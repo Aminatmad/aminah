@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AMANAH - Your Life. Your Trust.</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+   
+    <style>
+        /* --- ЦВЕТОВАЯ ПАЛИТРА --- */
+        :root {
+            --bg-color: #1a3312;        
+            --card-bg: #f4f1e6;      
+            --text-light: #f4f1e6;      
+            --text-dark: #1a3312;       
+            --text-muted-dark: #556B2F; 
+            --gold: #d4af37;            
+            --gold-light: #e8dcc4;      
+            
+            --mosque-color: #10220a; 
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-light);
+            padding: 20px;
+            padding-bottom: 150px; 
+            -webkit-font-smoothing: antialiased;
+            position: relative;
+            overflow-x: hidden;
+            
+            /* Легкий узор на фоне */
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><path d="M40 0 L80 40 L40 80 L0 40 Z" fill="none" stroke="%23d4af37" stroke-width="1" opacity="0.5"/><circle cx="40" cy="40" r="10" fill="none" stroke="%23d4af37" stroke-width="1" opacity="0.5"/></svg>');
+            background-size: 80px 80px;
+            background-position: center;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--bg-color);
+            opacity: 0.85; 
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2; 
+        }
+
+        /* --- ШАПКА --- */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 40px;
+            padding-top: 10px;
+        }
+
+        .logo-img {
+            height: 70px;
+            width: 70px;
+            background: url('images/logo.png') no-repeat center center;
+            background-size: contain;
+            background-color: rgba(255,255,255,0.1); 
+            border-radius: 50%; 
+        }
+
+        .logo-text {
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--gold); 
+            display: block;
+        }
+
+        .logo-subtext {
+            font-size: 12px;
+            color: var(--text-light);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            font-weight: 600;
+            display: block;
+            margin-top: 4px;
+        }
+
+        /* --- ПРИВЕТСТВИЕ --- */
+        .greeting {
+            margin-bottom: 40px;
+        }
+
+        .greeting h1 {
+            font-size: 36px;
+            margin-bottom: 12px;
+            color: var(--text-light); 
+        }
+
+        .greeting p {
+            font-size: 18px;
+            color: var(--gold-light);
+        }
+
+        /* --- КАРТОЧКИ --- */
+        .list-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px 25px; 
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            position: relative;
+            z-index: 3;
+        }
+
+        .card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+            background-color: #ffffff; 
+        }
+
+        /* Контейнер для картинок */
+        .icon-box {
+            width: 70px;  
+            height: 70px;
+            min-width: 70px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: var(--bg-color); /* Темный фон квадратика */
+            border-radius: 12px;
+            overflow: hidden; 
+            padding: 5px; /* Небольшой отступ, чтобы картинка не прилипала к краям */
+        }
+
+        /* Стили для картинок БЕЗ фильтров */
+        .icon-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* Картинка вписывается целиком, сохраняя пропорции */
+        }
+
+        .card-content {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .card-content h3 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .card-content p {
+            font-size: 15px;
+            color: var(--text-muted-dark);
+            line-height: 1.4;
+        }
+
+        /* --- НИЖНИЙ СИЛУЭТ МЕЧЕТЕЙ --- */
+        .mosque-footer {
+            position: fixed;
+            bottom: 0; 
+            left: 0;
+            width: 100%;
+            height: 220px; 
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 220" preserveAspectRatio="none"><path fill="%2310220a" d="M0,220 L0,180 L20,180 L20,120 L25,120 L25,180 L40,180 L40,140 L45,140 L45,180 L80,180 L80,160 L90,160 L90,100 L95,100 L95,160 L110,160 L110,180 L140,180 L140,120 C140,120 150,60 160,60 C170,60 180,120 180,120 L180,180 L220,180 L220,150 L230,150 L230,90 L235,90 L235,150 L250,150 L250,180 L280,180 L280,130 C280,130 300,50 320,50 C340,50 360,130 360,130 L360,180 L400,180 L400,150 L410,150 L410,90 L415,90 L415,150 L430,150 L430,180 L460,180 L460,140 L470,140 L470,80 L475,80 L475,140 L490,140 L490,180 L520,180 L520,120 C520,120 540,40 560,40 C580,40 600,120 600,120 L600,180 L640,180 L640,160 L650,160 L650,100 L655,100 L655,160 L670,160 L670,180 L700,180 L700,130 C700,130 720,50 740,50 C760,50 780,130 780,130 L780,180 L820,180 L820,150 L830,150 L830,90 L835,90 L835,150 L850,150 L850,180 L880,180 L880,140 C880,140 900,60 920,60 C940,60 960,140 960,140 L960,180 L1000,180 L1000,160 L1010,160 L1010,100 L1015,100 L1015,160 L1030,160 L1030,180 L1060,180 L1060,120 C1060,120 1080,40 1100,40 C1120,40 1140,120 1140,120 L1140,180 L1180,180 L1180,150 L1190,150 L1190,90 L1195,90 L1195,150 L1210,150 L1210,180 L1240,180 L1240,140 L1250,140 L1250,80 L1255,80 L1255,140 L1270,140 L1270,180 L1300,180 L1300,120 C1300,120 1320,50 1340,50 C1360,50 1380,120 1380,120 L1380,180 L1420,180 L1420,150 L1430,150 L1430,90 L1435,90 L1435,150 L1440,150 L1440,220 Z"/></svg>');
+            background-size: cover;
+            background-position: top center; 
+            background-repeat: no-repeat;
+            z-index: 1; 
+            pointer-events: none; 
+            filter: drop-shadow(0px -5px 15px rgba(0,0,0,0.5));
+        }
+
+        /* --- Мобильное меню --- */
+        .bottom-nav { display: none; }
+
+        @media (max-width: 768px) {
+            body { padding-bottom: 100px; }
+            .header { margin-bottom: 30px; }
+            .logo-img { height: 50px; width: 50px; }
+            .logo-text { font-size: 24px; }
+            .greeting h1 { font-size: 28px; }
+            .card { padding: 15px; gap: 15px; }
+            .icon-box { width: 60px; height: 60px; min-width: 60px; }
+            .card-content h3 { font-size: 18px; }
+            .card-content p { font-size: 14px; }
+
+            .mosque-footer { height: 100px; background-size: 300% 100%; }
+
+            .bottom-nav {
+                position: fixed; bottom: 0; left: 0; width: 100%; height: 70px;
+                background: #f4f1e6; border-top: 1px solid rgba(0, 0, 0, 0.1);
+                display: flex; justify-content: space-around; align-items: center; z-index: 100; 
+            }
+            .nav-item {
+                text-decoration: none; color: #888; font-size: 11px; font-weight: 500;
+                display: flex; flex-direction: column; align-items: center; gap: 4px;
+            }
+            .nav-item.active { color: var(--bg-color); }
+            .nav-item svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Шапка -->
+        <header class="header">
+            <div class="logo-img"></div>
+            <div class="logo-wrapper">
+                <span class="logo-text">AMANAH</span>
+                <span class="logo-subtext">Your Life. Your Trust.</span>
+            </div>
+        </header>
+
+        <!-- Приветствие -->
+        <section class="greeting">
+            <h1>Ассаляму алейкум!</h1>
+            <p>Чем мы можем помочь тебе сегодня?</p>
+        </section>
+
+        <!-- Карточки -->
+        <main class="list-layout">
+           
+            <!-- 1. Начало в исламе -->
+            <a href="#" class="card">
+                <div class="icon-box">
+                    <!-- Проверьте расширение (.png, .jpg, .svg) в зависимости от ваших файлов -->
+                    <img src="images/icon-start.png" alt="Начало в исламе">
+                </div>
+                <div class="card-content">
+                    <h3>Начало в исламе</h3>
+                    <p>Первые шаги, обучение и поддержка</p>
+                </div>
+            </a>
+
+            <!-- 2. Путь в исламе -->
+            <a href="#" class="card">
+                <div class="icon-box">
+                    <img src="images/icon-path.png" alt="Путь в исламе">
+                </div>
+                <div class="card-content">
+                    <h3>Путь в исламе</h3>
+                    <p>Углубление знаний, лекции и наставления</p>
+                </div>
+            </a>
+
+            <!-- 3. Семья и никах -->
+            <a href="#" class="card">
+                <div class="icon-box">
+                    <img src="images/icon-family.png" alt="Семья и никах">
+                </div>
+                <div class="card-content">
+                    <h3>Семья и никах</h3>
+                    <p>Подготовка, организация и семейные ценности</p>
+                </div>
+            </a>
+
+            <!-- 4. Рождение ребёнка -->
+            <a href="#" class="card">
+                <div class="icon-box">
+                    <img src="images/icon-child.png" alt="Рождение ребёнка">
+                </div>
+                <div class="card-content">
+                    <h3>Рождение ребёнка</h3>
+                    <p>Поддержка родителей и необходимые обряды</p>
+                </div>
+            </a>
+
+            <!-- 5. Потеря близкого человека -->
+            <a href="#" class="card">
+                <div class="icon-box">
+                    <img src="images/icon-loss.png" alt="Потеря близкого человека">
+                </div>
+                <div class="card-content">
+                    <h3>Потеря близкого человека</h3>
+                    <p>Организация джаназа, погребение и помощь семье</p>
+                </div>
+            </a>
+
+        </main>
+    </div>
+
+    <!-- СИЛУЭТ ГОРОДА МЕЧЕТЕЙ СНИЗУ -->
+    <div class="mosque-footer"></div>
+
+    <!-- Мобильное нижнее меню -->
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item active">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <span>Главная</span>
+        </a>
+        <a href="#" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span>Каталог</span>
+        </a>
+        <a href="#" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            <span>Дуа</span>
+        </a>
+        <a href="#" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span>Профиль</span>
+        </a>
+    </nav>
+
+</body>
+</html>
