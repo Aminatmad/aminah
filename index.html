@@ -8,11 +8,10 @@
     <link rel="manifest" href="manifest.webmanifest">
     <meta name="theme-color" content="#1a3312">
 
-    <!-- iOS (Safari не всегда читает манифест сам) -->
+    <!-- iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="AMANAH">
-    
     <link rel="apple-touch-icon" href="images/apple-touch-icon.jpg">
     <link rel="icon" type="image/jpeg" href="images/ico-192.jpg">
 
@@ -36,7 +35,7 @@
             background-color: var(--bg-color);
             color: var(--text-light);
             padding: 20px;
-            padding-bottom: 150px;
+            padding-bottom: 100px; /* Отступ под нижнее меню */
             -webkit-font-smoothing: antialiased;
             position: relative;
             overflow-x: hidden;
@@ -112,106 +111,37 @@
         .quiz-option { display: block; padding: 10px; margin-bottom: 8px; background: #f9f9f9; border-radius: 8px; cursor: pointer; transition: background 0.2s; }
         .quiz-option:hover { background: #eef2ec; }
         .quiz-option.selected { background: #d4af37; color: #fff; font-weight: bold;}
-        .lesson-nav { display: flex; justify-content: space-between; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; }
-        .nav-btn { background: var(--bg-color); color: var(--gold); border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.3s; }
+        
+        /* Навигация внутри урока (адаптивная) */
+        .lesson-nav { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; }
+        .nav-btn { background: var(--bg-color); color: var(--gold); border: none; padding: 12px 15px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.3s; flex: 1 1 30%; text-align: center; font-size: 14px; }
         .nav-btn:hover { background: #2a4d20; }
         .nav-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .mosque-footer { position: fixed; bottom: 0; left: 0; width: 100%; height: 220px; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 220" preserveAspectRatio="none"><path fill="%2310220a" d="M0,220 L0,180 L20,180 L20,120 L25,120 L25,180 L40,180 L40,140 L45,140 L45,180 L80,180 L80,160 L90,160 L90,100 L95,100 L95,160 L110,160 L110,180 L140,180 L140,120 C140,120 150,60 160,60 C170,60 180,120 180,120 L180,180 L220,180 L220,150 L230,150 L230,90 L235,90 L235,150 L250,150 L250,180 L280,180 L280,130 C280,130 300,50 320,50 C340,50 360,130 360,130 L360,180 L400,180 L400,150 L410,150 L410,90 L415,90 L415,150 L430,150 L430,180 L460,180 L460,140 L470,140 L470,80 L475,80 L475,140 L490,140 L490,180 L520,180 L520,120 C520,120 540,40 560,40 C580,40 600,120 600,120 L600,180 L640,180 L640,160 L650,160 L650,100 L655,100 L655,160 L670,160 L670,180 L700,180 L700,130 C700,130 720,50 740,50 C760,50 780,130 780,130 L780,180 L820,180 L820,150 L830,150 L830,90 L835,90 L835,150 L850,150 L850,180 L880,180 L880,140 C880,140 900,60 920,60 C940,60 960,140 960,140 L960,180 L1000,180 L1000,160 L1010,160 L1010,100 L1015,100 L1015,160 L1030,160 L1030,180 L1060,180 L1060,120 C1060,120 1080,40 1100,40 C1120,40 1140,120 1140,120 L1140,180 L1180,180 L1180,150 L1190,150 L1190,90 L1195,90 L1195,150 L1210,150 L1210,180 L1240,180 L1240,140 L1250,140 L1250,80 L1255,80 L1255,140 L1270,140 L1270,180 L1300,180 L1300,120 C1300,120 1320,50 1340,50 C1360,50 1380,120 1380,120 L1380,180 L1420,180 L1420,150 L1430,150 L1430,90 L1435,90 L1435,150 L1440,150 L1440,220 Z"/></svg>'); background-size: cover; background-position: top center; background-repeat: no-repeat; z-index: 1; pointer-events: none; filter: drop-shadow(0px -5px 15px rgba(0,0,0,0.5)); }
-        .bottom-nav { display: none; }
+        .btn-complete { background: var(--gold); color: var(--bg-color); }
 
-        /* ===== СТИЛИ ДЛЯ ТАБЛИЦЫ АЗАНА И ИКАМАТА ===== */
-        .prayer-table {
-            width: 100%;
-            max-width: 100%;
-            border-collapse: collapse;
-            margin: 15px 0 25px;
-            font-size: 14px;
-            background: #fff;
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            overflow: hidden;
-            table-layout: fixed;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-        }
-        .prayer-table th {
-            background: var(--bg-color);
-            color: var(--gold);
-            padding: 10px 8px;
-            text-align: left;
-            font-weight: 600;
-            font-size: 13px;
-            letter-spacing: 0.5px;
-        }
-        .prayer-table td {
-            padding: 10px 8px;
-            border-bottom: 1px solid #eee;
-            color: var(--text-dark);
-            vertical-align: middle;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-        }
+        .mosque-footer { position: fixed; bottom: 0; left: 0; width: 100%; height: 100px; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 220" preserveAspectRatio="none"><path fill="%2310220a" d="M0,220 L0,180 L20,180 L20,120 L25,120 L25,180 L40,180 L40,140 L45,140 L45,180 L80,180 L80,160 L90,160 L90,100 L95,100 L95,160 L110,160 L110,180 L140,180 L140,120 C140,120 150,60 160,60 C170,60 180,120 180,120 L180,180 L220,180 L220,150 L230,150 L230,90 L235,90 L235,150 L250,150 L250,180 L280,180 L280,130 C280,130 300,50 320,50 C340,50 360,130 360,130 L360,180 L400,180 L400,150 L410,150 L410,90 L415,90 L415,150 L430,150 L430,180 L460,180 L460,140 L470,140 L470,80 L475,80 L475,140 L490,140 L490,180 L520,180 L520,120 C520,120 540,40 560,40 C580,40 600,120 600,120 L600,180 L640,180 L640,160 L650,160 L650,100 L655,100 L655,160 L670,160 L670,180 L700,180 L700,130 C700,130 720,50 740,50 C760,50 780,130 780,130 L780,180 L820,180 L820,150 L830,150 L830,90 L835,90 L835,150 L850,150 L850,180 L880,180 L880,140 C880,140 900,60 920,60 C940,60 960,140 960,140 L960,180 L1000,180 L1000,160 L1010,160 L1010,100 L1015,100 L1015,160 L1030,160 L1030,180 L1060,180 L1060,120 C1060,120 1080,40 1100,40 C1120,40 1140,120 1140,120 L1140,180 L1180,180 L1180,150 L1190,150 L1190,90 L1195,90 L1195,150 L1210,150 L1210,180 L1240,180 L1240,140 L1250,140 L1250,80 L1255,80 L1255,140 L1270,140 L1270,180 L1300,180 L1300,120 C1300,120 1320,50 1340,50 C1360,50 1380,120 1380,120 L1380,180 L1420,180 L1420,150 L1430,150 L1430,90 L1435,90 L1435,150 L1440,150 L1440,220 Z"/></svg>'); background-size: cover; background-position: top center; background-repeat: no-repeat; z-index: 1; pointer-events: none; filter: drop-shadow(0px -5px 15px rgba(0,0,0,0.5)); }
+
+        /* ===== ТАБЛИЦА АЗАНА ===== */
+        .prayer-table { width: 100%; max-width: 100%; border-collapse: collapse; margin: 15px 0 25px; font-size: 14px; background: #fff; border: 1px solid var(--border-color); border-radius: 10px; overflow: hidden; table-layout: fixed; word-wrap: break-word; overflow-wrap: break-word; }
+        .prayer-table th { background: var(--bg-color); color: var(--gold); padding: 10px 8px; text-align: left; font-weight: 600; font-size: 13px; letter-spacing: 0.5px; }
+        .prayer-table td { padding: 10px 8px; border-bottom: 1px solid #eee; color: var(--text-dark); vertical-align: middle; word-wrap: break-word; overflow-wrap: break-word; }
         .prayer-table tr:last-child td { border-bottom: none; }
         .prayer-table tr:nth-child(even) td { background: #faf8f1; }
-        .prayer-table td:first-child {
-            color: var(--text-muted-dark);
-            font-weight: 600;
-            width: 36px;
-            text-align: center;
-        }
-        .prayer-table td.ar {
-            font-family: serif;
-            font-size: 18px;
-            direction: rtl;
-            text-align: right;
-            line-height: 1.6;
-            white-space: normal;
-            word-break: break-word;
-        }
+        .prayer-table td:first-child { color: var(--text-muted-dark); font-weight: 600; width: 36px; text-align: center; }
+        .prayer-table td.ar { font-family: serif; font-size: 18px; direction: rtl; text-align: right; line-height: 1.6; white-space: normal; word-break: break-word; }
 
-        /* ===== НОВЫЕ СТИЛИ ДЛЯ ЗНАНИЙ (Компактные карточки) ===== */
-        .square-grid { 
-            display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 15px; 
-            margin-bottom: 20px; 
-        }
-        .square-card { 
-            background: var(--inner-card-bg); 
-            border-radius: 16px; 
-            padding: 15px; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            text-align: center; 
-            cursor: pointer; 
-            transition: all 0.3s ease; 
-            border: 1px solid #e0e0e0; 
-            aspect-ratio: 1 / 1; 
-        }
-        .square-card:hover { 
-            transform: translateY(-3px); 
-            box-shadow: 0 6px 15px rgba(26, 51, 18, 0.15); 
-            border-color: var(--gold); 
-        }
-        .square-icon { 
-            width: 40px; 
-            height: 40px; 
-            margin-bottom: 8px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-        }
+        /* ===== ЗНАНИЯ ===== */
+        .square-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
+        .square-card { background: var(--inner-card-bg); border-radius: 16px; padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; cursor: pointer; transition: all 0.3s ease; border: 1px solid #e0e0e0; aspect-ratio: 1 / 1; }
+        .square-card:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(26, 51, 18, 0.15); border-color: var(--gold); }
+        .square-icon { width: 35px; height: 35px; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; }
         .square-icon svg { width: 100%; height: 100%; object-fit: contain; }
-        .square-title { font-size: 13px; font-weight: 600; color: var(--text-dark); line-height: 1.3; }
+        .square-title { font-size: 12px; font-weight: 600; color: var(--text-dark); line-height: 1.2; }
         .section-divider { height: 2px; background: var(--border-color); margin: 30px 0; border-radius: 2px; }
-        
-        /* Прогресс бар */
+
         .progress-container { background: #e0e0e0; border-radius: 10px; height: 8px; overflow: hidden; margin-top: 10px; }
         .progress-bar { background: var(--gold); height: 100%; width: 0%; transition: width 0.3s ease; }
         
-        /* Карточки уроков (на странице книги/темы) */
         .lesson-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #fff; border-radius: 12px; border: 1px solid #eee; margin-bottom: 10px; transition: 0.2s; cursor: pointer; }
         .lesson-item:hover { border-color: var(--gold); background: #faf8f1; }
         .lesson-item-info h4 { margin: 0 0 5px 0; font-size: 16px; color: var(--text-dark); }
@@ -222,7 +152,6 @@
         .lesson-status { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: #f4f1e6; font-size: 16px; }
         .lesson-status.done { background: var(--gold); color: #fff; }
         
-        /* Модальное окно PRO */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; padding: 20px; }
         .modal-overlay.active { display: flex; }
         .modal-content { background: var(--card-bg); padding: 30px; border-radius: 16px; max-width: 400px; width: 100%; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 2px solid var(--gold); }
@@ -231,8 +160,13 @@
         .modal-btn { background: var(--bg-color); color: var(--gold); border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%; margin-bottom: 10px; transition: 0.3s; }
         .modal-btn:hover { background: #2a4d20; }
 
+        /* ===== НИЖНЕЕ МЕНЮ (ТЕПЕРЬ ВИДНО ВСЕГДА) ===== */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 70px; background: #f4f1e6; border-top: 1px solid rgba(0, 0, 0, 0.1); display: flex; justify-content: space-around; align-items: center; z-index: 100; }
+        .nav-item { text-decoration: none; color: #888; font-size: 11px; font-weight: 500; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .nav-item.active { color: var(--bg-color); }
+        .nav-item svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; }
+
         @media (max-width: 768px) {
-            body { padding-bottom: 100px; }
             .header { margin-bottom: 30px; }
             .logo-img { height: 50px; width: 50px; }
             .logo-text { font-size: 24px; }
@@ -241,7 +175,7 @@
             .icon-box { width: 60px; height: 60px; min-width: 60px; }
             .card-content h3 { font-size: 18px; }
             .card-content p { font-size: 14px; }
-            .mosque-footer { height: 100px; background-size: 300% 100%; }
+            .mosque-footer { height: 70px; }
             .section-title { font-size: 26px; }
             .section-subtitle { font-size: 14px; }
             .block-card { padding: 15px; }
@@ -250,25 +184,21 @@
             .lessons-grid { grid-template-columns: 1fr; }
             .lesson-screen { padding: 20px; }
             .lesson-header h2 { font-size: 22px; }
-            .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 70px; background: #f4f1e6; border-top: 1px solid rgba(0, 0, 0, 0.1); display: flex; justify-content: space-around; align-items: center; z-index: 100; }
-            .nav-item { text-decoration: none; color: #888; font-size: 11px; font-weight: 500; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-            .nav-item.active { color: var(--bg-color); }
-            .nav-item svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; }
 
-            /* Мобильная адаптация таблицы */
+            /* Таблица */
             .prayer-table { font-size: 11px; table-layout: auto; }
             .prayer-table th, .prayer-table td { padding: 6px 4px; }
-            .prayer-table th:first-child,
-            .prayer-table td:first-child { display: none; }
+            .prayer-table th:first-child, .prayer-table td:first-child { display: none; }
             .prayer-table td.ar { font-size: 14px; padding-left: 0; }
 
-            /* Мобильная адаптация квадратных карточек (2 в ряд) */
-            .square-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-            .square-card { aspect-ratio: auto; padding: 15px 10px; border-radius: 12px; }
-            .square-icon { width: 35px; height: 35px; }
-            .square-title { font-size: 12px; }
+            /* Строго 3 в ряд на телефоне */
+            .square-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+            .square-card { aspect-ratio: auto; padding: 12px 5px; border-radius: 12px; min-height: 90px; }
+            .square-icon { width: 30px; height: 30px; margin-bottom: 6px; }
+            .square-title { font-size: 10px; }
             .lesson-item { flex-direction: column; align-items: flex-start; gap: 10px; }
             .lesson-status { align-self: flex-end; }
+            .nav-btn { font-size: 12px; padding: 10px 5px; }
         }
     </style>
 </head>
@@ -283,7 +213,7 @@
             </div>
         </header>
 
-        <!-- СЕКЦИЯ 1: ГЛАВНАЯ -->
+        <!-- ГЛАВНАЯ -->
         <section id="main-page" class="page-section active">
             <div class="greeting">
                 <h1>Ассаляму алейкум!</h1>
@@ -313,254 +243,45 @@
             </main>
         </section>
 
-        <!-- СЕКЦИЯ 2: НАЧАЛО В ИСЛАМЕ -->
-        <section id="islam-start-page" class="page-section">
-            <div class="back-btn" onclick="showPage('main-page')">
-                <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> На главную
-            </div>
-            <div class="epigraph-box">
-                <div class="epigraph-text">«Поистине, твоя религия — твоя плоть и кровь, так оберегай её».</div>
-                <div class="epigraph-author">— Из наставлений Ибн Умара</div>
-            </div>
-            <h2 class="section-title">Начало в исламе</h2>
-            <p class="section-subtitle">Твой путь начинается с малого. Изучай основы Ислама постепенно, в своём темпе, без спешки и страха.</p>
-            
-            <div class="block-card">
-                <div class="block-header"><h3 class="block-title">Блок 1. Самое первое и важное (Основы)</h3><div class="block-divider"></div></div>
-                <div class="lessons-grid">
-                    <div class="lesson-card" onclick="openLesson(1)"><div class="lesson-number">1</div><div class="lesson-info"><h4>Что такое Ислам?</h4><p>Кто такой мусульманин? В чём суть религии?</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(2)"><div class="lesson-number">2</div><div class="lesson-info"><h4>Символ веры (Шахада)</h4><p>Как она произносится и что означает?</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(3)"><div class="lesson-number">3</div><div class="lesson-info"><h4>Столпы Ислама</h4><p>Пять столпов и их краткое объяснение.</p></div></div>
-                </div>
-            </div>
-            <div class="block-card">
-                <div class="block-header"><h3 class="block-title">Блок 2. Знакомство с Аллахом и Пророком ﷺ</h3><div class="block-divider"></div></div>
-                <div class="lessons-grid">
-                    <div class="lesson-card" onclick="openLesson(4)"><div class="lesson-number">4</div><div class="lesson-info"><h4>Кто такой Аллах?</h4><p>Единобожие (Таухид) простыми словами.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(5)"><div class="lesson-number">5</div><div class="lesson-info"><h4>Пророк Мухаммад ﷺ</h4><p>Кто он и почему его любят мусульмане?</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(6)"><div class="lesson-number">6</div><div class="lesson-info"><h4>Зачем нужен Коран?</h4><p>Что это за книга и как к ней относиться?</p></div></div>
-                </div>
-            </div>
-            <div class="block-card">
-                <div class="block-header"><h3 class="block-title">Блок 3. Практика для новичка</h3><div class="block-divider"></div></div>
-                <div class="lessons-grid">
-                    <div class="lesson-card" onclick="openLesson(7)"><div class="lesson-number">7</div><div class="lesson-info"><h4>Что такое омовение (Тахарат)?</h4><p>Зачем нужно и как правильно совершать?</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(8)"><div class="lesson-number">8</div><div class="lesson-info"><h4>Первая молитва (Намаз)</h4><p>Время молитвы и знакомство с сурой Аль-Фатиха.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(9)"><div class="lesson-number">9</div><div class="lesson-info"><h4>Мои первые посты</h4><p>Что такое Рамадан и как начать поститься?</p></div></div>
-                </div>
-            </div>
-            <div class="block-card">
-                <div class="block-header"><h3 class="block-title">Блок 4. Нравственность и адаптация</h3><div class="block-divider"></div></div>
-                <div class="lessons-grid">
-                    <div class="lesson-card" onclick="openLesson(10)"><div class="lesson-number">10</div><div class="lesson-info"><h4>Что такое «Халяль» и «Харам»?</h4><p>Дозволенное и запретное в еде, поведении.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(11)"><div class="lesson-number">11</div><div class="lesson-info"><h4>Как общаться с немусульманами?</h4><p>Как рассказать близким и сохранить отношения.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(12)"><div class="lesson-number">12</div><div class="lesson-info"><h4>Частые вопросы новичков</h4><p>Арабский язык, пропущенные молитвы и мечеть.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(13)"><div class="lesson-number">13</div><div class="lesson-info"><h4>Дуа для начинающих</h4><p>Простые повседневные молитвы перед едой и в доме.</p></div></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ===== СЕКЦИЯ 3: СЕМЬЯ И НИКАХ ===== -->
-        <section id="family-page" class="page-section">
-            <div class="back-btn" onclick="showPage('main-page')">
-                <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> На главную
-            </div>
-            <div class="epigraph-box">
-                <div class="epigraph-text">«Самыми совершенными верующими в вере являются те, у кого наилучший нрав, а лучшие из вас — те, кто лучше всех относится к своим жёнам».</div>
-                <div class="epigraph-author">— Джами ат-Тирмизи, хадис 1162 (хасан сахих)</div>
-            </div>
-            <h2 class="section-title">Семья и Никах</h2>
-            <p class="section-subtitle">Семья в Исламе — это не просто союз двух людей. Это ответственность, милосердие, доверие и совместный путь к довольству Аллаха. Изучай постепенно, чтобы строить отношения на знаниях, а не на предположениях.</p>
-
-            <div class="block-card">
-                <div class="block-header">
-                    <h3 class="block-title">Блок 1. Создание семьи и выбор партнера (Фундамент)</h3>
-                    <p class="block-subtitle">Как выбрать человека, с которым ты разделишь свою жизнь и религию.</p>
-                    <div class="block-divider"></div>
-                </div>
-                <div class="lessons-grid">
-                    <div class="lesson-card" onclick="openLesson(14)"><div class="lesson-number">1</div><div class="lesson-info"><h4>Главный критерий выбора — религия и нравственность</h4><p>Не смотри только на «обёртку».</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(15)"><div class="lesson-number">2</div><div class="lesson-info"><h4>На что смотреть мужчине при выборе жены</h4><p>Религия, характер и благодарность.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(16)"><div class="lesson-number">3</div><div class="lesson-info"><h4>На что смотреть женщине при выборе мужа</h4><p>Богобоязненность и характер.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(17)"><div class="lesson-number">4</div><div class="lesson-info"><h4>Важность соответствия (Кяфаа)</h4><p>Уровень, воспитание, ценности.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(18)"><div class="lesson-number">5</div><div class="lesson-info"><h4>Дозволенное общение до брака (Тааруф) и запрет на уединение (Халва)</h4><p>Границы и правильное знакомство.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(19)"><div class="lesson-number">6</div><div class="lesson-info"><h4>Как правильно свататься</h4><p>Роль родственников и махрамов.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(20)"><div class="lesson-number">7</div><div class="lesson-info"><h4>История из жизни Пророка ﷺ</h4><p>Почему иман важнее богатства и статуса.</p></div></div>
-                </div>
-            </div>
-
-            <div class="block-card">
-                <div class="block-header">
-                    <h3 class="block-title">Блок 2. Заключение брака (Практика и условия)</h3>
-                    <p class="block-subtitle">Что нужно знать перед заключением исламского брака.</p>
-                    <div class="block-divider"></div>
-                </div>
-                <div class="lessons-grid">
-                    <div class="lesson-card" onclick="openLesson(21)"><div class="lesson-number">8</div><div class="lesson-info"><h4>Условия никаха</h4><p>Фундамент брака: согласие, вали, свидетели, махр.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(22)"><div class="lesson-number">9</div><div class="lesson-info"><h4>Согласие невесты (Иджаб и Кабул)</h4><p>Почему это важно.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(23)"><div class="lesson-number">10</div><div class="lesson-info"><h4>Опекун (Вали) и его роль</h4><p>Защита прав женщины.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(24)"><div class="lesson-number">11</div><div class="lesson-info"><h4>Свидетели (Шухуд) и гласность брака</h4><p>Брак не должен быть тайной.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(25)"><div class="lesson-number">12</div><div class="lesson-info"><h4>Махр (Брачный дар)</h4><p>Суть, правила и история о самом скромном махре.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(26)"><div class="lesson-number">13</div><div class="lesson-info"><h4>Проведение Валимы</h4><p>Свадебное угощение и отказ от излишеств.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(27)"><div class="lesson-number">14</div><div class="lesson-info"><h4>Как избежать огромных трат и сложностей</h4><p>При проведении Никяха.</p></div></div>
-                </div>
-            </div>
-
-            <div class="block-card">
-                <div class="block-header">
-                    <h3 class="block-title">Блок 3. Семейная жизнь и права супругов (Быт и отношения)</h3>
-                    <p class="block-subtitle">Как строить семью на любви, уважении и ответственности.</p>
-                    <div class="block-divider"></div>
-                </div>
-                <div class="lessons-grid">
-                    <div class="lesson-card" onclick="openLesson(28)"><div class="lesson-number">15</div><div class="lesson-info"><h4>Обязанности мужа</h4><p>Нафака, защита и доброе отношение.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(29)"><div class="lesson-number">16</div><div class="lesson-info"><h4>Обязанности жены</h4><p>Забота о доме, сохранение имущества и послушание в дозволенном.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(30)"><div class="lesson-number">17</div><div class="lesson-info"><h4>Пример Пророка ﷺ в быту</h4><p>Помощь по дому и отношение к жёнам.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(31)"><div class="lesson-number">18</div><div class="lesson-info"><h4>Как решать конфликты</h4><p>Терпение, прощение и поиск хорошего в супруге.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(32)"><div class="lesson-number">19</div><div class="lesson-info"><h4>Мягкость и снисходительность</h4><p>Почему нельзя ломать характер супруга.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(33)"><div class="lesson-number">20</div><div class="lesson-info"><h4>Как жить в мире</h4><p>Уступки, уважение и сохранение любви.</p></div></div>
-                </div>
-            </div>
-
-            <div class="block-card">
-                <div class="block-header">
-                    <h3 class="block-title">Блок 4. Испытания и развод (Талак)</h3>
-                    <p class="block-subtitle">Серьёзная тема, о которой важно знать без страха и заблуждений.</p>
-                    <div class="block-divider"></div>
-                </div>
-                <div class="lessons-grid">
-                    <div class="lesson-card" onclick="openLesson(34)"><div class="lesson-number">21</div><div class="lesson-info"><h4>Что такое Талак</h4><p>Почему разрешён, но не должен быть первым решением.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(35)"><div class="lesson-number">22</div><div class="lesson-info"><h4>Когда развод действительно необходим</h4><p>Исчерпаны ли все попытки примирения.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(36)"><div class="lesson-number">23</div><div class="lesson-info"><h4>Как правильно давать развод и что такое «Идда»</h4><p>Порядок талака и срок ожидания.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(37)"><div class="lesson-number">24</div><div class="lesson-info"><h4>Обязанности мужа в период Идды</h4><p>Содержание и возможность примирения.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(38)"><div class="lesson-number">25</div><div class="lesson-info"><h4>Первый и второй развод</h4><p>Можно ли помириться и как это сделать.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(39)"><div class="lesson-number">26</div><div class="lesson-info"><h4>Третий развод</h4><p>Почему жена становится запретной и что делать.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(40)"><div class="lesson-number">27</div><div class="lesson-info"><h4>Как сохранить достоинство</h4><p>Не раскрывать секреты и защитить детей после развода.</p></div></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ===== СЕКЦИЯ 4: РОЖДЕНИЕ РЕБЁНКА ===== -->
-        <section id="birth-page" class="page-section">
-            <div class="back-btn" onclick="showPage('main-page')">
-                <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> На главную
-            </div>
-            <div class="epigraph-box">
-                <div class="epigraph-text">«Господи! Даруй мне праведное потомство. Поистине, Ты — Слышащий мольбу».</div>
-                <div class="epigraph-author">— Коран, 3:38 (перевод смысла)</div>
-            </div>
-            <h2 class="section-title">Рождение ребёнка</h2>
-            <p class="section-subtitle">Ребёнок — это дар Аллаха, а не собственность. Он приходит в этот мир с правами, которые Всевышний доверил родителям. Изучай обряды и обязанности постепенно, чтобы встретить и воспитать его в согласии с Сунной.</p>
-
-            <div class="block-card">
-                <div class="block-header">
-                    <h3 class="block-title">Блок 1. Встреча новорожденного и первые обряды</h3>
-                    <p class="block-subtitle">Первые часы и дни: благодарность, азан, тахник, имя и акика.</p>
-                    <div class="block-divider"></div>
-                </div>
-                <div class="lessons-grid">
-                    <div class="lesson-card" onclick="openLesson(41)"><div class="lesson-number">1</div><div class="lesson-info"><h4>Благодарность Аллаху и радость</h4><p>Независимо от пола ребёнка.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(42)"><div class="lesson-number">2</div><div class="lesson-info"><h4>Азан и икамат в уши младенца</h4><p>Сунна с важным нюансом достоверности.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(43)"><div class="lesson-number">3</div><div class="lesson-info"><h4>Тахник (угощение фиником)</h4><p>Достоверная сунна и её мудрость.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(44)"><div class="lesson-number">4</div><div class="lesson-info"><h4>Когда давать имя</h4><p>Гибкость сунны: день рождения или седьмой день.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(45)"><div class="lesson-number">5</div><div class="lesson-info"><h4>Лучшие имена</h4><p>Красивое имя — это идентичность.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(46)"><div class="lesson-number">6</div><div class="lesson-info"><h4>Акика (жертвоприношение)</h4><p>Суть и правила жертвы за мальчика и девочку.</p></div></div>
-                </div>
-            </div>
-
-            <div class="block-card">
-                <div class="block-header">
-                    <h3 class="block-title">Блок 2. Забота, здоровье и воспитание</h3>
-                    <p class="block-subtitle">Как растить ребёнка телесно и духовно, чтобы забота стала ибадой.</p>
-                    <div class="block-divider"></div>
-                </div>
-                <div class="lessons-grid">
-                    <div class="lesson-card" onclick="openLesson(47)"><div class="lesson-number">7</div><div class="lesson-info"><h4>Период после родов (40 дней)</h4><p>Забота о матери и её восстановление.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(48)"><div class="lesson-number">8</div><div class="lesson-info"><h4>Бритьё головы и милостыня</h4><p>Сунна седьмого дня.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(49)"><div class="lesson-number">9</div><div class="lesson-info"><h4>Обрезание (для мальчиков)</h4><p>Важность и время.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(50)"><div class="lesson-number">10</div><div class="lesson-info"><h4>Кормление грудью</h4><p>Право ребёнка и обязанность матери.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(51)"><div class="lesson-number">11</div><div class="lesson-info"><h4>Адаб (воспитание)</h4><p>Главная ответственность родителей и этапы воспитания.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(52)"><div class="lesson-number">12</div><div class="lesson-info"><h4>Здоровье и безопасность ребёнка</h4><p>Забота как ибада.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(53)"><div class="lesson-number">13</div><div class="lesson-info"><h4>Финансовая ответственность за ребёнка</h4><p>Нафака и обязанности отца.</p></div></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ===== СЕКЦИЯ 5: ПОТЕРЯ БЛИЗКОГО ЧЕЛОВЕКА ===== -->
-        <section id="loss-page" class="page-section">
-            <div class="back-btn" onclick="showPage('main-page')">
-                <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> На главную
-            </div>
-            <div class="epigraph-box">
-                <div class="epigraph-text">«Поистине, мы принадлежим Аллаху, и к Нему мы возвращаемся».</div>
-                <div class="epigraph-author">— Коран, 2:156 (перевод смысла)</div>
-            </div>
-            <h2 class="section-title">Потеря близкого человека</h2>
-            <p class="section-subtitle">Смерть близкого — одно из самых тяжёлых испытаний. Ислам не требует от тебя быть без чувств. Он учит проходить через горе так, чтобы не потерять веру, сохранить достоинство и помочь умершему тем, что действительно приносит пользу.</p>
-
-            <div class="block-card">
-                <div class="block-header">
-                    <h3 class="block-title">Блок 1. Первые дни после утраты</h3>
-                    <p class="block-subtitle">Терпение, слёзы, первые действия, погребение и то, что помогает умершему.</p>
-                    <div class="block-divider"></div>
-                </div>
-                <div class="lessons-grid">
-                    <div class="lesson-card" onclick="openLesson(54)"><div class="lesson-number">1</div><div class="lesson-info"><h4>Когда умирает близкий человек</h4><p>Терпение, слёзы и первые действия.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(55)"><div class="lesson-number">2</div><div class="lesson-info"><h4>Как правильно хоронить мусульманина</h4><p>Омовение, саван, джаназа и погребение.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(56)"><div class="lesson-number">3</div><div class="lesson-info"><h4>Что может принести пользу умершему</h4><p>Дуа, садака и посещение кладбища.</p></div></div>
-                    <div class="lesson-card" onclick="openLesson(57)"><div class="lesson-number">4</div><div class="lesson-info"><h4>Что нельзя превращать в религиозный обряд</h4><p>Различение Сунны и местных обычаев.</p></div></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ===== СЕКЦИЯ 6: ЗНАНИЯ (КАТАЛОГ) ===== -->
+        <!-- ЗНАНИЯ -->
         <section id="knowledge-page" class="page-section">
             <div class="back-btn" onclick="showPage('main-page')">
                 <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> На главную
             </div>
-
             <h2 class="section-title">Знания</h2>
-            <p class="section-subtitle">Изучай основы религии и классические труды ученых постепенно.</p>
+            <p class="section-subtitle">Изучай основы религии и классические труды.</p>
 
-            <!-- 3 Основных раздела -->
             <div class="square-grid">
                 <div class="square-card" onclick="openSection(1)">
-                    <div class="square-icon">
-                        <svg viewBox="0 0 64 64" fill="none"><path d="M32 56C32 56 8 42 8 24C8 15.163 15.163 8 24 8C28.418 8 32 10.5 32 10.5C32 10.5 35.582 8 40 8C48.837 8 56 15.163 56 24C56 42 32 56 32 56Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M38 22C34.686 22 32 24.686 32 28C32 31.314 34.686 34 38 34C38.8 34 39.5 33.8 40.2 33.5C38.9 35.6 36.6 37 34 37C29.6 37 26 33.4 26 29C26 24.6 29.6 21 34 21C35.6 21 37.1 21.4 38.4 22.2C38.2 22.1 38.1 22 38 22Z" fill="#d4af37"/></svg>
-                    </div>
+                    <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 56C32 56 8 42 8 24C8 15.163 15.163 8 24 8C28.418 8 32 10.5 32 10.5C32 10.5 35.582 8 40 8C48.837 8 56 15.163 56 24C56 42 32 56 32 56Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M38 22C34.686 22 32 24.686 32 28C32 31.314 34.686 34 38 34C38.8 34 39.5 33.8 40.2 33.5C38.9 35.6 36.6 37 34 37C29.6 37 26 33.4 26 29C26 24.6 29.6 21 34 21C35.6 21 37.1 21.4 38.4 22.2C38.2 22.1 38.1 22 38 22Z" fill="#d4af37"/></svg></div>
                     <div class="square-title">Акыда</div>
                 </div>
                 <div class="square-card" onclick="openSection(2)">
-                    <div class="square-icon">
-                        <svg viewBox="0 0 64 64" fill="none"><path d="M32 8V52" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/><path d="M12 18H52" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/><path d="M12 18L6 32C6 35.314 8.686 38 12 38C15.314 38 18 35.314 18 32L12 18Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M52 18L46 32C46 35.314 48.686 38 52 38C55.314 38 58 35.314 58 32L52 18Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M22 52H42" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/></svg>
-                    </div>
+                    <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 8V52" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/><path d="M12 18H52" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/><path d="M12 18L6 32C6 35.314 8.686 38 12 38C15.314 38 18 35.314 18 32L12 18Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M52 18L46 32C46 35.314 48.686 38 52 38C55.314 38 58 35.314 58 32L52 18Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M22 52H42" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/></svg></div>
                     <div class="square-title">Фикх</div>
                 </div>
                 <div class="square-card" onclick="openSection(3)">
-                    <div class="square-icon">
-                        <svg viewBox="0 0 64 64" fill="none"><path d="M32 20C32 20 24 14 12 14V46C24 46 32 52 32 52C32 52 40 46 52 46V14C40 14 32 20 32 20Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 20V52" stroke="#d4af37" stroke-width="2.5"/><path d="M44 10L45.2 13.8L49 15L45.2 16.2L44 20L42.8 16.2L39 15L42.8 13.8L44 10Z" fill="#d4af37"/></svg>
-                    </div>
+                    <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 20C32 20 24 14 12 14V46C24 46 32 52 32 52C32 52 40 46 52 46V14C40 14 32 20 32 20Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 20V52" stroke="#d4af37" stroke-width="2.5"/><path d="M44 10L45.2 13.8L49 15L45.2 16.2L44 20L42.8 16.2L39 15L42.8 13.8L44 10Z" fill="#d4af37"/></svg></div>
                     <div class="square-title">Сира</div>
                 </div>
             </div>
 
             <div class="section-divider"></div>
 
-            <!-- Разбор книг -->
             <h2 class="section-title">Разбор исламских книг</h2>
-            <p class="section-subtitle">Изучай классические труды известных исламских учёных с подробными уроками и объяснениями.</p>
+            <p class="section-subtitle">Изучай классические труды с подробными уроками.</p>
 
             <h3 class="block-title" style="margin: 20px 0 15px; font-size: 18px;">Акыда и единобожие</h3>
             <div class="square-grid">
-                <div class="square-card" onclick="openBook(1)">
+                <div class="square-card" onclick="openContent('book', 1)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="20" stroke="#d4af37" stroke-width="2.5"/><circle cx="32" cy="32" r="6" fill="#d4af37"/></svg></div>
                     <div class="square-title">Китаб ат-Таухид</div>
                 </div>
-                <div class="square-card" onclick="openBook(2)">
+                <div class="square-card" onclick="openContent('book', 2)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 8L40 24H56L44 36L50 52L32 42L14 52L20 36L8 24H24L32 8Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/></svg></div>
                     <div class="square-title">Аль-Акыда аль-Васитыйя</div>
                 </div>
-                <div class="square-card" onclick="openBook(3)">
+                <div class="square-card" onclick="openContent('book', 3)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="8" fill="#d4af37"/><path d="M32 8V18M32 46V56M8 32H18M46 32H56M15 15L22 22M42 42L49 49M49 15L42 22M22 42L15 49" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/></svg></div>
                     <div class="square-title">Аль-Акыда ат-Тахавийя</div>
                 </div>
@@ -568,27 +289,27 @@
 
             <h3 class="block-title" style="margin: 20px 0 15px; font-size: 18px;">Фикх и поклонение</h3>
             <div class="square-grid">
-                <div class="square-card" onclick="openBook(4)">
+                <div class="square-card" onclick="openContent('book', 4)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M12 16C12 12 16 10 20 12C26 14 32 16 32 16C32 16 38 14 44 12C48 10 52 12 52 16V50C52 52 48 52 44 50C38 48 32 50 32 50C32 50 26 48 20 50C16 52 12 52 12 50V16Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 16V50" stroke="#d4af37" stroke-width="2.5"/></svg></div>
                     <div class="square-title">Важные уроки для всей уммы</div>
                 </div>
-                <div class="square-card" onclick="openBook(5)">
+                <div class="square-card" onclick="openContent('book', 5)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M16 8H40L48 16V56H16V8Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M40 8V16H48M22 28H42M22 36H42M22 44H34" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/></svg></div>
                     <div class="square-title">Умдат аль-Ахкам</div>
                 </div>
-                <div class="square-card" onclick="openBook(6)">
+                <div class="square-card" onclick="openContent('book', 6)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 52C32 52 12 40 12 26C12 19 17 14 24 14C27.5 14 32 17 32 17C32 17 36.5 14 40 14C47 14 52 19 52 26C52 40 32 52 32 52Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 24L33.5 28L38 29L34.5 32L35.5 36L32 34L28.5 36L29.5 32L26 29L30.5 28L32 24Z" fill="#d4af37"/></svg></div>
                     <div class="square-title">Рияд ас-Салихин</div>
                 </div>
-                <div class="square-card" onclick="openBook(7)">
+                <div class="square-card" onclick="openContent('book', 7)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="22" stroke="#d4af37" stroke-width="2.5"/><path d="M32 14V32L42 42" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/></svg></div>
                     <div class="square-title">Сорок хадисов</div>
                 </div>
-                <div class="square-card" onclick="openBook(8)">
+                <div class="square-card" onclick="openContent('book', 8)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 10C32 10 16 30 16 40C16 48.837 23.163 56 32 56C40.837 56 48 48.837 48 40C48 30 32 10 32 10Z" stroke="#d4af37" stroke-width="2.5"/></svg></div>
                     <div class="square-title">Булюг аль-Марам</div>
                 </div>
-                <div class="square-card" onclick="openBook(9)">
+                <div class="square-card" onclick="openContent('book', 9)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 52C32 52 12 40 12 26C12 19 17 14 24 14C27.5 14 32 17 32 17C32 17 36.5 14 40 14C47 14 52 19 52 26C52 40 32 52 32 52Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 24L33.5 28L38 29L34.5 32L35.5 36L32 34L28.5 36L29.5 32L26 29L30.5 28L32 24Z" fill="#d4af37"/></svg></div>
                     <div class="square-title">Аль-Адаб аль-Муфрад</div>
                 </div>
@@ -596,32 +317,32 @@
 
             <h3 class="block-title" style="margin: 20px 0 15px; font-size: 18px;">Сира — жизнеописание Пророка Мухаммада ﷺ</h3>
             <div class="square-grid">
-                <div class="square-card" onclick="openBook(10)">
+                <div class="square-card" onclick="openContent('book', 10)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 20C32 20 24 14 12 14V46C24 46 32 52 32 52C32 52 40 46 52 46V14C40 14 32 20 32 20Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 20V52" stroke="#d4af37" stroke-width="2.5"/><path d="M44 10L45.2 13.8L49 15L45.2 16.2L44 20L42.8 16.2L39 15L42.8 13.8L44 10Z" fill="#d4af37"/></svg></div>
                     <div class="square-title">Запечатанный нектар</div>
                 </div>
-                <div class="square-card" onclick="openBook(11)">
+                <div class="square-card" onclick="openContent('book', 11)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 20C32 20 24 14 12 14V46C24 46 32 52 32 52C32 52 40 46 52 46V14C40 14 32 20 32 20Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 20V52" stroke="#d4af37" stroke-width="2.5"/><path d="M44 10L45.2 13.8L49 15L45.2 16.2L44 20L42.8 16.2L39 15L42.8 13.8L44 10Z" fill="#d4af37"/></svg></div>
                     <div class="square-title">Жизнеописание Пророка</div>
                 </div>
-                <div class="square-card" onclick="openBook(12)">
+                <div class="square-card" onclick="openContent('book', 12)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 20C32 20 24 14 12 14V46C24 46 32 52 32 52C32 52 40 46 52 46V14C40 14 32 20 32 20Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 20V52" stroke="#d4af37" stroke-width="2.5"/><path d="M44 10L45.2 13.8L49 15L45.2 16.2L44 20L42.8 16.2L39 15L42.8 13.8L44 10Z" fill="#d4af37"/></svg></div>
                     <div class="square-title">Пророческая сира</div>
                 </div>
             </div>
         </section>
 
-        <!-- ===== СЕКЦИЯ 7: СТРАНИЦА РАЗДЕЛА (Акыда, Фикх, Сира) ===== -->
+        <!-- РАЗДЕЛ -->
         <section id="section-page" class="page-section">
             <div class="back-btn" onclick="showPage('knowledge-page')">
-                <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Назад к знаниям
+                <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Назад
             </div>
-            <h2 class="section-title" id="section-title">Название раздела</h2>
+            <h2 class="section-title" id="section-title">Раздел</h2>
             <p class="section-subtitle" id="section-desc">Описание</p>
             <div class="square-grid" id="section-topics"></div>
         </section>
 
-        <!-- ===== СЕКЦИЯ 8: СТРАНИЦА ТЕМЫ / КНИГИ ===== -->
+        <!-- КОНТЕНТ (Тема/Книга) -->
         <section id="content-page" class="page-section">
             <div class="back-btn" onclick="goBackFromContent()">
                 <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Назад
@@ -637,7 +358,7 @@
             </div>
         </section>
 
-        <!-- ===== СЕКЦИЯ 9: ЭКРАН УРОКА ===== -->
+        <!-- УРОК -->
         <section id="lesson-page" class="page-section">
             <div class="back-btn" id="lesson-back-btn" onclick="goBackFromLesson()">
                 <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
@@ -650,31 +371,52 @@
                 </div>
                 <div class="lesson-content" id="lesson-content"></div>
                 <div class="lesson-nav">
-                    <button class="nav-btn" id="prev-btn" onclick="changeLesson(-1)">← Предыдущий</button>
-                    <button class="nav-btn" id="next-btn" onclick="changeLesson(1)">Следующий →</button>
-                    <button class="nav-btn" id="complete-btn" onclick="completeCurrentLesson()" style="background: var(--gold); color: var(--bg-color);">Завершить урок</button>
+                    <button class="nav-btn" id="prev-btn" onclick="changeLesson(-1)">← Назад</button>
+                    <button class="nav-btn" id="next-btn" onclick="changeLesson(1)">Далее →</button>
+                    <button class="nav-btn btn-complete" id="complete-btn" onclick="completeCurrentLesson()">Завершить</button>
                 </div>
             </div>
         </section>
 
-        <!-- ===== СЕКЦИЯ 10: ПРОФИЛЬ ===== -->
+        <!-- ПРОФИЛЬ -->
         <section id="profile-page" class="page-section">
             <div class="back-btn" onclick="showPage('main-page')">
                 <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> На главную
             </div>
             <h2 class="section-title">Мой прогресс</h2>
-            <p class="section-subtitle">Твои достижения и история обучения.</p>
-            
             <div id="continue-block"></div>
             <div id="profile-content"></div>
         </section>
+        
+        <!-- СТАРЫЕ СЕКЦИИ (Семья, Рождение, Потеря) ОСТАВЛЕНЫ ДЛЯ СОВМЕСТИМОСТИ -->
+        <section id="islam-start-page" class="page-section">
+            <div class="back-btn" onclick="showPage('main-page')"><svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> На главную</div>
+            <h2 class="section-title">Начало в исламе</h2>
+            <p class="section-subtitle">Твой путь начинается с малого.</p>
+            <div id="old-islam-container"></div>
+        </section>
+        <section id="family-page" class="page-section">
+            <div class="back-btn" onclick="showPage('main-page')"><svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> На главную</div>
+            <h2 class="section-title">Семья и Никах</h2>
+            <div id="old-family-container"></div>
+        </section>
+        <section id="birth-page" class="page-section">
+            <div class="back-btn" onclick="showPage('main-page')"><svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> На главную</div>
+            <h2 class="section-title">Рождение ребёнка</h2>
+            <div id="old-birth-container"></div>
+        </section>
+        <section id="loss-page" class="page-section">
+            <div class="back-btn" onclick="showPage('main-page')"><svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> На главную</div>
+            <h2 class="section-title">Потеря близкого</h2>
+            <div id="old-loss-container"></div>
+        </section>
     </div>
 
-    <!-- Модальное окно PRO -->
+    <!-- Модалка PRO -->
     <div class="modal-overlay" id="pro-modal">
         <div class="modal-content">
             <h3>PRO Подписка</h3>
-            <p>Этот урок доступен только с PRO-подпиской. Откройте все уроки всех книг и получите полный доступ к знаниям.</p>
+            <p>Этот урок доступен только с PRO-подпиской. Откройте все уроки всех книг.</p>
             <button class="modal-btn" onclick="activatePro()">Активировать демо-PRO</button>
             <button class="modal-btn" style="background: transparent; color: #666; box-shadow: none;" onclick="closeProModal()">Закрыть</button>
         </div>
@@ -694,205 +436,192 @@
     </nav>
 
     <script>
-        // ===== БАЗА ДАННЫХ РАЗДЕЛОВ И ТЕМ =====
+        // ===== БАЗА ДАННЫХ =====
         const sectionsData = {
-            1: { title: "Акыда", desc: "Изучение вероубеждения. 7 тем.", topics: [
+            1: { title: "Акыда", desc: "Изучение вероубеждения.", topics: [
                 { id: 101, title: "Шахада", lessons: [
                     { id: 'a1_1', title: "Значение шахады", desc: "Смысл свидетельства веры.", isPro: false },
-                    { id: 'a1_2', title: "Условия шахады", desc: "Что требуется для действительности.", isPro: true },
-                    { id: 'a1_3', title: "Обязательства шахады", desc: "Как она влияет на жизнь.", isPro: true }
+                    { id: 'a1_2', title: "Условия шахады", desc: "Что требуется для действительности.", isPro: false },
+                    { id: 'a1_3', title: "Обязательства шахады", desc: "Как она влияет на жизнь.", isPro: false }
                 ]},
                 { id: 102, title: "Таухид", lessons: [
                     { id: 'a2_1', title: "Понятие таухида", desc: "Основы единобожия.", isPro: false },
-                    { id: 'a2_2', title: "Таухид ар-рубубия", desc: "Единственность в господстве.", isPro: true },
-                    { id: 'a2_3', title: "Таухид аль-улюхия", desc: "Единственность в поклонении.", isPro: true },
-                    { id: 'a2_4', title: "Таухид аль-асма ва-ссыфат", desc: "Имена и атрибуты Аллаха.", isPro: true },
-                    { id: 'a2_5', title: "Практическое значение", desc: "Как таухид меняет жизнь.", isPro: true }
+                    { id: 'a2_2', title: "Таухид ар-рубубия", desc: "Единственность в господстве.", isPro: false },
+                    { id: 'a2_3', title: "Таухид аль-улюхия", desc: "Единственность в поклонении.", isPro: false },
+                    { id: 'a2_4', title: "Таухид аль-асма ва-ссыфат", desc: "Имена и атрибуты Аллаха.", isPro: false },
+                    { id: 'a2_5', title: "Практическое значение", desc: "Как таухид меняет жизнь.", isPro: false }
                 ]},
                 { id: 103, title: "Шесть столпов имана", lessons: [
                     { id: 'a3_1', title: "Вера в Аллаха", desc: "Первый столп.", isPro: false },
-                    { id: 'a3_2', title: "Вера в ангелов", desc: "Их природа и роль.", isPro: true },
-                    { id: 'a3_3', title: "Вера в Писания", desc: "Священные книги.", isPro: true },
-                    { id: 'a3_4', title: "Вера в посланников", desc: "Миссия пророков.", isPro: true },
-                    { id: 'a3_5', title: "Вера в Последний день", desc: "Судный день.", isPro: true },
-                    { id: 'a3_6', title: "Вера в предопределение", desc: "Хорошее и плохое.", isPro: true }
+                    { id: 'a3_2', title: "Вера в ангелов", desc: "Их природа и роль.", isPro: false },
+                    { id: 'a3_3', title: "Вера в Писания", desc: "Священные книги.", isPro: false },
+                    { id: 'a3_4', title: "Вера в посланников", desc: "Миссия пророков.", isPro: false },
+                    { id: 'a3_5', title: "Вера в Последний день", desc: "Судный день.", isPro: false },
+                    { id: 'a3_6', title: "Вера в предопределение", desc: "Хорошее и плохое.", isPro: false }
                 ]},
                 { id: 104, title: "Имена и атрибуты Аллаха", lessons: [
                     { id: 'a4_1', title: "Значение имён Аллаха", desc: "Их красота и смысл.", isPro: false },
-                    { id: 'a4_2', title: "Правила веры в атрибуты", desc: "Как правильно понимать.", isPro: true },
-                    { id: 'a4_3', title: "Примеры имён", desc: "Ар-Рахман и другие.", isPro: true }
+                    { id: 'a4_2', title: "Правила веры в атрибуты", desc: "Как правильно понимать.", isPro: false },
+                    { id: 'a4_3', title: "Примеры имён", desc: "Ар-Рахман и другие.", isPro: false }
                 ]},
                 { id: 105, title: "Ислам, иман и ихсан", lessons: [
                     { id: 'a5_1', title: "Что такое Ислам?", desc: "Внешние действия.", isPro: false },
-                    { id: 'a5_2', title: "Что такое иман?", desc: "Внутренняя вера.", isPro: true },
-                    { id: 'a5_3', title: "Что такое ихсан?", desc: "Искренность.", isPro: true }
+                    { id: 'a5_2', title: "Что такое иман?", desc: "Внутренняя вера.", isPro: false },
+                    { id: 'a5_3', title: "Что такое ихсан?", desc: "Искренность.", isPro: false }
                 ]},
                 { id: 106, title: "Вера в предопределение", lessons: [
                     { id: 'a6_1', title: "Понятие аль-кадар", desc: "Основы веры.", isPro: false },
-                    { id: 'a6_2', title: "Четыре уровня", desc: "Степени предопределения.", isPro: true },
-                    { id: 'a6_3', title: "Ответственность человека", desc: "Свобода выбора.", isPro: true }
+                    { id: 'a6_2', title: "Четыре уровня", desc: "Степени предопределения.", isPro: false },
+                    { id: 'a6_3', title: "Ответственность человека", desc: "Свобода выбора.", isPro: false }
                 ]},
                 { id: 107, title: "Вера в Последний день", lessons: [
                     { id: 'a7_1', title: "Смерть и Барзах", desc: "Промежуточная жизнь.", isPro: false },
-                    { id: 'a7_2', title: "Воскрешение", desc: "Судный день.", isPro: true },
-                    { id: 'a7_3', title: "Рай и Ад", desc: "Итог жизни.", isPro: true }
+                    { id: 'a7_2', title: "Воскрешение", desc: "Судный день.", isPro: false },
+                    { id: 'a7_3', title: "Рай и Ад", desc: "Итог жизни.", isPro: false }
                 ]}
             ]},
-            2: { title: "Фикх", desc: "Изучение шариатского права. 8 тем.", topics: [
+            2: { title: "Фикх", desc: "Изучение шариатского права.", topics: [
                 { id: 201, title: "Омовение (тахара)", lessons: [
                     { id: 'f1_1', title: "Понятие очищения", desc: "Чистота в Исламе.", isPro: false },
-                    { id: 'f1_2', title: "Малое омовение", desc: "Правила вуду.", isPro: true },
-                    { id: 'f1_3', title: "Полное омовение", desc: "Гусль.", isPro: true },
-                    { id: 'f1_4', title: "Таяммум", desc: "Очищение песком.", isPro: true }
+                    { id: 'f1_2', title: "Малое омовение", desc: "Правила вуду.", isPro: false },
+                    { id: 'f1_3', title: "Полное омовение", desc: "Гусль.", isPro: false },
+                    { id: 'f1_4', title: "Таяммум", desc: "Очищение песком.", isPro: false }
                 ]},
                 { id: 202, title: "Намаз", lessons: [
                     { id: 'f2_1', title: "Значение намаза", desc: "Важность молитвы.", isPro: false },
-                    { id: 'f2_2', title: "Условия намаза", desc: "Что нужно до начала.", isPro: true },
-                    { id: 'f2_3', title: "Столпы намаза", desc: "Неотъемлемые части.", isPro: true },
-                    { id: 'f2_4', title: "Сунны намаза", desc: "Желательные действия.", isPro: true },
-                    { id: 'f2_5', title: "Порядок совершения", desc: "Пошаговая инструкция.", isPro: true },
-                    { id: 'f2_6', title: "Коллективный намаз", desc: "Джамаат.", isPro: true },
-                    { id: 'f2_7', title: "Джума-намаз", desc: "Пятничная молитва.", isPro: true }
+                    { id: 'f2_2', title: "Условия намаза", desc: "Что нужно до начала.", isPro: false },
+                    { id: 'f2_3', title: "Столпы намаза", desc: "Неотъемлемые части.", isPro: false },
+                    { id: 'f2_4', title: "Сунны намаза", desc: "Желательные действия.", isPro: false },
+                    { id: 'f2_5', title: "Порядок совершения", desc: "Пошаговая инструкция.", isPro: false },
+                    { id: 'f2_6', title: "Коллективный намаз", desc: "Джамаат.", isPro: false },
+                    { id: 'f2_7', title: "Джума-намаз", desc: "Пятничная молитва.", isPro: false }
                 ]},
                 { id: 203, title: "Закят", lessons: [
                     { id: 'f3_1', title: "Понятие закята", desc: "Третий столп.", isPro: false },
-                    { id: 'f3_2', title: "Условия обязательности", desc: "Когда он обязателен.", isPro: true },
-                    { id: 'f3_3', title: "Виды имущества", desc: "С чего платить.", isPro: true },
-                    { id: 'f3_4', title: "Расчёт", desc: "Как посчитать.", isPro: true }
+                    { id: 'f3_2', title: "Условия обязательности", desc: "Когда он обязателен.", isPro: false },
+                    { id: 'f3_3', title: "Виды имущества", desc: "С чего платить.", isPro: false },
+                    { id: 'f3_4', title: "Расчёт", desc: "Как посчитать.", isPro: false }
                 ]},
                 { id: 204, title: "Пост", lessons: [
                     { id: 'f4_1', title: "Понятие поста", desc: "Четвертый столп.", isPro: false },
-                    { id: 'f4_2', title: "Что нарушает пост", desc: "Основные запреты.", isPro: true },
-                    { id: 'f4_3', title: "Освобождение", desc: "Кому можно не поститься.", isPro: true }
+                    { id: 'f4_2', title: "Что нарушает пост", desc: "Основные запреты.", isPro: false },
+                    { id: 'f4_3', title: "Освобождение", desc: "Кому можно не поститься.", isPro: false }
                 ]},
                 { id: 205, title: "Хадж", lessons: [
                     { id: 'f5_1', title: "Понятие хаджа", desc: "Пятый столп.", isPro: false },
-                    { id: 'f5_2', title: "Столпы хаджа", desc: "Основа паломничества.", isPro: true },
-                    { id: 'f5_3', title: "Порядок", desc: "Ритуалы.", isPro: true }
+                    { id: 'f5_2', title: "Столпы хаджа", desc: "Основа паломничества.", isPro: false },
+                    { id: 'f5_3', title: "Порядок", desc: "Ритуалы.", isPro: false }
                 ]},
                 { id: 206, title: "Наследство (мирас)", lessons: [
                     { id: 'f6_1', title: "Основы", desc: "Исламское право.", isPro: false },
-                    { id: 'f6_2', title: "Доли наследства", desc: "Кому сколько.", isPro: true },
-                    { id: 'f6_3', title: "Правила распределения", desc: "Как делить.", isPro: true }
+                    { id: 'f6_2', title: "Доли наследства", desc: "Кому сколько.", isPro: false },
+                    { id: 'f6_3', title: "Правила распределения", desc: "Как делить.", isPro: false }
                 ]},
                 { id: 207, title: "Пять категорий поступков", lessons: [
                     { id: 'f7_1', title: "Ваджиб", desc: "Обязательное.", isPro: false },
-                    { id: 'f7_2', title: "Мандуб", desc: "Желательное.", isPro: true },
-                    { id: 'f7_3', title: "Мубах", desc: "Дозволенное.", isPro: true },
-                    { id: 'f7_4', title: "Макрух", desc: "Нежелательное.", isPro: true },
-                    { id: 'f7_5', title: "Харам", desc: "Запретное.", isPro: true }
+                    { id: 'f7_2', title: "Мандуб", desc: "Желательное.", isPro: false },
+                    { id: 'f7_3', title: "Мубах", desc: "Дозволенное.", isPro: false },
+                    { id: 'f7_4', title: "Макрух", desc: "Нежелательное.", isPro: false },
+                    { id: 'f7_5', title: "Харам", desc: "Запретное.", isPro: false }
                 ]},
                 { id: 208, title: "Общее понимание фикха", lessons: [
                     { id: 'f8_1', title: "Что такое фикх?", desc: "Введение.", isPro: false },
-                    { id: 'f8_2', title: "Источники", desc: "Коран и Сунна.", isPro: true },
-                    { id: 'f8_3', title: "Роль в жизни", desc: "Зачем его изучать.", isPro: true }
+                    { id: 'f8_2', title: "Источники", desc: "Коран и Сунна.", isPro: false },
+                    { id: 'f8_3', title: "Роль в жизни", desc: "Зачем его изучать.", isPro: false }
                 ]}
             ]},
-            3: { title: "Сира", desc: "Жизнеописание Пророка Мухаммада ﷺ. 7 тем.", topics: [
+            3: { title: "Сира", desc: "Жизнеописание Пророка Мухаммада ﷺ.", topics: [
                 { id: 301, title: "Что такое наука сира?", lessons: [
                     { id: 's1_1', title: "Определение", desc: "Что изучает сира.", isPro: false },
-                    { id: 's1_2', title: "Источники", desc: "Откуда мы берем знания.", isPro: true }
+                    { id: 's1_2', title: "Источники", desc: "Откуда мы берем знания.", isPro: false }
                 ]},
                 { id: 302, title: "Важность изучения сиры", lessons: [
                     { id: 's2_1', title: "Почему это важно?", desc: "Значение для верующего.", isPro: false },
-                    { id: 's2_2', title: "Влияние на практику", desc: "Как это меняет жизнь.", isPro: true }
+                    { id: 's2_2', title: "Влияние на практику", desc: "Как это меняет жизнь.", isPro: false }
                 ]},
                 { id: 303, title: "Сира — путь к любви", lessons: [
                     { id: 's3_1', title: "Любовь к Пророку ﷺ", desc: "Как её достичь.", isPro: false },
-                    { id: 's3_2', title: "Признаки любви", desc: "В следовании сунне.", isPro: true }
+                    { id: 's3_2', title: "Признаки любви", desc: "В следовании сунне.", isPro: false }
                 ]},
                 { id: 304, title: "Ключ к пониманию Корана", lessons: [
                     { id: 's4_1', title: "Понимание аятов", desc: "Контекст ниспослания.", isPro: false },
-                    { id: 's4_2', title: "Сунна и сира", desc: "Их взаимосвязь.", isPro: true }
+                    { id: 's4_2', title: "Сунна и сира", desc: "Их взаимосвязь.", isPro: false }
                 ]},
                 { id: 305, title: "Лучший пример для подражания", lessons: [
                     { id: 's5_1', title: "Идеальный образ", desc: "Черты Пророка ﷺ.", isPro: false },
-                    { id: 's5_2', title: "В быту и семье", desc: "Как он жил.", isPro: true }
+                    { id: 's5_2', title: "В быту и семье", desc: "Как он жил.", isPro: false }
                 ]},
                 { id: 306, title: "Укрепление имана", lessons: [
                     { id: 's6_1', title: "Уроки стойкости", desc: "Как он преодолевал трудности.", isPro: false },
-                    { id: 's6_2', title: "Упование на Аллаха", desc: "Таваккуль.", isPro: true }
+                    { id: 's6_2', title: "Упование на Аллаха", desc: "Таваккуль.", isPro: false }
                 ]},
                 { id: 307, title: "Нравственность Посланника", lessons: [
                     { id: 's7_1', title: "Ахляк Пророка ﷺ", desc: "Его характер.", isPro: false },
-                    { id: 's7_2', title: "Отношение к людям", desc: "Милосердие и справедливость.", isPro: true }
+                    { id: 's7_2', title: "Отношение к людям", desc: "Милосердие и справедливость.", isPro: false }
                 ]}
             ]}
         };
 
         const booksData = {
-            1: { title: "Китаб ат-Таухид", author: "Мухаммад ибн Абдуль-Ваххаб", desc: "Фундаментальный труд по единобожию.", benefits: "Поймешь суть таухида и научишься избегать ширка.", lessons: [
-                { id: '1_1', title: "Введение в книгу", desc: "О чем эта книга и почему она важна.", isPro: false },
-                { id: '1_2', title: "Глава о таухиде", desc: "Что такое таухид и его виды.", isPro: true },
-                { id: '1_3', title: "О страхе перед ширком", desc: "Почему важно остерегаться многобожия.", isPro: true }
+            1: { title: "Китаб ат-Таухид", author: "Мухаммад ибн Абдуль-Ваххаб", desc: "Фундаментальный труд по единобожию.", benefits: "Поймешь суть таухида.", lessons: [
+                { id: '1_1', title: "Введение в книгу", desc: "О чем эта книга.", isPro: false },
+                { id: '1_2', title: "Глава о таухиде", desc: "Что такое таухид.", isPro: true },
+                { id: '1_3', title: "О страхе перед ширком", desc: "Многобожие.", isPro: true }
             ]},
-            2: { title: "Аль-Акыда аль-Васитыйя", author: "Ибн Таймийя", desc: "Изложение основ веры.", benefits: "Систематизируешь знания об именах и атрибутах Аллаха.", lessons: [
-                { id: '2_1', title: "Введение", desc: "Краткий обзор послания.", isPro: false },
-                { id: '2_2', title: "Имена и атрибуты", desc: "Правила веры в имена и атрибуты.", isPro: true },
-                { id: '2_3', title: "Степени религии", desc: "Ислам, Иман, Ихсан.", isPro: true }
+            2: { title: "Аль-Акыда аль-Васитыйя", author: "Ибн Таймийя", desc: "Изложение основ веры.", benefits: "Знания об именах Аллаха.", lessons: [
+                { id: '2_1', title: "Введение", desc: "Краткий обзор.", isPro: false },
+                { id: '2_2', title: "Имена и атрибуты", desc: "Правила веры.", isPro: true }
             ]},
-            3: { title: "Аль-Акыда ат-Тахавийя", author: "Абу Джафар ат-Тахави", desc: "Классический текст акыды.", benefits: "Поймешь вероубеждение праведных предшественников.", lessons: [
-                { id: '3_1', title: "Введение в акыду", desc: "О важности следования сунне.", isPro: false },
-                { id: '3_2', title: "Единственность Аллаха", desc: "Нет ничего подобного Ему.", isPro: true },
-                { id: '3_3', title: "Вера в ангелов", desc: "Их природа и обязанности.", isPro: true }
+            3: { title: "Аль-Акыда ат-Тахавийя", author: "Абу Джафар ат-Тахави", desc: "Классический текст.", benefits: "Вероубеждение саляфов.", lessons: [
+                { id: '3_1', title: "Введение в акыду", desc: "Важность сунны.", isPro: false },
+                { id: '3_2', title: "Единственность Аллаха", desc: "Нет подобного Ему.", isPro: true }
             ]},
-            4: { title: "Важные уроки для всей уммы", author: "Абдуль-Азиз ибн Баз", desc: "Сборник уроков по фикху.", benefits: "Получишь базовые знания по поклонению.", lessons: [
+            4: { title: "Важные уроки для всей уммы", author: "Абдуль-Азиз ибн Баз", desc: "Сборник уроков.", benefits: "Базовые знания.", lessons: [
                 { id: '4_1', title: "Введение", desc: "О важности знания.", isPro: false },
-                { id: '4_2', title: "Очищение (Тахара)", desc: "Правила омовения.", isPro: true },
-                { id: '4_3', title: "Намаз", desc: "Важность и условия.", isPro: true }
+                { id: '4_2', title: "Очищение (Тахара)", desc: "Правила омовения.", isPro: true }
             ]},
-            5: { title: "Умдат аль-Ахкам", author: "Абдуль-Гани аль-Макдиси", desc: "Хадисы о правовых решениях.", benefits: "Изучишь фикх на основе хадисов.", lessons: [
-                { id: '5_1', title: "Книга очищения", desc: "Хадисы о воде и омовении.", isPro: false },
-                { id: '5_2', title: "Книга молитвы", desc: "Хадисы о намазе.", isPro: true },
-                { id: '5_3', title: "Книга поста", desc: "Хадисы о посте.", isPro: true }
+            5: { title: "Умдат аль-Ахкам", author: "Абдуль-Гани аль-Макдиси", desc: "Хадисы.", benefits: "Фикх на основе хадисов.", lessons: [
+                { id: '5_1', title: "Книга очищения", desc: "Хадисы о воде.", isPro: false },
+                { id: '5_2', title: "Книга молитвы", desc: "Хадисы о намазе.", isPro: true }
             ]},
-            6: { title: "Рияд ас-Салихин", author: "Имам ан-Навави", desc: "Сборник хадисов о нравственности.", benefits: "Воспитаешь в себе хороший нрав.", lessons: [
-                { id: '6_1', title: "Искренность", desc: "О важности намерения.", isPro: false },
-                { id: '6_2', title: "Покаяние", desc: "Как правильно каяться.", isPro: true },
-                { id: '6_3', title: "Терпение", desc: "Сабур в трудностях.", isPro: true }
+            6: { title: "Рияд ас-Салихин", author: "Имам ан-Навави", desc: "Хадисы о нравственности.", benefits: "Хороший нрав.", lessons: [
+                { id: '6_1', title: "Искренность", desc: "О намерении.", isPro: false },
+                { id: '6_2', title: "Покаяние", desc: "Как каяться.", isPro: true }
             ]},
-            7: { title: "Сорок хадисов", author: "Имам ан-Навави", desc: "40 основополагающих хадисов.", benefits: "Изучишь ядро религии.", lessons: [
-                { id: '7_1', title: "Хадис о делах", desc: "Дела оцениваются по намерениям.", isPro: false },
-                { id: '7_2', title: "Хадис о Джибриле", desc: "Ислам, Иман, Ихсан.", isPro: true },
-                { id: '7_3', title: "Хадис о столпах Ислама", desc: "Пять столпов.", isPro: true }
+            7: { title: "Сорок хадисов", author: "Имам ан-Навави", desc: "40 хадисов.", benefits: "Ядро религии.", lessons: [
+                { id: '7_1', title: "Хадис о делах", desc: "По намерениям.", isPro: false },
+                { id: '7_2', title: "Хадис о Джибриле", desc: "Ислам, Иман, Ихсан.", isPro: true }
             ]},
-            8: { title: "Булюг аль-Марам", author: "Ибн Хаджар аль-Аскаляни", desc: "Достижение цели в хадисах.", benefits: "Освоишь аргументацию в фикхе.", lessons: [
-                { id: '8_1', title: "Книга очищения", desc: "Очищение и его виды.", isPro: false },
-                { id: '8_2', title: "Книга намаза", desc: "Время молитв.", isPro: true },
-                { id: '8_3', title: "Книга закята", desc: "Кому и сколько давать.", isPro: true }
+            8: { title: "Булюг аль-Марам", author: "Ибн Хаджар", desc: "Достижение цели.", benefits: "Аргументация.", lessons: [
+                { id: '8_1', title: "Книга очищения", desc: "Виды очищения.", isPro: false },
+                { id: '8_2', title: "Книга намаза", desc: "Время молитв.", isPro: true }
             ]},
-            9: { title: "Аль-Адаб аль-Муфрад", author: "Имам аль-Бухари", desc: "Книга о благонравии.", benefits: "Улучшишь свой характер и поведение.", lessons: [
-                { id: '9_1', title: "О доброте", desc: "Важность мягкости.", isPro: false },
-                { id: '9_2', title: "О лжи", desc: "Вред лжи.", isPro: true },
-                { id: '9_3', title: "О родителях", desc: "Почтительность к родителям.", isPro: true }
+            9: { title: "Аль-Адаб аль-Муфрад", author: "Имам аль-Бухари", desc: "Благонравие.", benefits: "Характер.", lessons: [
+                { id: '9_1', title: "О доброте", desc: "Мягкость.", isPro: false },
+                { id: '9_2', title: "О лжи", desc: "Вред лжи.", isPro: true }
             ]},
-            10: { title: "Запечатанный нектар", author: "Сафиюррахман аль-Мубаракфури", desc: "Классическое жизнеописание Пророка ﷺ.", benefits: "Узнаешь жизнь Пророка ﷺ и возьмешь уроки.", lessons: [
-                { id: '10_1', title: "Аравия до Ислама", desc: "Описание мира до пророчества.", isPro: false },
-                { id: '10_2', title: "Рождение Пророка", desc: "Его детство и юность.", isPro: true },
-                { id: '10_3', title: "Начало миссии", desc: "Первое откровение.", isPro: true }
+            10: { title: "Запечатанный нектар", author: "Сафиюррахман", desc: "Жизнеописание.", benefits: "Уроки жизни.", lessons: [
+                { id: '10_1', title: "Аравия до Ислама", desc: "Мир до пророчества.", isPro: false },
+                { id: '10_2', title: "Рождение Пророка", desc: "Детство.", isPro: true }
             ]},
-            11: { title: "Жизнеописание Пророка", author: "Ибн Хишам", desc: "Один из самых ранних источников.", benefits: "Познакомишься с деталями жизни Пророка ﷺ.", lessons: [
-                { id: '11_1', title: "Предисловие", desc: "О достоверности.", isPro: false },
-                { id: '11_2', title: "Родословная", desc: "Род Пророка ﷺ.", isPro: true },
-                { id: '11_3', title: "Мекканский период", desc: "Первые годы миссии.", isPro: true }
+            11: { title: "Жизнеописание Пророка", author: "Ибн Хишам", desc: "Ранний источник.", benefits: "Детали жизни.", lessons: [
+                { id: '11_1', title: "Предисловие", desc: "Достоверность.", isPro: false },
+                { id: '11_2', title: "Родословная", desc: "Род Пророка.", isPro: true }
             ]},
-            12: { title: "Пророческая сира", author: "Ибн Касир", desc: "Сира от известного мухаддиса.", benefits: "Поймешь историю в свете Корана и Сунны.", lessons: [
-                { id: '12_1', title: "О книге", desc: "Особенности труда.", isPro: false },
-                { id: '12_2', title: "Благословенное рождение", desc: "Обстоятельства рождения.", isPro: true },
-                { id: '12_3', title: "Хиджра", desc: "Переселение в Медину.", isPro: true }
+            12: { title: "Пророческая сира", author: "Ибн Касир", desc: "Сира.", benefits: "История.", lessons: [
+                { id: '12_1', title: "О книге", desc: "Особенности.", isPro: false },
+                { id: '12_2', title: "Рождение", desc: "Обстоятельства.", isPro: true }
             ]}
         };
 
-        const lessonsData = {}; // Заглушка, так как уроки теперь внутри книг/тем
-
         // ===== ЛОГИКА ПРОГРЕССА И PRO =====
         function getProgress() {
-            let p = localStorage.getItem('amanah_progress_v2');
-            return p ? JSON.parse(p) : { books: {}, lastOpened: null };
+            let p = localStorage.getItem('amanah_progress_v3');
+            return p ? JSON.parse(p) : { books: {}, lastOpened: null, scrollPos: {} };
         }
 
         function saveProgress(data) {
-            localStorage.setItem('amanah_progress_v2', JSON.stringify(data));
+            localStorage.setItem('amanah_progress_v3', JSON.stringify(data));
         }
 
         function isPro() {
@@ -909,20 +638,9 @@
         function showProModal() { document.getElementById('pro-modal').classList.add('active'); }
         function closeProModal() { document.getElementById('pro-modal').classList.remove('active'); }
 
-        function markLessonDone(bookId, lessonId) {
-            let progress = getProgress();
-            if(!progress.books[bookId]) progress.books[bookId] = { done: [], last: null };
-            if(!progress.books[bookId].done.includes(lessonId)) {
-                progress.books[bookId].done.push(lessonId);
-            }
-            progress.books[bookId].last = lessonId;
-            saveProgress(progress);
-        }
-
         // ===== НАВИГАЦИЯ =====
-        let currentSectionId = null;
         let currentContentId = null; // { type: 'book' | 'topic', id: number }
-        let currentScrollPos = 0;
+        let currentLessonData = null;
 
         function showPage(pageId) {
             document.querySelectorAll('.page-section').forEach(page => page.classList.remove('active'));
@@ -1018,7 +736,6 @@
 
         function goBackFromContent() {
             if(currentContentId && currentContentId.type === 'topic') {
-                // Возврат к разделу
                 for (const [secId, sec] of Object.entries(sectionsData)) {
                     if(sec.topics.some(t => t.id === currentContentId.id)) {
                         openSection(secId);
@@ -1030,8 +747,6 @@
         }
 
         // ===== ЭКРАН УРОКА =====
-        let currentLessonData = null;
-
         function openLesson(type, parentId, lessonId) {
             const parent = type === 'book' ? booksData[parentId] : findTopic(parentId);
             if(!parent) return;
@@ -1043,20 +758,40 @@
 
             document.getElementById('lesson-title').innerText = lesson.title;
             document.getElementById('lesson-intro').innerText = lesson.desc;
-            document.getElementById('lesson-content').innerHTML = `<p>Здесь будет подробный текст урока. (Демо-контент)</p><p>Нажмите "Завершить урок" внизу, чтобы сохранить прогресс.</p>`;
             
-            // Восстанавливаем позицию скролла
+            // Подставляем контент
+            document.getElementById('lesson-content').innerHTML = `<p>Здесь будет подробный текст урока. (Демо-контент)</p><p>Нажмите "Завершить" внизу, чтобы сохранить прогресс.</p>`;
+            
             let progress = getProgress();
             let scrollKey = type + '_' + parentId + '_' + lessonId;
+            
             if(progress.scrollPos && progress.scrollPos[scrollKey]) {
                 setTimeout(() => window.scrollTo({ top: progress.scrollPos[scrollKey], behavior: 'smooth' }), 100);
+            } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
 
             // Настройка кнопок
             const order = parent.lessons;
             const idx = order.findIndex(l => l.id === lessonId);
-            document.getElementById('prev-btn').disabled = (idx <= 0);
-            document.getElementById('next-btn').disabled = (idx >= order.length - 1);
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+
+            prevBtn.disabled = (idx <= 0);
+            
+            // Проверка для кнопки Далее
+            if (idx >= order.length - 1) {
+                nextBtn.disabled = true;
+            } else {
+                const nextLesson = order[idx + 1];
+                if (nextLesson.isPro && !isPro()) {
+                    nextBtn.disabled = false; // Разрешаем нажать, чтобы показать модалку
+                    nextBtn.onclick = () => showProModal();
+                } else {
+                    nextBtn.disabled = false;
+                    nextBtn.onclick = () => changeLesson(1);
+                }
+            }
             
             // Сохраняем "последнее открытое"
             progress.lastOpened = { type, parentId, lessonId };
@@ -1078,7 +813,12 @@
             const newIdx = idx + dir;
             
             if(newIdx >= 0 && newIdx < parent.lessons.length) {
-                openLesson(currentLessonData.type, currentLessonData.parentId, parent.lessons[newIdx].id);
+                const nextLesson = parent.lessons[newIdx];
+                if (nextLesson.isPro && !isPro()) {
+                    showProModal();
+                } else {
+                    openLesson(currentLessonData.type, currentLessonData.parentId, nextLesson.id);
+                }
             }
         }
 
@@ -1108,7 +848,7 @@
             }
         });
 
-        // ===== ПРОФИЛЬ И ПРОДОЛЖЕНИЕ =====
+        // ===== ПРОФИЛЬ =====
         function renderProfile() {
             let progress = getProgress();
             let html = '';
@@ -1134,24 +874,38 @@
             document.getElementById('continue-block').innerHTML = continueBlock;
 
             // Общий прогресс
-            let totalLessons = 0;
-            let totalDone = 0;
-
-            const allItems = [
+            let allItems = [
                 ...Object.entries(booksData).map(([id, b]) => ({ key: 'book_'+id, title: b.title, lessons: b.lessons })),
                 ...Object.values(sectionsData).flatMap(s => s.topics.map(t => ({ key: 'topic_'+t.id, title: t.title, lessons: t.lessons })))
             ];
 
             allItems.forEach(item => {
-                const prog = progress.books[item.key] || { done: [] };
+                const prog = progress.books[item.key] || { done: [], last: null };
                 const done = prog.done.length;
-                totalLessons += item.lessons.length;
-                totalDone += done;
                 const percent = Math.round((done / item.lessons.length) * 100);
 
-                if (done > 0) {
+                if (done > 0 || prog.last) {
+                    // Если есть прогресс, делаем карточку кликабельной
+                    let clickAction = '';
+                    if (item.key.startsWith('book_')) {
+                        let bookId = item.key.split('_')[1];
+                        // Открываем последний урок, если есть, иначе книгу
+                        if(prog.last) {
+                            clickAction = `onclick="openLesson('book', ${bookId}, '${prog.last}')"`;
+                        } else {
+                            clickAction = `onclick="openContent('book', ${bookId})"`;
+                        }
+                    } else {
+                        let topicId = item.key.split('_')[1];
+                        if(prog.last) {
+                            clickAction = `onclick="openLesson('topic', ${topicId}, '${prog.last}')"`;
+                        } else {
+                            clickAction = `onclick="openContent('topic', ${topicId})"`;
+                        }
+                    }
+
                     html += `
-                        <div class="block-card" style="margin-bottom: 15px; padding: 15px;">
+                        <div class="block-card" style="margin-bottom: 15px; padding: 15px; cursor: pointer; transition: 0.2s;" ${clickAction} onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border-color)'">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                                 <h4 style="color: var(--text-dark); margin: 0;">${item.title}</h4>
                                 <span style="font-size: 13px; color: var(--text-muted-dark);">${done}/${item.lessons.length}</span>
@@ -1171,12 +925,9 @@
             document.getElementById('profile-content').innerHTML = html;
         }
 
-        // Перехватываем вызов showPage для обновления профиля
         const originalShowPage = showPage;
         showPage = function(pageId) {
-            if(pageId === 'profile-page') {
-                renderProfile();
-            }
+            if(pageId === 'profile-page') renderProfile();
             originalShowPage(pageId);
         };
 
