@@ -171,6 +171,39 @@
             word-break: break-word;
         }
 
+        /* ===== НОВЫЕ СТИЛИ ДЛЯ ЗНАНИЙ ===== */
+        .square-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .square-card { background: var(--inner-card-bg); border-radius: 16px; padding: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; cursor: pointer; transition: all 0.3s ease; border: 1px solid #e0e0e0; aspect-ratio: 1 / 1; }
+        .square-card:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(26, 51, 18, 0.15); border-color: var(--gold); }
+        .square-icon { width: 50px; height: 50px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; }
+        .square-icon svg { width: 100%; height: 100%; object-fit: contain; }
+        .square-title { font-size: 14px; font-weight: 600; color: var(--text-dark); line-height: 1.3; }
+        .section-divider { height: 2px; background: var(--border-color); margin: 30px 0; border-radius: 2px; }
+        
+        /* Прогресс бар */
+        .progress-container { background: #e0e0e0; border-radius: 10px; height: 10px; overflow: hidden; margin-top: 10px; }
+        .progress-bar { background: var(--gold); height: 100%; width: 0%; transition: width 0.3s ease; }
+        
+        /* Карточки уроков (на странице книги) */
+        .lesson-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #fff; border-radius: 12px; border: 1px solid #eee; margin-bottom: 10px; transition: 0.2s; }
+        .lesson-item:hover { border-color: var(--gold); background: #faf8f1; }
+        .lesson-item-info h4 { margin: 0 0 5px 0; font-size: 16px; color: var(--text-dark); }
+        .lesson-item-info p { margin: 0; font-size: 13px; color: #666; }
+        .lesson-badge { font-size: 11px; padding: 4px 8px; border-radius: 6px; font-weight: bold; display: inline-block; margin-top: 5px; }
+        .badge-free { background: #d4edda; color: #155724; }
+        .badge-pro { background: #fff3cd; color: #856404; }
+        .lesson-status { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: #f4f1e6; }
+        .lesson-status.done { background: var(--gold); color: #fff; }
+        
+        /* Модальное окно PRO */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; padding: 20px; }
+        .modal-overlay.active { display: flex; }
+        .modal-content { background: var(--card-bg); padding: 30px; border-radius: 16px; max-width: 400px; width: 100%; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 2px solid var(--gold); }
+        .modal-content h3 { color: var(--text-dark); margin-bottom: 15px; font-size: 24px; }
+        .modal-content p { color: var(--text-muted-dark); margin-bottom: 20px; font-size: 15px; line-height: 1.5; }
+        .modal-btn { background: var(--bg-color); color: var(--gold); border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%; margin-bottom: 10px; transition: 0.3s; }
+        .modal-btn:hover { background: #2a4d20; }
+
         @media (max-width: 768px) {
             body { padding-bottom: 100px; }
             .header { margin-bottom: 30px; }
@@ -195,12 +228,18 @@
             .nav-item.active { color: var(--bg-color); }
             .nav-item svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; }
 
-            /* Мобильная адаптация: скрываем номер колонки, уменьшаем текст и паддинги */
+            /* Мобильная адаптация таблицы */
             .prayer-table { font-size: 11px; table-layout: auto; }
             .prayer-table th, .prayer-table td { padding: 6px 4px; }
             .prayer-table th:first-child,
             .prayer-table td:first-child { display: none; }
             .prayer-table td.ar { font-size: 14px; padding-left: 0; }
+
+            /* Мобильная адаптация квадратных карточек */
+            .square-grid { grid-template-columns: repeat(2, 1fr); }
+            .square-card { aspect-ratio: auto; padding: 20px 10px; }
+            .lesson-item { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .lesson-status { align-self: flex-end; }
         }
     </style>
 </head>
@@ -450,7 +489,131 @@
             </div>
         </section>
 
-        <!-- СЕКЦИЯ 6: ЭКРАН УРОКА -->
+        <!-- ===== СЕКЦИЯ 6: ЗНАНИЯ (КАТАЛОГ) ===== -->
+        <section id="knowledge-page" class="page-section">
+            <div class="back-btn" onclick="showPage('main-page')">
+                <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> На главную
+            </div>
+
+            <h2 class="section-title">Знания</h2>
+            <p class="section-subtitle">Изучай основы религии и классические труды ученых постепенно.</p>
+
+            <!-- 3 Основных раздела -->
+            <div class="square-grid">
+                <div class="square-card" onclick="alert('Раздел Акыда в разработке. Секция будет добавлена на следующем этапе.')">
+                    <div class="square-icon">
+                        <svg viewBox="0 0 64 64" fill="none"><path d="M32 56C32 56 8 42 8 24C8 15.163 15.163 8 24 8C28.418 8 32 10.5 32 10.5C32 10.5 35.582 8 40 8C48.837 8 56 15.163 56 24C56 42 32 56 32 56Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M38 22C34.686 22 32 24.686 32 28C32 31.314 34.686 34 38 34C38.8 34 39.5 33.8 40.2 33.5C38.9 35.6 36.6 37 34 37C29.6 37 26 33.4 26 29C26 24.6 29.6 21 34 21C35.6 21 37.1 21.4 38.4 22.2C38.2 22.1 38.1 22 38 22Z" fill="#d4af37"/></svg>
+                    </div>
+                    <div class="square-title">Акыда</div>
+                </div>
+                <div class="square-card" onclick="alert('Раздел Фикх в разработке. Секция будет добавлена на следующем этапе.')">
+                    <div class="square-icon">
+                        <svg viewBox="0 0 64 64" fill="none"><path d="M32 8V52" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/><path d="M12 18H52" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/><path d="M12 18L6 32C6 35.314 8.686 38 12 38C15.314 38 18 35.314 18 32L12 18Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M52 18L46 32C46 35.314 48.686 38 52 38C55.314 38 58 35.314 58 32L52 18Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M22 52H42" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="square-title">Фикх</div>
+                </div>
+                <div class="square-card" onclick="alert('Раздел Сира в разработке. Секция будет добавлена на следующем этапе.')">
+                    <div class="square-icon">
+                        <svg viewBox="0 0 64 64" fill="none"><path d="M32 20C32 20 24 14 12 14V46C24 46 32 52 32 52C32 52 40 46 52 46V14C40 14 32 20 32 20Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 20V52" stroke="#d4af37" stroke-width="2.5"/><path d="M44 10L45.2 13.8L49 15L45.2 16.2L44 20L42.8 16.2L39 15L42.8 13.8L44 10Z" fill="#d4af37"/></svg>
+                    </div>
+                    <div class="square-title">Сира</div>
+                </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- Разбор книг -->
+            <h2 class="section-title">Разбор исламских книг</h2>
+            <p class="section-subtitle">Изучай классические труды известных исламских учёных с подробными уроками и объяснениями.</p>
+
+            <h3 class="block-title" style="margin: 20px 0 15px; font-size: 18px;">Акыда и единобожие</h3>
+            <div class="square-grid">
+                <div class="square-card" onclick="openBook(1)">
+                    <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="20" stroke="#d4af37" stroke-width="2.5"/><circle cx="32" cy="32" r="6" fill="#d4af37"/></svg></div>
+                    <div class="square-title">Китаб ат-Таухид</div>
+                </div>
+                <div class="square-card" onclick="openBook(2)">
+                    <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 8L40 24H56L44 36L50 52L32 42L14 52L20 36L8 24H24L32 8Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/></svg></div>
+                    <div class="square-title">Аль-Акыда аль-Васитыйя</div>
+                </div>
+                <div class="square-card" onclick="openBook(3)">
+                    <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="8" fill="#d4af37"/><path d="M32 8V18M32 46V56M8 32H18M46 32H56M15 15L22 22M42 42L49 49M49 15L42 22M22 42L15 49" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+                    <div class="square-title">Аль-Акыда ат-Тахавийя</div>
+                </div>
+            </div>
+
+            <h3 class="block-title" style="margin: 20px 0 15px; font-size: 18px;">Фикх и поклонение</h3>
+            <div class="square-grid">
+                <div class="square-card" onclick="openBook(4)">
+                    <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M12 16C12 12 16 10 20 12C26 14 32 16 32 16C32 16 38 14 44 12C48 10 52 12 52 16V50C52 52 48 52 44 50C38 48 32 50 32 50C32 50 26 48 20 50C16 52 12 52 12 50V16Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 16V50" stroke="#d4af37" stroke-width="2.5"/></svg></div>
+                    <div class="square-title">Важные уроки для всей уммы</div>
+                </div>
+                <div class="square-card" onclick="openBook(5)">
+                    <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M16 8H40L48 16V56H16V8Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M40 8V16H48M22 28H42M22 36H42M22 44H34" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+                    <div class="square-title">Умдат аль-Ахкам</div>
+                </div>
+                <div class="square-card" onclick="openBook(6)">
+                    <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 52C32 52 12 40 12 26C12 19 17 14 24 14C27.5 14 32 17 32 17C32 17 36.5 14 40 14C47 14 52 19 52 26C52 40 32 52 32 52Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 24L33.5 28L38 29L34.5 32L35.5 36L32 34L28.5 36L29.5 32L26 29L30.5 28L32 24Z" fill="#d4af37"/></svg></div>
+                    <div class="square-title">Рияд ас-Салихин</div>
+                </div>
+                <div class="square-card" onclick="openBook(7)">
+                    <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="22" stroke="#d4af37" stroke-width="2.5"/><path d="M32 14V32L42 42" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+                    <div class="square-title">Сорок хадисов</div>
+                </div>
+                <div class="square-card" onclick="openBook(8)">
+                    <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 10C32 10 16 30 16 40C16 48.837 23.163 56 32 56C40.837 56 48 48.837 48 40C48 30 32 10 32 10Z" stroke="#d4af37" stroke-width="2.5"/></svg></div>
+                    <div class="square-title">Булюг аль-Марам</div>
+                </div>
+                <div class="square-card" onclick="openBook(9)">
+                    <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 52C32 52 12 40 12 26C12 19 17 14 24 14C27.5 14 32 17 32 17C32 17 36.5 14 40 14C47 14 52 19 52 26C52 40 32 52 32 52Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 24L33.5 28L38 29L34.5 32L35.5 36L32 34L28.5 36L29.5 32L26 29L30.5 28L32 24Z" fill="#d4af37"/></svg></div>
+                    <div class="square-title">Аль-Адаб аль-Муфрад</div>
+                </div>
+            </div>
+
+            <h3 class="block-title" style="margin: 20px 0 15px; font-size: 18px;">Сира — жизнеописание Пророка Мухаммада ﷺ</h3>
+            <div class="square-grid">
+                <div class="square-card" onclick="openBook(10)">
+                    <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 20C32 20 24 14 12 14V46C24 46 32 52 32 52C32 52 40 46 52 46V14C40 14 32 20 32 20Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 20V52" stroke="#d4af37" stroke-width="2.5"/><path d="M44 10L45.2 13.8L49 15L45.2 16.2L44 20L42.8 16.2L39 15L42.8 13.8L44 10Z" fill="#d4af37"/></svg></div>
+                    <div class="square-title">Запечатанный нектар</div>
+                </div>
+                <div class="square-card" onclick="openBook(11)">
+                    <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 20C32 20 24 14 12 14V46C24 46 32 52 32 52C32 52 40 46 52 46V14C40 14 32 20 32 20Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 20V52" stroke="#d4af37" stroke-width="2.5"/><path d="M44 10L45.2 13.8L49 15L45.2 16.2L44 20L42.8 16.2L39 15L42.8 13.8L44 10Z" fill="#d4af37"/></svg></div>
+                    <div class="square-title">Жизнеописание Пророка</div>
+                </div>
+                <div class="square-card" onclick="openBook(12)">
+                    <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 20C32 20 24 14 12 14V46C24 46 32 52 32 52C32 52 40 46 52 46V14C40 14 32 20 32 20Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 20V52" stroke="#d4af37" stroke-width="2.5"/><path d="M44 10L45.2 13.8L49 15L45.2 16.2L44 20L42.8 16.2L39 15L42.8 13.8L44 10Z" fill="#d4af37"/></svg></div>
+                    <div class="square-title">Пророческая сира</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== СЕКЦИЯ 7: СТРАНИЦА КНИГИ ===== -->
+        <section id="book-page" class="page-section">
+            <div class="back-btn" onclick="showPage('knowledge-page')">
+                <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Назад к знаниям
+            </div>
+            <div class="lesson-screen">
+                <div class="lesson-header">
+                    <h2 id="book-title">Название книги</h2>
+                    <p class="intro" id="book-author">Автор</p>
+                </div>
+                <div class="lesson-content" id="book-content"></div>
+                <h3 class="block-title" style="margin-top: 30px;">Программа обучения</h3>
+                <div id="book-lessons-list"></div>
+            </div>
+        </section>
+
+        <!-- ===== СЕКЦИЯ 8: ПРОФИЛЬ ===== -->
+        <section id="profile-page" class="page-section">
+            <div class="back-btn" onclick="showPage('main-page')">
+                <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> На главную
+            </div>
+            <h2 class="section-title">Мой профиль</h2>
+            <p class="section-subtitle">Твой прогресс и история обучения.</p>
+            <div id="profile-content"></div>
+        </section>
+
+        <!-- СЕКЦИЯ 9: ЭКРАН УРОКА -->
         <section id="lesson-page" class="page-section">
             <div class="back-btn" id="lesson-back-btn" onclick="goBackFromLesson()">
                 <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
@@ -470,25 +633,96 @@
         </section>
     </div>
 
+    <!-- Модальное окно PRO -->
+    <div class="modal-overlay" id="pro-modal">
+        <div class="modal-content">
+            <h3>PRO Подписка</h3>
+            <p>Этот урок доступен только с PRO-подпиской. Откройте все уроки всех книг и получите полный доступ к знаниям.</p>
+            <button class="modal-btn" onclick="activatePro()">Активировать демо-PRO</button>
+            <button class="modal-btn" style="background: transparent; color: #666; box-shadow: none;" onclick="closeProModal()">Закрыть</button>
+        </div>
+    </div>
+
     <div class="mosque-footer"></div>
 
     <nav class="bottom-nav">
         <a href="#" class="nav-item active" onclick="showPage('main-page'); return false;">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Главная</span>
         </a>
-        <a href="#" class="nav-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Каталог</span></a>
+        <a href="#" class="nav-item" onclick="showPage('knowledge-page'); return false;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Знания</span>
+        </a>
         <a href="#" class="nav-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg><span>Дуа</span></a>
-        <a href="#" class="nav-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Профиль</span></a>
+        <a href="#" class="nav-item" onclick="showPage('profile-page'); return false;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Профиль</span></a>
     </nav>
 
     <script>
-        // ===== БАЗА УРОКОВ =====
-        // 1–13  — Начало в исламе
-        // 14–40 — Семья и никах
-        // 41–53 — Рождение ребёнка
-        // 54–57 — Потеря близкого человека
+        // ===== БАЗА ДАННЫХ КНИГ =====
+        const booksData = {
+            1: { title: "Китаб ат-Таухид", author: "Мухаммад ибн Абдуль-Ваххаб", desc: "Фундаментальный труд по единобожию.", benefits: "Поймешь суть таухида и научишься избегать ширка.", lessons: [
+                { id: '1_1', title: "Введение в книгу", desc: "О чем эта книга и почему она важна.", isPro: false },
+                { id: '1_2', title: "Глава о таухиде", desc: "Что такое таухид и его виды.", isPro: true },
+                { id: '1_3', title: "О страхе перед ширком", desc: "Почему важно остерегаться многобожия.", isPro: true }
+            ]},
+            2: { title: "Аль-Акыда аль-Васитыйя", author: "Ибн Таймийя", desc: "Изложение основ веры.", benefits: "Систематизируешь знания об именах и атрибутах Аллаха.", lessons: [
+                { id: '2_1', title: "Введение", desc: "Краткий обзор послания.", isPro: false },
+                { id: '2_2', title: "Имена и атрибуты", desc: "Правила веры в имена и атрибуты.", isPro: true },
+                { id: '2_3', title: "Степени религии", desc: "Ислам, Иман, Ихсан.", isPro: true }
+            ]},
+            3: { title: "Аль-Акыда ат-Тахавийя", author: "Абу Джафар ат-Тахави", desc: "Классический текст акыды.", benefits: "Поймешь вероубеждение праведных предшественников.", lessons: [
+                { id: '3_1', title: "Введение в акыду", desc: "О важности следования сунне.", isPro: false },
+                { id: '3_2', title: "Единственность Аллаха", desc: "Нет ничего подобного Ему.", isPro: true },
+                { id: '3_3', title: "Вера в ангелов", desc: "Их природа и обязанности.", isPro: true }
+            ]},
+            4: { title: "Важные уроки для всей уммы", author: "Абдуль-Азиз ибн Баз", desc: "Сборник уроков по фикху.", benefits: "Получишь базовые знания по поклонению.", lessons: [
+                { id: '4_1', title: "Введение", desc: "О важности знания.", isPro: false },
+                { id: '4_2', title: "Очищение (Тахара)", desc: "Правила омовения.", isPro: true },
+                { id: '4_3', title: "Намаз", desc: "Важность и условия.", isPro: true }
+            ]},
+            5: { title: "Умдат аль-Ахкам", author: "Абдуль-Гани аль-Макдиси", desc: "Хадисы о правовых решениях.", benefits: "Изучишь фикх на основе хадисов.", lessons: [
+                { id: '5_1', title: "Книга очищения", desc: "Хадисы о воде и омовении.", isPro: false },
+                { id: '5_2', title: "Книга молитвы", desc: "Хадисы о намазе.", isPro: true },
+                { id: '5_3', title: "Книга поста", desc: "Хадисы о посте.", isPro: true }
+            ]},
+            6: { title: "Рияд ас-Салихин", author: "Имам ан-Навави", desc: "Сборник хадисов о нравственности.", benefits: "Воспитаешь в себе хороший нрав.", lessons: [
+                { id: '6_1', title: "Искренность", desc: "О важности намерения.", isPro: false },
+                { id: '6_2', title: "Покаяние", desc: "Как правильно каяться.", isPro: true },
+                { id: '6_3', title: "Терпение", desc: "Сабур в трудностях.", isPro: true }
+            ]},
+            7: { title: "Сорок хадисов", author: "Имам ан-Навави", desc: "40 основополагающих хадисов.", benefits: "Изучишь ядро религии.", lessons: [
+                { id: '7_1', title: "Хадис о делах", desc: "Дела оцениваются по намерениям.", isPro: false },
+                { id: '7_2', title: "Хадис о Джибриле", desc: "Ислам, Иман, Ихсан.", isPro: true },
+                { id: '7_3', title: "Хадис о столпах Ислама", desc: "Пять столпов.", isPro: true }
+            ]},
+            8: { title: "Булюг аль-Марам", author: "Ибн Хаджар аль-Аскаляни", desc: "Достижение цели в хадисах.", benefits: "Освоишь аргументацию в фикхе.", lessons: [
+                { id: '8_1', title: "Книга очищения", desc: "Очищение и его виды.", isPro: false },
+                { id: '8_2', title: "Книга намаза", desc: "Время молитв.", isPro: true },
+                { id: '8_3', title: "Книга закята", desc: "Кому и сколько давать.", isPro: true }
+            ]},
+            9: { title: "Аль-Адаб аль-Муфрад", author: "Имам аль-Бухари", desc: "Книга о благонравии.", benefits: "Улучшишь свой характер и поведение.", lessons: [
+                { id: '9_1', title: "О доброте", desc: "Важность мягкости.", isPro: false },
+                { id: '9_2', title: "О лжи", desc: "Вред лжи.", isPro: true },
+                { id: '9_3', title: "О родителях", desc: "Почтительность к родителям.", isPro: true }
+            ]},
+            10: { title: "Запечатанный нектар", author: "Сафиюррахман аль-Мубаракфури", desc: "Классическое жизнеописание Пророка ﷺ.", benefits: "Узнаешь жизнь Пророка ﷺ и возьмешь уроки.", lessons: [
+                { id: '10_1', title: "Аравия до Ислама", desc: "Описание мира до пророчества.", isPro: false },
+                { id: '10_2', title: "Рождение Пророка", desc: "Его детство и юность.", isPro: true },
+                { id: '10_3', title: "Начало миссии", desc: "Первое откровение.", isPro: true }
+            ]},
+            11: { title: "Жизнеописание Пророка", author: "Ибн Хишам", desc: "Один из самых ранних источников.", benefits: "Познакомишься с деталями жизни Пророка ﷺ.", lessons: [
+                { id: '11_1', title: "Предисловие", desc: "О достоверности.", isPro: false },
+                { id: '11_2', title: "Родословная", desc: "Род Пророка ﷺ.", isPro: true },
+                { id: '11_3', title: "Мекканский период", desc: "Первые годы миссии.", isPro: true }
+            ]},
+            12: { title: "Пророческая сира", author: "Ибн Касир", desc: "Сира от известного мухаддиса.", benefits: "Поймешь историю в свете Корана и Сунны.", lessons: [
+                { id: '12_1', title: "О книге", desc: "Особенности труда.", isPro: false },
+                { id: '12_2', title: "Благословенное рождение", desc: "Обстоятельства рождения.", isPro: true },
+                { id: '12_3', title: "Хиджра", desc: "Переселение в Медину.", isPro: true }
+            ]}
+        };
+
+        // ===== БАЗА УРОКОВ (старая, оставляем) =====
         const lessonsData = {
-            // --- НАЧАЛО В ИСЛАМЕ (1-13) ---
             1: { title: "1. Что такое Ислам?", intro: "Самое первое знакомство с религией.", content: `<p><strong>Кто такой мусульманин?</strong><br>Мусульманин — это человек, который принял Ислам и старается жить по его законам. Это не национальность, а состояние души и выбор пути.</p><p><strong>Что означает слово «Ислам»?</strong><br>С арабского языка «Ислам» переводится как «покорность», «смирение». В религиозном смысле это полная покорность воле Единого Бога — Аллаха.</p><p><strong>В чём суть религии?</strong><br>Суть Ислама в том, чтобы верить в Единого Бога и жить по тем законам, которые Он передал через Своих пророков, чтобы обрести покой в этой жизни и успех в Вечности.</p><div class="word-of-day"><h4>Слово дня: Ислам (إسلام)</h4><p><strong>Перевод:</strong> Покорность, мир.</p><p><strong>Значение:</strong> Добровольное следование наставлениям Творца.</p></div>` },
             2: { title: "2. Символ веры (Шахада)", intro: "Ключ к двери Ислама.", content: `<p><strong>Что такое шахада?</strong><br>Шахада — это свидетельство веры. Это главный и самый важный столп Ислама. Произнеся шахаду с искренним намерением, человек становится мусульманином.</p><p><strong>Арабский текст:</strong></p><div class="arabic-text">أَشْهَدُ أَنْ لَا إِلَٰهَ إِلَّا اللهُ، وَأَشْهَدُ أَنَّ مُحَمَّدًا عَبْدُهُ وَرَسُولُهُ</div><p><strong>Транскрипция:</strong></p><div class="transliteration">«Ашхаду алля иляха илля Ллах, ва ашхаду анна Мухаммадан ‘абдуху ва расулюху»</div><p><strong>Перевод:</strong></p><div class="translation">«Свидетельствую, что нет божества, кроме Аллаха, и свидетельствую, что Мухаммад — Его раб и Его посланник».</div><p><strong>Объяснение смысла:</strong><br>1. Мы признаем, что только Аллах достоин поклонения.<br>2. Мы признаем, что Мухаммад ﷺ — последний пророк, и следуем его примеру.</p><div class="word-of-day"><h4>Слово дня: Шахада (شهادة)</h4><p><strong>Перевод:</strong> Свидетельство.</p></div>` },
             3: { title: "3. Столпы Ислама", intro: "Пять основ, на которых держится религия.", content: `<p>Ислам зиждется на пяти столпах. Это фундамент жизни мусульманина:</p><p><strong>1. Шахада</strong> — Свидетельство веры (что нет бога кроме Аллаха и Мухаммад его пророк).</p><p><strong>2. Намаз</strong> — Ежедневная пятикратная молитва.</p><p><strong>3. Закят</strong> — Ежегодный налог в пользу нуждающихся (для тех, у кого есть достаток).</p><p><strong>4. Пост</strong> — Соблюдение поста в священный месяц Рамадан.</p><p><strong>5. Хадж</strong> — Паломничество в Мекку, которое хотя бы раз в жизни должен совершить каждый мусульманин, если у него есть физическая и финансовая возможность.</p><div class="word-of-day"><h4>Слово дня: Аркан (أركان)</h4><p><strong>Перевод:</strong> Столпы, основы.</p></div>` },
@@ -502,8 +736,6 @@
             11: { title: "11. Как общаться с немусульманами?", intro: "Мусульманин — пример доброго нрава.", content: `<p>Ислам призывает к уважению всех людей и справедливости по отношению к ним, независимо от их веры.</p><p><strong>Как рассказать близким о принятии Ислама?</strong><br>Лучше всего — своим поведением. Будьте вежливы, терпеливы и искренни. Если решите рассказать словами, делайте это мягко, без давления, показывая красоту религии. Пусть ваши родители увидят, что вы стали лучше.</p><p><strong>Как сохранить отношения с родителями и друзьями?</strong><br>Сохраняйте родственные связи, помогайте им, уважайте их. Если они против чего-то в вашей религии, проявляйте мудрость и не отвечайте агрессией.</p><p><strong>Уважение к старшим:</strong> В Исламе уважение к старшим — это огромная добродетель, и это касается всех людей, независимо от их религиозных взглядов.</p><div class="word-of-day"><h4>Слово дня: Ахляк (أخلاق)</h4><p><strong>Перевод:</strong> Нравственность, характер.</p></div>` },
             12: { title: "12. Частые вопросы новичков", intro: "Ответы на то, что часто мешает сделать первый шаг.", content: `<p><strong>Нужно ли знать арабский язык?</strong><br>Нет, для того чтобы быть мусульманином, не обязательно быть арабом или знать язык в совершенстве. Важно понимать смысл того, что вы читаете в намазе. Коран переведен на все языки мира для понимания.</p><p><strong>Что делать, если пропустил молитву?</strong><br>Если вы пропустили молитву по забывчивости или из-за сна, совершите её, как только вспомните. Намеренно пропускать нельзя, но если это случилось — просто вернитесь к молитве.</p><p><strong>Как впервые прийти в мечеть?</strong><br>Снимите обувь на входе. Оденьтесь скромно (мужчинам следует прикрыть тело, женщинам — одежда должна быть свободной и покрывать всё тело, кроме лица и кистей рук, а также волосы). В мечети есть отдельные зоны для мужчин и женщин. Вы можете просто сесть в уголке и понаблюдать, или обратиться к имаму с вопросами.</p><div class="word-of-day"><h4>Слово дня: Масджид (مسجد)</h4><p><strong>Перевод:</strong> Мечеть, место земных поклонов.</p></div>` },
             13: { title: "13. Дуа для начинающих", intro: "Простые слова для общения с Богом.", content: `<p>Дуа — это личная молитва, просьба. Вы можете обращаться к Аллаху на любом языке в любое время.</p><p><strong>1. Дуа перед едой:</strong><br><span class="arabic-text">بِسْمِ اللَّهِ</span><br>Бисмиллях. <em>Перевод: С именем Аллаха.</em></p><p><strong>2. Дуа после еды:</strong><br><span class="arabic-text">الْحَمْدُ لِلَّهِ</span><br>Альхамдулиллях. <em>Перевод: Вся хвала Аллаху.</em></p><p><strong>3. Дуа при входе в дом:</strong><br><span class="arabic-text">بِسْمِ اللَّهِ وَلَجْنَا، وَبِسْمِ اللَّهِ خَرَجْنَا</span><br>Бисмилляхи валяжна, ва бисмилляхи харажна. <em>Перевод: С именем Аллаха мы вошли, и с именем Аллаха мы вышли.</em></p><div class="word-of-day"><h4>Слово дня: Дуа (دعاء)</h4><p><strong>Перевод:</strong> Зов, мольба.</p></div>` },
-
-            // --- СЕМЬЯ И НИКАХ (14-40) ---
             14: { title: "1. Главный критерий выбора — религия и нравственность", intro: "Не смотри только на «обёртку».", content: `<p>Когда мы ищем спутника жизни, наш взгляд часто цепляется за внешнее: красивая улыбка, дорогая машина, высокий статус. Это нормально. Но Ислам предлагает посмотреть глубже.</p><p>Представь, что ты выбираешь дом. Ты можешь выбрать красивый фасад, но если у него гнилой фундамент, дом рухнет при первом шторме. Так и в браке: внешность и богатство — это фасад, а религия и характер (иман и ахляк) — это фундамент.</p><div class="hadith-block"><p>«За женщину выходят замуж по четырём причинам: за её богатство, за её знатное происхождение, за её красоту и за её религию. Выбирай же ту, которая придерживается религии, иначе твои руки покроются пылью».</p><div class="source">Источник: Сахих аль-Бухари 5090, Сахих Муслим 1466 — достоверный.</div></div><p>«Покроются пылью» — это образное выражение, означающее «потерпишь убыток». Пророк ﷺ не запрещает смотреть на красоту, он предупреждает: не делай это единственным критерием. Если человек красив, но не имеет страха Божьего, он может быть жестоким в семье.</p><p>Для мужчин есть отдельное наставление:</p><div class="hadith-block"><p>«Если к вам придёт тот, чьей религией и нравом вы довольны, то выдавайте за него замуж. Если вы не сделаете этого, то на земле будет смута и большое нечестие».</p><div class="source">Источник: Джами ат-Тирмизи 1084 — хасан (хороший).</div></div><p>Подумай сам: если родители отказывают хорошему человеку только потому, что он небогат, а выдают дочь за богатого гуляку, что из этого выйдет? Семья, построенная на деньгах, но без веры, часто рушится.</p><p>Когда ты выбираешь партнёра, задай себе вопрос: «С кем я хочу встретить старость и предстать перед Аллахом?»</p><p><strong>Совет:</strong> Если ты хочешь праведную жену, стань сам праведным мужчиной. В Коране сказано:</p><div class="translation">«Самый благородный из вас перед Аллахом — самый богобоязненный».</div><p style="text-align:center; font-size: 14px;">Коран, 49:13 (перевод смысла).</p><div class="word-of-day"><h4>Слово дня: Таква (تقوى)</h4><p><strong>Перевод:</strong> Богобоязненность.</p><p><strong>Значение:</strong> Внутренний барьер, удерживающий человека от запретного.</p></div><div class="quiz-block"><h4>Проверь себя</h4><div class="quiz-question">1. Что хадис называет приоритетным при выборе?</div><div class="quiz-option" onclick="this.classList.toggle('selected')">А) Богатство</div><div class="quiz-option" onclick="this.classList.toggle('selected')">Б) Религия</div><div class="quiz-option" onclick="this.classList.toggle('selected')">В) Происхождение</div></div>` },
             15: { title: "2. На что смотреть мужчине при выборе жены", intro: "Красота увядает, а характер остаётся.", content: `<p>Мужчины часто говорят: «Хочу, чтобы она была красивой». Ислам не против красоты, но если зациклиться только на этом, можно пропустить самое главное. Красота увядает, а характер остаётся.</p><p>Представь: женщина очень красива, но дома невыносима: постоянные претензии, неуважение к тебе и твоей семье. Или наоборот: женщина не выглядит как супермодель, но она добрая, терпеливая, и с ней легко. С кем ты хочешь прожить всю жизнь? Ответ очевиден.</p><p>Пророк ﷺ велел выбирать ту, которая «придерживается религии» (Бухари, Муслим).</p><p><strong>Что это означает на практике?</strong></p><p><strong>Молитва:</strong> Если она не молится, это тревожный звонок. Если человек не боится Аллаха, он может не бояться и тебя.</p><p><strong>Отношение к родителям:</strong> Неуважение к своим родителям часто переносится и на мужа.</p><p><strong>Речь:</strong> Сплетни, зависть, злословие — это черты, которые отравляют жизнь.</p><p><strong>Благодарность:</strong> Благодарная жена — это спокойный дом.</p><div class="hadith-block"><p>«Этот мир — преходящее, и лучшее в нём — праведная жена».</p><div class="source">Источник: Сахих Муслим 1467 — достоверный.</div></div><p>Он не сказал «лучшая машина» или «лучший дом». Она — твой тыл, твой покой, твой помощник в религии. Если ты выбираешь женщину только за красоту, ты рискуешь получить «красивый фасад» без фундамента.</p><div class="important-block"><strong>Важно:</strong> Не сводите ценность женщины только к внешности, готовке или рождению детей. Брак — взаимное обязательство двух людей.</div>` },
             16: { title: "3. На что смотреть женщине при выборе мужа (богобоязненность и характер)", intro: "Не ставь деньги и статус на первое место.", content: `<p>Девушки часто мечтают о «принце на белом коне» — богатом и красивом. Ислам не запрещает желать достатка, но предупреждает: не ставь деньги и статус на первое место.</p><p>Представь: ты вышла замуж за очень богатого человека, но он груб, не молится, не смотрит на тебя как на человека. Будет ли тебе счастливо? Деньги будут, а покоя не будет. А другой — не такой богатый, но богобоязненный, добрый. Что важнее?</p><div class="hadith-block"><p>«Если к вам придёт тот, чьей религией и нравом вы довольны, то выдавайте за него замуж».</p><div class="source">Источник: Джами ат-Тирмизи 1084 — хасан (хороший).</div></div><p><strong>Что означает «бояться Аллаха в отношении жены»?</strong> Такой мужчина не поднимет на тебя руку, не будет унижать, не оставит без еды. Он будет заботиться о тебе, потому что знает: это его обязанность перед Аллахом. Он будет справедлив, даже когда ты ему не нравишься, потому что боится не тебя, а Бога.</p><p><strong>История:</strong> Однажды к Пророку ﷺ пришла девушка и сказала: «Мой отец выдал меня замуж за человека, которого я не хочу». Пророк ﷺ дал ей право выбора.</p><div class="hadith-block"><p>Передаётся, что женщина пришла к Пророку ﷺ и сказала, что её отец выдал её замуж против воли. Пророк ﷺ предоставил ей выбор.</p><div class="source">Источник: Сунан Абу Дауд 2095 — достоверный (сахих по аль-Альбани).</div></div><p>Это учит нас: женщина имеет право голоса. Её чувства и мнение важны. Если тебя принуждают, ты можешь сказать «нет».</p><p><strong>Совет:</strong> Не выходи замуж за человека, который не молится и не имеет хорошего характера, даже если у него миллион. Миллион не купит тебе покой.</p><div class="important-block"><strong>Важно:</strong> Признаки опасного поведения — унижение, угрозы, контроль, насилие, манипуляции — это не «строгость», а недопустимое поведение. Ислам не требует терпеть такое.</div>` },
@@ -531,8 +763,6 @@
             38: { title: "25. Первый и второй развод: можно ли помириться и как это сделать", intro: "Возможность исправить отношения.", content: `<p>Представь, что муж и жена пережили серьёзный конфликт. Муж произнёс первый талак, а спустя некоторое время понял, что не хочет терять семью. В исламе предусмотрена возможность возвращения супругов друг к другу.</p><p>Именно поэтому Аллах установил не один окончательный развод, а возможность двух возвратных разводов.</p><div class="translation">«Развод допускается дважды, после чего следует либо удержать жену на разумных условиях, либо отпустить её по-доброму».</div><p style="text-align:center; font-size: 14px;">Коран, 2:229 (перевод смысла).</p><p><strong>Что происходит после первого талака?</strong> Если это первый возвратный развод и брак был консуммирован, во время идды муж может вернуть жену без заключения нового никаха. Это называется радж'а (الرجعة) — возвращение жены после возвратного развода.</p><p><strong>А если произошёл второй талак?</strong> Второй возвратный развод также оставляет возможность примирения во время идды. Но нужно понимать серьёзность происходящего: муж уже использовал две возможности развода. Если впоследствии произойдёт третий действительный талак, последствия будут совершенно другими.</p><p><strong>А если идда закончилась?</strong> Если после первого или второго талака идда завершилась, муж уже не может просто объявить, что возвращает жену. Если оба хотят снова создать семью, потребуется новый никах с согласием женщины, махром и соблюдением остальных условий брака.</p><div class="translation">«Когда вы разводитесь с женщинами и они выжидают установленный срок, не препятствуйте им вступать в брак со своими бывшими мужьями, если они договорились между собой на разумных условиях».</div><p style="text-align:center; font-size: 14px;">Коран, 2:232 (перевод смысла).</p><p>Этот аят показывает, что даже после завершения идды бывшие супруги могут снова пожениться, если оба этого хотят и соблюдают правила.</p><div class="important-block"><strong>Важный момент:</strong> Возвращение жены не должно быть способом причинить ей вред. Некоторые мужчины возвращают женщину только для того, чтобы снова развестись и продлить её страдания. Такое поведение противоречит прямому повелению Аллаха обращаться с женой достойно.</div><p><strong>Главная мысль урока:</strong> первый и второй возвратные разводы оставляют возможность исправить отношения. Но нельзя злоупотреблять этой возможностью и превращать её в инструмент манипуляции.</p>` },
             39: { title: "26. Третий развод: почему жена становится запретной и что делать", intro: "Серьёзные последствия.", content: `<p>Теперь представим ситуацию: супруги уже дважды проходили через развод и возвращение. Но семейная жизнь снова не складывается, и происходит третий действительный талак. Здесь правила меняются.</p><div class="translation">«Если он развёлся с ней в третий раз, то она уже не дозволена ему, пока не выйдет замуж за другого мужа. И если тот разведётся с ней, то нет греха на них, если они вернутся друг к другу, если считают, что смогут соблюдать ограничения Аллаха».</div><p style="text-align:center; font-size: 14px;">Коран, 2:230 (перевод смысла).</p><p><strong>Что это означает?</strong> После третьего действительного талака прежний муж уже не может просто вернуть жену, как после первого или второго развода. Брак становится окончательно расторгнутым, и бывшие супруги не могут сразу заключить новый никах друг с другом.</p><p>Аллах установил особое условие: женщина должна вступить в настоящий брак с другим мужчиной, и этот брак должен быть полноценным супружеским союзом, а не формальностью. Если второй брак впоследствии естественным образом закончится разводом или смертью мужа, женщина завершит положенный срок идды. После этого она и первый муж могут заключить новый никах, если оба этого хотят.</p><p><strong>Можно ли специально выйти замуж за другого, чтобы вернуться к первому мужу?</strong> Нет, нельзя превращать это правило в заранее организованную фиктивную схему. Нельзя заключать временный брак с другим мужчиной исключительно ради того, чтобы затем развестись и вернуть женщину первому мужу. Такое намеренное устройство называется тахлиль.</p><p>Пророк ﷺ строго осудил подобное поведение. В хадисе передаётся проклятие тому, кто делает тахлиль, и тому, ради кого он совершается.</p><div class="hadith-block"><p>Тахлиль — тяжкий грех.</p><div class="source">Источник: Сунан ат-Тирмизи 1120 — хасан сахих.</div></div><div class="important-block"><strong>Очень важное уточнение:</strong> три произнесённых развода за один раз — отдельный вопрос, по которому существуют разногласия учёных относительно того, сколько разводов засчитывается. Поэтому нельзя самостоятельно объявлять брак окончательно расторгнутым в такой ситуации.</div><p><strong>Главная мысль урока:</strong> третий действительный развод имеет серьёзные последствия. Именно поэтому мужчина не должен играть словами «талак», произносить их в гневе или использовать для запугивания жены.</p>` },
             40: { title: "27. Как сохранить достоинство, не раскрывать секреты и защитить детей после развода", intro: "Исламский нрав не заканчивается вместе с браком.", content: `<p>Развод — это не только окончание брака. Это ещё и испытание характера человека.</p><p>Иногда после расставания люди начинают мстить друг другу: рассказывают родственникам личные подробности, выставляют бывшего супруга в плохом свете, используют детей для давления или пытаются лишить другого родителя возможности общаться с ребёнком.</p><p>Но задумайся: если человек когда-то был твоим самым близким, разве после развода разрешается унижать его и раскрывать всё, что он доверил тебе?</p><p>Ислам учит сохранять достоинство даже тогда, когда семейная жизнь закончилась.</p><div class="translation">«Либо удерживайте их по-доброму, либо отпускайте их по-доброму».</div><p style="text-align:center; font-size: 14px;">Коран, 2:231 (перевод смысла).</p><p>Обрати внимание: даже при расставании Аллах повелевает соблюдать благородное отношение. Развод не даёт права на месть и несправедливость.</p><p><strong>Не раскрывай семейные тайны</strong></p><p>Пророк ﷺ строго предостерегал от разглашения интимных секретов между супругами. Он сказал, что среди людей, занимающих худшее положение перед Аллахом в Судный день, будет тот, кто вступает в близость со своей женой, а затем раскрывает её секреты.</p><div class="hadith-block"><p>Даже после развода не следует рассказывать посторонним подробности интимной жизни, распространять личные переписки ради унижения или выставлять чужие слабости на всеобщее обозрение.</p><div class="source">Источник: Сахих Муслим 1437 — достоверный.</div></div><div class="important-block"><strong>Важно:</strong> Обращение за помощью к специалистам, суду или надёжным людям для защиты своих прав не является тем же самым, что распространение секретов ради мести.</div><p><strong>Не используйте детей как оружие</strong></p><p>Особенно тяжело развод отражается на детях. Иногда отец говорит ребёнку плохие вещи о матери, а мать настраивает его против отца. Ребёнок начинает чувствовать, что обязан выбрать одного родителя и предать другого. Но дети не должны становиться участниками конфликта взрослых.</p><div class="translation">«Ни одна мать не должна причинять вред своему ребёнку, и ни один отец не должен причинять вред своему ребёнку».</div><p style="text-align:center; font-size: 14px;">Коран, 2:233 (перевод смысла).</p><p><strong>Что должны помнить родители после развода?</strong> Не настраивать детей против второго родителя. Не использовать встречи с ребёнком как способ мести. Не отказываться от материальной ответственности. Не обсуждать при детях взрослые конфликты. Не заставлять ребёнка передавать оскорбления и требования. Заботиться о безопасности, воспитании и психологическом благополучии детей.</p><p><strong>Можно ли снова выйти замуж или жениться после развода?</strong> Конечно. Развод не означает, что жизнь человека закончилась или что он больше не достоин счастья.</p><div class="translation">«Если они расстанутся, Аллах обогатит каждого из них из Своей милости».</div><p style="text-align:center; font-size: 14px;">Коран, 4:130 (перевод смысла).</p><p>Этот аят напоминает, что если супруги не смогли сохранить брак, каждый из них может надеяться на милость Аллаха и новую жизнь. Не нужно считать разведённую женщину хуже других женщин или разведённого мужчину человеком, который больше не достоин семейного счастья.</p><p><strong>Главная мысль урока:</strong> даже если брак закончился, твой исламский нрав не должен заканчиваться вместе с ним. Не мсти, не раскрывай чужие тайны, не причиняй вред детям и не нарушай права бывшего супруга.</p>` },
-
-            // ===== РОЖДЕНИЕ РЕБЁНКА (41–53) =====
             41: { title: "1. Благодарность Аллаху и радость (независимо от пола)", intro: "Рождение ребёнка — дар и испытание.", content: `<p>Рождение ребёнка — это огромный дар и испытание. В некоторых культурах рождение девочки воспринимается с печалью, но Ислам уравнял ценность детей. Первое, что должен сделать родитель, — воздать хвалу Аллаху.</p><div class="hadith-block"><p>Аиша (р.а.) учила: когда ей сообщали о рождении ребёнка, она не спрашивала «мальчик или девочка?», а спрашивала: «Создан ли он полноценным?» И если ей отвечали «да», она говорила: «Хвала Аллаху, Господу миров!»</p><div class="source">Источник: аль-Бухари в «Адаб аль-муфрад».</div></div><p>Это показывает, что главное — здоровье и полноценность творения, а не пол.</p><div class="translation">«Аллаху принадлежит власть над небесами и землёй. Он создаёт, что пожелает. Дарует потомство женского пола, кому пожелает, и дарует потомство мужского пола, кому пожелает».</div><p style="text-align:center; font-size: 14px;">Коран, 42:49–50 (перевод смысла).</p><p>В доисламской Аравии рождение девочки часто воспринималось как позор, и некоторые даже закапывали младенцев живьём. Коран осудил это. Девочка — такой же дар от Аллаха, как и мальчик. Если Аллах пожелал дать тебе девочку, это не «наказание» и не «ошибка», это Его выбор и Его мудрость. Многие праведные люди были воспитаны женщинами, и через девочек Аллах даёт семье особую милость и награду.</p><div class="important-block"><strong>Совет:</strong> В первые минуты после рождения скажите «Альхамдулиллях» — и не важно, сын это или дочь. Радость и благодарность — это первое, что должен увидеть и почувствовать младенец.</div><div class="quiz-block"><h4>Проверь себя</h4><div class="quiz-question">1. Что Аиша (р.а.) спрашивала в первую очередь?</div><div class="quiz-option" onclick="this.classList.toggle('selected')">А) Пол ребёнка</div><div class="quiz-option" onclick="this.classList.toggle('selected')">Б) Полноценность творения</div><div class="quiz-option" onclick="this.classList.toggle('selected')">В) Вес ребёнка</div></div>` },
             42: { title: "2. Азан и икамат в уши младенца (сунна с важным нюансом)", intro: "Первые слова, которые слышит ребёнок.", content: `<p>Сунной является произнесение азана в правое ухо и икамата в левое ухо новорожденного. Этот обряд символизирует, что первыми словами, которые слышит ребёнок, становятся слова единобожия.</p>
 
@@ -586,8 +816,6 @@
             51: { title: "11. Адаб (воспитание) — главная ответственность родителей", intro: "Воспитание — это пример, а не только слова.", content: `<p>Воспитание — это не только слова, но и пример.</p><div class="hadith-block"><p>«Ни один отец не подарил своему ребенку ничего более ценного, чем хорошее воспитание».</p><div class="source">Источник: ат-Тирмизи.</div></div><p>Ребенок имеет право на обучение Корану и полезным знаниям.</p><div class="hadith-block"><p>«Бойтесь Аллаха и будьте справедливы к своим детям».</p><div class="source">Источник: Сахих аль-Бухари, Сахих Муслим.</div></div><p><strong>Этапы воспитания (мудрость учёных и праведных предшественников):</strong></p><p>В исламской традиции существует красивая и глубокая концепция поэтапного воспитания, которую передают учёные и праведные предшественники. Важно понимать: это не хадис Пророка ﷺ, а мудрость, которая передается от таких имамов, как Али ибн Абу Талиб (р.а.), и используется многими учёными в качестве ориентира.</p><p><strong>Суть этой концепции:</strong></p><p>С рождения до 7 лет — ребенок как «царь» (или «господин»). С ним нужно быть мягким, играть, баловать, проявлять максимум любви и нежности. В этот период закладывается базовое доверие к миру и к родителям.</p><p>С 7 до 14 лет — ребенок как «заложник» (в смысле ответственности и дисциплины). В этот период нужно активно обучать его религии, нормам поведения, приучать к молитве. Здесь важно проявлять настойчивость, но без жестокости.</p><div class="hadith-block"><p>«Велите своим детям совершать намаз с семи лет, и бейте их за это (если они не делают) с десяти лет».</p><div class="source">Источник: Абу Дауд.</div></div><p>С 14 до 21 года — ребенок как «визирь» (советник). В этот период с ним нужно советоваться, обсуждать его жизнь, уважать его мнение, но при этом направлять его. Он уже не маленький, но еще не полностью самостоятельный.</p><p>После 21 года — «отпустить». Теперь он взрослый человек, и родители должны доверять ему и давать самостоятельность, продолжая делать дуа за него.</p><div class="important-block"><strong>Совет:</strong> Не пытайтесь «воспитывать» ребенка одинаково во все периоды. Если вы будете строги с 3-летним — вы сломаете его. Если будете играть с 15-летним как с малышом — вы потеряете его уважение. Мудрость в том, чтобы менять подход по мере взросления.</div><p><strong>История:</strong> Однажды Пророк ﷺ сидел с людьми, пришел его сын, он поцеловал его и посадил на колени. Потом пришла дочь, и он также посадил ее перед собой. Это показывает, что нежность к детям и равное отношение к сыновьям и дочерям — это сунна.</p>` },
             52: { title: "12. Здоровье и безопасность ребёнка (забота как ибада)", intro: "Забота о здоровье — акт поклонения.", content: `<p>Забота о здоровье ребенка — это не просто обязанность, это акт поклонения (ибада).</p><div class="hadith-block"><p>«Каждый из вас является пастырем, и каждый отвечает за свою паству».</p><div class="source">Источник: Сахих аль-Бухари, Сахих Муслим.</div></div><p><strong>Что это означает на практике:</strong></p><p>Регулярные визиты к врачу.</p><p>Вакцинация (если нет медицинских противопоказаний).</p><p>Здоровое питание.</p><p>Безопасная среда дома.</p><p><strong>Почему это важно:</strong> Ислам не запрещает лечиться.</p><div class="hadith-block"><p>«Аллах не ниспослал болезнь, не ниспослав и лекарство от нее».</p><div class="source">Источник: Сахих аль-Бухари.</div></div><p>Это значит, что лечение — это часть веры, а не отказ от нее.</p><p><strong>Жизненная ситуация:</strong> Некоторые родители отказываются от вакцинации, ссылаясь на религию. Это неверно. Ислам призывает заботиться о здоровье и использовать доступные средства. Если врач говорит, что вакцинация необходима, не пренебрегайте этим.</p><div class="important-block"><strong>Совет:</strong> Не пренебрегайте медицинской помощью. Ислам не запрещает лечиться.</div>` },
             53: { title: "13. Финансовая ответственность за ребёнка", intro: "Ребёнок — это ответственность, а не игрушка.", content: `<p>Отец обязан содержать ребенка (нафака): обеспечивать жильем, едой, одеждой, образованием. Это его обязанность перед Аллахом.</p><div class="translation">«А тот, у кого родился ребёнок, обязан обеспечить его пропитанием и одеждой в соответствии с обычаем».</div><p style="text-align:center; font-size: 14px;">Коран, 2:233 (перевод смысла).</p><p><strong>Почему это важно:</strong> Ребенок — это не игрушка, это ответственность. Отец должен заботиться о нем, даже если родители развелись. Ислам не освобождает отца от ответственности после развода.</p><p><strong>Жизненная ситуация:</strong> Если отец не в состоянии обеспечить ребенка, ответственность может перейти к другим родственникам. Но оставлять ребенка без заботы запрещено. Если родители развелись, отец все равно обязан содержать ребенка и заботиться о нем.</p><div class="important-block"><strong>Совет:</strong> Если отец не в состоянии обеспечить ребенка, ответственность может перейти к другим родственникам. Но оставлять ребенка без заботы запрещено.</div>` },
-
-            // ===== ПОТЕРЯ БЛИЗКОГО ЧЕЛОВЕКА (54–57) =====
             54: { title: "1. Когда умирает близкий человек: терпение, слёзы и первые действия", intro: "Ислам не запрещает печалиться.", content: `<p>Представьте, что человек получает известие о смерти самого близкого. Возможно, это мама, отец, супруг, ребёнок или брат. В такие минуты слова теряют значение. Человек может плакать, не верить услышанному, чувствовать пустоту и задаваться вопросом: «Как теперь жить без него?»</p><p>Ислам не запрещает человеку печалиться. Он не требует, чтобы мусульманин превращался в человека без чувств. Даже Пророк Мухаммад ﷺ плакал, когда терял близких. Но ислам учит нас проходить через горе так, чтобы не терять веру в Аллаха.</p><p><strong>1. Что нужно говорить, когда приходит известие о смерти?</strong></p><div class="translation">«Которые, когда их постигает беда, говорят: "Поистине, мы принадлежим Аллаху, и к Нему мы возвращаемся"».</div><p style="text-align:center; font-size: 14px;">Коран, 2:156 (перевод смысла).</p><p>На арабском:</p><div class="arabic-text">إِنَّا لِلَّٰهِ وَإِنَّا إِلَيْهِ رَاجِعُونَ</div><div class="transliteration">Инна лилляхи ва инна иляйхи раджи‘ун.</div><p>Это не просто слова, которые произносят на похоронах. Это напоминание самому себе: наша жизнь принадлежит Аллаху, наши близкие принадлежат Аллаху, и однажды каждый из нас вернётся к Нему.</p><p>Мы не владеем людьми, которых любим. Аллах доверил их нам на определённое время. И когда наступает назначенный срок, никто не может его отодвинуть.</p><p><strong>2. Какое дуа читать во время беды?</strong></p><p>Пророк ﷺ научил нас обращаться к Аллаху во время несчастья.</p><div class="hadith-block"><p>Умм Саляма (р.а.) рассказывала, что Посланник Аллаха ﷺ сказал: «Нет такого раба, которого постигнет беда и который скажет: "Поистине, мы принадлежим Аллаху и к Нему возвращаемся. О Аллах, вознагради меня за мою беду и замени мне её тем, что лучше", — кроме как Аллах вознаградит его за беду и заменит ему её тем, что лучше».</p><div class="source">Источник: Сахих Муслим, 918.</div></div><p>Дуа:</p><div class="arabic-text">إِنَّا لِلَّهِ وَإِنَّا إِلَيْهِ رَاجِعُونَ، اللَّهُمَّ أْجُرْنِي فِي مُصِيبَتِي وَأَخْلِفْ لِي خَيْرًا مِنْهَا</div><div class="transliteration">Инна лилляхи ва инна иляйхи раджи‘ун. Аллахумма-джурни фи мусибати ва ахлиф ли хайран минха.</div><div class="translation">«Поистине, мы принадлежим Аллаху и к Нему возвращаемся. О Аллах, вознагради меня за мою беду и замени мне её тем, что лучше».</div><p>Обрати внимание: человек просит не обязательно вернуть ему то, что он потерял, а просит Аллаха дать ему лучшее по Своей мудрости.</p><p><strong>3. Разрешено ли плакать после смерти близкого?</strong></p><p>Да. Плач сам по себе не запрещён.</p><p>Когда умер маленький сын Пророка ﷺ Ибрахим, Посланник Аллаха ﷺ взял его на руки, и его глаза наполнились слезами. Абдуррахман ибн Ауф (р.а.) удивился и спросил о плаче. Тогда Пророк ﷺ сказал:</p><div class="hadith-block"><p>«Это милость». Затем он произнёс: «Глаза проливают слёзы, сердце печалится, но мы говорим только то, чем доволен наш Господь. И, поистине, мы опечалены разлукой с тобой, о Ибрахим».</p><div class="source">Источник: аль-Бухари, 1303; Муслим, 2315.</div></div><p>Этот хадис очень важен. Он показывает, что даже самый сильный в вере человек может плакать и испытывать боль.</p><p>Терпение — это не отсутствие слёз. Терпение — это когда, несмотря на боль, человек не говорит слов недовольства Аллахом, не обвиняет Его в несправедливости и не совершает запрещённых действий.</p><p>Нельзя причитать, кричать, рвать одежду, бить себя и говорить слова, выражающие протест против предопределения Аллаха.</p><p><strong>4. Что нужно сделать сразу после смерти человека?</strong></p><p>Когда смерть подтверждена, близким следует сохранять спокойствие и организовать необходимые приготовления.</p><p>Нужно: сообщить родственникам и людям, которые будут заниматься похоронами; обратиться к тем, кто умеет правильно совершать омовение умершего; подготовить саван; организовать джаназа-намаз и погребение; позаботиться о семье умершего, особенно если она осталась без помощи.</p><p>Не следует без необходимости откладывать похороны.</p><div class="hadith-block"><p>«Ускоряйте погребение умершего. Если он был праведным, то вы приблизите его к благу, а если он был иным, то вы снимете с себя зло».</p><div class="source">Источник: аль-Бухари, 1315; Муслим, 944.</div></div><p>Это не означает, что нужно торопиться в ущерб правильному оформлению необходимых документов, установлению факта смерти или соблюдению правил безопасности. Но без причины затягивать погребение не следует.</p><p><strong>5. Кто должен помогать семье умершего?</strong></p><p>Очень важный момент: семья умершего не должна оставаться один на один со своим горем и ещё заниматься угощением всех пришедших.</p><p>Когда погиб Джафар ибн Абу Талиб (р.а.), Пророк ﷺ сказал:</p><div class="hadith-block"><p>«Приготовьте еду для семьи Джафара, ведь их постигло то, что заняло их».</p><div class="source">Источник: Абу Дауд, 3132; ат-Тирмизи, 998. Хадис оценивался как хороший.</div></div><p>Посмотри, насколько это красиво: ислам учит окружающих не просто выражать соболезнования, а реально помогать.</p><p>Если у человека умер близкий, ему не нужно в этот момент думать о том, чем накормить гостей. Лучше, чтобы родственники, соседи и друзья приготовили еду, помогли с организацией похорон и поддержали семью.</p><p><strong>Главная мысль урока:</strong> смерть близкого — тяжёлое испытание. Можно плакать, скучать, вспоминать и переживать. Но нельзя забывать, что Аллах видит нашу боль. Мы не можем вернуть умершего, но можем просить Аллаха простить его, помиловать его и даровать ему Рай.</p>` },
             55: { title: "2. Как правильно хоронить мусульманина: омовение, саван, джаназа и погребение", intro: "Коллективная обязанность общины.", content: `<p>Когда человек умирает, мусульмане должны выполнить определённые обязанности по отношению к нему. Это называется коллективной обязанностью — фард кифая. Если часть мусульман должным образом выполняет эти обязанности, с остальных снимается обязанность. Но если никто этого не делает без уважительной причины, грех ложится на общину.</p><p>К основным обязанностям относятся: омовение умершего; заворачивание в саван; совершение джаназа-намаза; погребение.</p><p><strong>1. Омовение умершего — гусль</strong></p><p>Перед погребением тело мусульманина омывают.</p><div class="hadith-block"><p>В хадисе Умм ‘Атыйи (р.а.) рассказывается, что после смерти дочери Пророка ﷺ он сказал женщинам, которые омывали её: «Омойте её три раза, или пять раз, или больше, если посчитаете нужным, водой с листьями лотоса, а в последний раз добавьте камфару».</p><div class="source">Источник: аль-Бухари, 1253; Муслим, 939.</div></div><p>Из этого хадиса учёные извлекли правила омовения умершего. Обычно омовение совершают нечётное количество раз: три, пять или больше, если есть необходимость. Тело омывают бережно, соблюдая достоинство умершего и прикрывая его ‘аурат.</p><p><strong>Важные правила:</strong> Мужчин обычно омывают мужчины, женщин — женщины. Исключения и подробности относительно супругов, маленьких детей и других случаев различаются в фикхе. Нельзя грубо обращаться с телом умершего. Необходимо сохранять его достоинство и не рассказывать другим о том, что было обнаружено при омовении.</p><p><strong>2. В какой саван заворачивают умершего?</strong></p><p>Умершего заворачивают в чистую ткань — кафан.</p><div class="hadith-block"><p>Передано, что самого Пророка ﷺ завернули в три белых полотна.</p><div class="source">Источник: аль-Бухари, 1264; Муслим, 941.</div></div><p>Из этого следует достоинство белого савана.</p><div class="important-block"><strong>Важно:</strong> хадис о трёх полотнах рассказывает о погребальном облачении самого Пророка ﷺ. Вопрос о количестве полотен для мужчин и женщин имеет дополнительные подробности и разногласия среди учёных. Поэтому нельзя утверждать, что для каждого умершего независимо от обстоятельств обязательно требуется ровно три полотна. Главное — чтобы саван был чистым, закрывал тело и соответствовал требованиям шариата.</div><p><strong>3. Джаназа-намаз — молитва за умершего</strong></p><p>Джаназа-намаз отличается от обычного намаза. В нём нет поясных и земных поклонов. Молящиеся стоят, совершают такбиры и обращаются к Аллаху с мольбами за умершего. Распространённая практика — четыре такбира. В разных мазхабах существуют некоторые различия в порядке чтения, положении рук и других деталях. Поэтому не следует считать каждую отличающуюся от привычной практику ошибочной.</p><p>Одна из достоверных мольб, переданная от Пророка ﷺ:</p><div class="arabic-text">اللَّهُمَّ اغْفِرْ لَهُ وَارْحَمْهُ وَعَافِهِ وَاعْفُ عَنْهُ</div><div class="transliteration">Аллахумма-гфир ляху, ва-рхамху, ва ‘афихи, ва‘фу ‘анху.</div><div class="translation">«О Аллах, прости его, помилуй его, даруй ему благополучие и освободи его от прегрешений».</div><p>Для умершей женщины:</p><div class="arabic-text">اللَّهُمَّ اغْفِرْ لَهَا وَارْحَمْهَا وَعَافِهَا وَاعْفُ عَنْهَا</div><div class="transliteration">Аллахумма-гфир ляха, ва-рхамха, ва ‘афиха, ва‘фу ‘анха.</div><div class="source">Источник: Сахих Муслим, 963.</div><p>Обрати внимание: джаназа-намаз — это не просто прощание с человеком. Это возможность попросить Аллаха о прощении для него.</p><p><strong>4. Как опускают умершего в могилу?</strong></p><p>После джаназа-намаза умершего относят на кладбище и хоронят. Могила должна быть подготовлена так, чтобы тело было защищено и надёжно укрыто землёй. Умершего обычно укладывают на правый бок лицом в сторону киблы. Это известное положение в исламском погребальном обряде. При погребении следует обращаться с телом бережно, не допуская унижения умершего.</p><p><strong>5. Что делать после погребения?</strong></p><p>Когда человека уже похоронили, не нужно сразу расходиться, забыв о нём. Можно постоять у могилы и просить Аллаха простить умершего и укрепить его.</p><div class="hadith-block"><p>Передаётся, что после погребения Пророк ﷺ говорил: «Просите прощения для вашего брата и просите для него стойкости, ведь сейчас его спрашивают».</p><div class="source">Источник: Абу Дауд, 3221. Хадис оценивался рядом учёных как достоверный.</div></div><p>Это напоминает нам о том, что после смерти человека начинается жизнь в барзахе — промежуточном мире до Воскресения. Мы не знаем всех подробностей того, что происходит с конкретным человеком. Но мы можем просить Аллаха о милости для него.</p><p><strong>Главная мысль урока:</strong> похороны в исламе должны быть достойными, простыми и соответствовать Сунне. Не нужно превращать погребение в соревнование богатства, показуху или повод для чрезмерных расходов. Самое важное для умершего — искреннее дуа, прощение Аллаха и милость Всевышнего.</p>` },
             56: { title: "3. Что может принести пользу умершему? Дуа, садака и посещение кладбища", intro: "Любовь к умершему проявляется в делах.", content: `<p>После смерти человек уже не может совершать намаз, поститься, раздавать милостыню и делать другие дела так, как делал это при жизни. Но ислам учит нас, что некоторые виды пользы могут продолжаться и после смерти.</p><p><strong>1. Дуа за умершего</strong></p><p>Одно из самых важных дел, которые мы можем делать для умершего, — просить Аллаха простить его.</p><div class="translation">«Господь наш! Прости нас и наших братьев, которые уверовали раньше нас, и не помещай в наши сердца злобы к тем, кто уверовал».</div><p style="text-align:center; font-size: 14px;">Коран, 59:10 (перевод смысла).</p><div class="translation">«Господь мой! Помилуй их, ведь они растили меня ребёнком».</div><p style="text-align:center; font-size: 14px;">Коран, 17:24 (перевод смысла).</p><p>Дуа за родителей — прекрасное дело, которое мусульманин может совершать всю жизнь.</p><p>Можно говорить:</p><div class="arabic-text">اللَّهُمَّ اغْفِرْ لَهُ وَارْحَمْهُ</div><div class="transliteration">Аллахумма-гфир ляху ва-рхамху.</div><div class="translation">«О Аллах, прости его и помилуй его».</div><p>Для умершей женщины:</p><div class="arabic-text">اللَّهُمَّ اغْفِرْ لَهَا وَارْحَمْهَا</div><div class="transliteration">Аллахумма-гфир ляха ва-рхамха.</div><div class="translation">«О Аллах, прости её и помилуй её».</div><p>Не нужно обязательно произносить длинные арабские тексты. Можно просить Аллаха на русском языке, искренне и от сердца.</p><p><strong>2. Можно ли давать садака от имени умершего?</strong></p><p>Да. Это подтверждено достоверным хадисом.</p><div class="hadith-block"><p>Один человек пришёл к Пророку ﷺ и спросил, будет ли ему польза, если он раздаст милостыню от имени умершей матери. Пророк ﷺ ответил утвердительно.</p><div class="source">Источник: аль-Бухари, 1388.</div></div><p>Из этого мы понимаем, что человек может раздать садака с намерением, чтобы награда за неё была дарована умершему. Например: накормить нуждающихся; помочь бедной семье; дать деньги человеку, который не может позволить себе лечение; обеспечить питьевой водой тех, кто в ней нуждается; поддержать полезный благотворительный проект. Главное — чтобы милостыня была искренней ради Аллаха и из дозволенного имущества.</p><p><strong>3. Какие три дела продолжают приносить пользу после смерти?</strong></p><div class="hadith-block"><p>«Когда человек умирает, его дела прекращаются, кроме трёх: непрерывной милостыни, знания, которым приносят пользу, и праведного ребёнка, который обращается к Аллаху с мольбой за него».</p><div class="source">Источник: Сахих Муслим, 1631.</div></div><p>Разберём эти три дела. <strong>Первое — садака джария.</strong> Это непрерывная милостыня, польза от которой сохраняется после смерти человека. Например, человек при жизни помог построить колодец, мечеть или другое полезное сооружение. <strong>Второе — полезное знание.</strong> Если человек обучал людей добру, оставил полезные знания, которыми продолжают пользоваться, то польза от этого может продолжаться и после его смерти. <strong>Третье — праведный ребёнок, который делает дуа.</strong> Это напоминание родителям о том, насколько важно воспитывать детей в вере, нравственности и благих поступках.</p><p>Но важно понимать: этот хадис не означает, что умершему вообще не может принести пользу ничего другого. Мы уже видели достоверное подтверждение пользы садака от имени умершего.</p><p><strong>4. Можно ли посещать кладбища?</strong></p><p>Да. Посещение кладбищ установлено в Сунне.</p><div class="hadith-block"><p>«Я прежде запрещал вам посещать могилы, а теперь посещайте их, ведь они напоминают о Последней жизни».</p><div class="source">Источник: Сахих Муслим, 977.</div></div><p>Посещение кладбища напоминает человеку, что однажды и он окажется в таком же положении. Деньги, красота, должности и имущество останутся в этом мире. С собой человек возьмёт свои дела.</p><p>При посещении кладбища можно приветствовать умерших и делать за них дуа.</p><div class="arabic-text">السَّلَامُ عَلَيْكُمْ أَهْلَ الدِّيَارِ مِنَ الْمُؤْمِنِينَ وَالْمُسْلِمِينَ، وَإِنَّا إِنْ شَاءَ اللَّهُ بِكُمْ لَاحِقُونَ، نَسْأَلُ اللَّهَ لَنَا وَلَكُمُ الْعَافِيَةَ</div><div class="transliteration">Ас-саляму ‘аляйкум ахля-д-дияри миналь-му’минина валь-муслимин. Ва инна ин ша’а-Ллаху бикум ляхикун. Нас’алю-Ллаха ляна ва лякумуль-‘афия.</div><div class="translation">«Мир вам, обитатели этих жилищ, верующие и мусульмане. Поистине, если пожелает Аллах, мы присоединимся к вам. Просим Аллаха благополучия для нас и для вас».</div><p style="text-align:center; font-size: 14px;">Источник: Сахих Муслим, 975.</p><p><strong>5. Можно ли женщинам посещать кладбища?</strong></p><p>Это отдельный важный вопрос, в котором среди учёных есть разногласие.</p><div class="hadith-block"><p>Передаётся от Абу Хурайры (р.а.), что Посланник Аллаха ﷺ проклял женщин, часто посещающих могилы.</p><div class="source">Источник: ат-Тирмизи, 1056. Ат-Тирмизи оценил хадис как хасан сахих.</div></div><p>Некоторые учёные понимали этот хадис как запрет женщинам посещать кладбища. Другие обращали внимание на слово «завварат», указывающее на частое посещение, и считали, что порицается именно чрезмерное посещение. Кроме того, существует общий хадис о разрешении посещать могилы (Муслим, 977). Учёные разошлись во мнениях относительно того, распространяется ли это разрешение на женщин так же, как на мужчин.</p><p>Поэтому существуют разные позиции: некоторые учёные запрещали женщинам посещать кладбища; некоторые считали это нежелательным; другие разрешали посещение при соблюдении правил шариата и отсутствии запрещённых действий.</p><p>Следовательно, нельзя безоговорочно обвинять каждую женщину, пришедшую на могилу матери, отца или другого близкого человека, в грехе. Но и нельзя игнорировать хадис, в котором порицается частое посещение могил женщинами.</p><p>Если женщина посещает кладбище, ей следует: соблюдать скромность в одежде и поведении; избегать неподобающего смешения с мужчинами; не кричать, не причитать и не выражать недовольство предопределением Аллаха; не обращаться с мольбами к умершим и не просить у них помощи; помнить, что посещение должно напоминать о смерти и Последней жизни.</p><p><strong>6. Можно ли женщине плакать на могиле близкого?</strong></p><p>Да. Естественные слёзы сами по себе не запрещены. Мы уже говорили о том, что Пророк ﷺ плакал после смерти сына Ибрахима. Поэтому женщине не нужно думать, что сама по себе печаль или слёзы являются грехом.</p><p>Но нужно отличать обычный плач от причитаний, громких воплей, ударов себя и слов недовольства решением Аллаха.</p><p>Если женщина придерживается мнения учёных, которые не разрешают посещать кладбища, она может делать дуа за умершего дома. Для мольбы не обязательно находиться возле могилы. Аллах слышит мольбу человека в любом месте.</p><p><strong>Главная мысль урока:</strong> после смерти близкого наша любовь к нему не должна превращаться только в тоску и воспоминания. Пусть она проявляется в дуа, садака, добрых делах и просьбах к Аллаху о прощении умершего. Мы не можем изменить прошлое, но можем просить Аллаха о милости для тех, кого любим.</p>` },
@@ -595,7 +823,6 @@
         };
 
         // ===== НАВИГАЦИЯ =====
-        // Порядок уроков по разделам (ID идут сквозные, номера в карточках — локальные)
         const sectionOrders = {
             'islam-start-page': [1,2,3,4,5,6,7,8,9,10,11,12,13],
             'family-page':      [14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40],
@@ -605,7 +832,114 @@
 
         let currentLessonId = 1;
         let currentSectionId = 'islam-start-page';
+        let currentBookId = null;
 
+        // ===== ЛОГИКА ПРОГРЕССА И PRO =====
+        function getProgress() {
+            let p = localStorage.getItem('amanah_progress');
+            return p ? JSON.parse(p) : {};
+        }
+
+        function saveProgress(data) {
+            localStorage.setItem('amanah_progress', JSON.stringify(data));
+        }
+
+        function isPro() {
+            return localStorage.getItem('amanah_pro') === 'true';
+        }
+
+        function activatePro() {
+            localStorage.setItem('amanah_pro', 'true');
+            closeProModal();
+            if(currentBookId) {
+                openBook(currentBookId); // Перерисовываем страницу книги
+            }
+            alert('PRO активирован! Все уроки теперь доступны.');
+        }
+
+        function showProModal() {
+            document.getElementById('pro-modal').classList.add('active');
+        }
+
+        function closeProModal() {
+            document.getElementById('pro-modal').classList.remove('active');
+        }
+
+        function markLessonDone(bookId, lessonId) {
+            let progress = getProgress();
+            if(!progress[bookId]) progress[bookId] = { done: [], last: null };
+            if(!progress[bookId].done.includes(lessonId)) {
+                progress[bookId].done.push(lessonId);
+            }
+            progress[bookId].last = lessonId;
+            saveProgress(progress);
+        }
+
+        // ===== ЛОГИКА ОТКРЫТИЯ КНИГИ =====
+        function openBook(id) {
+            currentBookId = id;
+            const book = booksData[id];
+            if(!book) return;
+
+            document.getElementById('book-title').innerText = book.title;
+            document.getElementById('book-author').innerText = book.author;
+            
+            let html = `
+                <p><strong>О книге:</strong> ${book.desc}</p>
+                <div class="important-block">
+                    <strong>Преимущества изучения:</strong><br>
+                    ${book.benefits}
+                </div>
+            `;
+            document.getElementById('book-content').innerHTML = html;
+
+            // Рендер уроков
+            let lessonsHtml = '';
+            let progress = getProgress()[id] || { done: [] };
+            let proStatus = isPro();
+
+            book.lessons.forEach((lesson, index) => {
+                const isDone = progress.done.includes(lesson.id);
+                const isLocked = lesson.isPro && !proStatus;
+                
+                let action = '';
+                if(isLocked) {
+                    action = `onclick="showProModal()"`;
+                } else {
+                    action = `onclick="alert('Урок открыт! (Демо-контент)')"`; // Заглушка для открытия
+                }
+
+                lessonsHtml += `
+                    <div class="lesson-item" ${action}>
+                        <div class="lesson-item-info">
+                            <h4>${index + 1}. ${lesson.title}</h4>
+                            <p>${lesson.desc}</p>
+                            ${lesson.isPro ? '<span class="lesson-badge badge-pro">PRO</span>' : '<span class="lesson-badge badge-free">FREE</span>'}
+                        </div>
+                        <div class="lesson-status ${isDone ? 'done' : ''}">
+                            ${isLocked ? '🔒' : (isDone ? '✓' : '▶')}
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Прогресс бар для книги
+            const total = book.lessons.length;
+            const doneCount = progress.done.length;
+            const percent = Math.round((doneCount / total) * 100);
+            
+            lessonsHtml = `
+                <div class="progress-container" style="margin-bottom: 20px;">
+                    <div class="progress-bar" style="width: ${percent}%"></div>
+                </div>
+                <p style="font-size: 14px; margin-bottom: 15px; color: var(--text-muted-dark);">Пройдено: ${doneCount} из ${total} (${percent}%)</p>
+            ` + lessonsHtml;
+
+            document.getElementById('book-lessons-list').innerHTML = lessonsHtml;
+            showPage('book-page');
+        }
+
+        // ===== СТАРАЯ ЛОГИКА УРОКОВ =====
         function showPage(pageId) {
             document.querySelectorAll('.page-section').forEach(page => {
                 page.classList.remove('active');
@@ -654,6 +988,48 @@
         function goBackFromLesson() {
             showPage(currentSectionId);
         }
+
+        // ===== РЕНДЕР ПРОФИЛЯ =====
+        function renderProfile() {
+            let html = '';
+            let progress = getProgress();
+            let totalDone = 0;
+
+            for (const [bookId, book] of Object.entries(booksData)) {
+                const bProgress = progress[bookId] || { done: [], last: null };
+                const doneCount = bProgress.done.length;
+                totalDone += doneCount;
+                const percent = Math.round((doneCount / book.lessons.length) * 100);
+
+                html += `
+                    <div class="block-card" style="margin-bottom: 15px; padding: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <h4 style="color: var(--text-dark); margin: 0;">${book.title}</h4>
+                            <span style="font-size: 13px; color: var(--text-muted-dark);">${doneCount}/${book.lessons.length}</span>
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: ${percent}%"></div>
+                        </div>
+                        ${bProgress.last ? `<p style="font-size: 12px; margin-top: 8px; color: var(--text-muted-dark);">Последний урок: ${bProgress.last}</p>` : ''}
+                    </div>
+                `;
+            }
+
+            if(totalDone === 0) {
+                html = `<div class="important-block" style="text-align: center;">Вы еще не начали обучение. Перейдите в раздел "Знания" и выберите книгу!</div>` + html;
+            }
+
+            document.getElementById('profile-content').innerHTML = html;
+        }
+
+        // Обновляем профиль при переходе на него
+        const originalShowPage = showPage;
+        showPage = function(pageId) {
+            if(pageId === 'profile-page') {
+                renderProfile();
+            }
+            originalShowPage(pageId);
+        };
 
         document.addEventListener('click', function(e) {
             if (e.target.classList.contains('quiz-option')) {
