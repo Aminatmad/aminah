@@ -9,9 +9,22 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <!-- PWA / установка на домашний экран -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#1a3312">
+
+    <!-- Иконки для разных устройств -->
+    <link rel="icon" type="image/png" href="images/icon-192.png">
+    <link rel="apple-touch-icon" href="images/icon-192.png">
+    
+    <!-- Для iOS (чтобы открывалось как приложение) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="AMANAH">
+
     <div class="container">
         <header class="header" onclick="window.location.href='index.html'">
-            <div class="logo-img"></div>
+                        <div class="logo-img" style="background-image: url('images/ico-180.png');"></div>
             <div class="logo-wrapper">
                 <span class="logo-text">AMANAH</span>
                 <span class="logo-subtext">ТВОЯ ЖИЗНЬ — ТВОЙ АМАНАТ</span>

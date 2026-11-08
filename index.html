@@ -3,27 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- PWA / установка на домашний экран -->
-    <link rel="manifest" href="manifest.webmanifest">
-    <meta name="theme-color" content="#1a3312">
-
-    <!-- iOS -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="AMANAH">
-    <link rel="apple-touch-icon" href="images/apple-touch-icon.jpg">
-    <link rel="icon" type="image/jpeg" href="images/ico-192.jpg">
 
     <title>AMANAH - Твой путь</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+   <!-- PWA / установка на домашний экран -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#1a3312">
+
+    <!-- Иконки для разных устройств -->
+    <link rel="icon" type="image/png" href="images/icon-180.png">
+    <link rel="apple-touch-icon" href="images/icon-180.png">
+    
+    <!-- Для iOS (чтобы открывалось как приложение) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="AMANAH">
 
     <div class="container">
         <header class="header" onclick="showPage('main-page')">
-            <div class="logo-img"></div>
+                        <div class="logo-img" style="background-image: url('images/ico-180.png');"></div>
             <div class="logo-wrapper">
                 <span class="logo-text">AMANAH</span>
                 <span class="logo-subtext">ТВОЯ ЖИЗНЬ — ТВОЙ АМАНАТ</span>
