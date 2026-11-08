@@ -11,6 +11,7 @@ let currentSectionId = 'islam-start-page';
 let currentBookId = null;
 let lessonType = 'old'; 
 let parentId = null;
+let autoSaveTimer = null;
 
 // ===== ЛОГИКА ПРОГРЕССА И PRO =====
 function getProgress() {
@@ -230,7 +231,7 @@ function openLesson(type, parent, id) {
         }
     }
 
-    // ЗАПОМИНАЕМ КОНТЕКСТ (чтобы кнопка Назад знала, куда идти)
+    // ЗАПОМИНАЕМ КОНТЕКСТ
     lessonType = type;
     parentId = parent;
     currentLessonId = id;
@@ -259,6 +260,7 @@ function openLesson(type, parent, id) {
 
     if (!lesson) return;
 
+    // Выводим контент
     document.getElementById('lesson-title').innerText = lesson.title;
     document.getElementById('lesson-intro').innerText = lesson.desc || lesson.intro; 
     document.getElementById('lesson-content').innerHTML = lesson.content;
@@ -267,38 +269,89 @@ function openLesson(type, parent, id) {
     const nextBtn = document.getElementById('next-btn');
     const completeBtn = document.getElementById('complete-btn');
     
-    // Кнопка "Завершить" показывается только для книг и тем
     if (type === 'old') {
         if(completeBtn) completeBtn.style.display = 'none';
     } else {
         if(completeBtn) completeBtn.style.display = 'block';
     }
 
-    // Навигация Назад/Далее внутри урока
+    // --- НАСТРОЙКА КНОПОК НАВИГАЦИИ ---
+    
+    // 1. Кнопка "Назад" (внутри урока)
     prevBtn.disabled = (currentIndex <= 0);
     prevBtn.onclick = () => openLesson(type, parent, allLessons[currentIndex - 1].id);
     
+    // 2. Кнопка "Далее" (внутри урока)
     if (currentIndex >= totalLessons - 1) {
+        // Если это последний урок, отключаем кнопку
         nextBtn.disabled = true;
         nextBtn.onclick = null;
     } else {
+        // Если есть следующий урок
         const nextLesson = allLessons[currentIndex + 1];
         const isNextLocked = (type === 'book') && nextLesson.isPro && !isPro();
         
+        nextBtn.disabled = false;
         if (isNextLocked) {
-            nextBtn.disabled = false;
             nextBtn.onclick = () => showProModal();
         } else {
-            nextBtn.disabled = false;
+            // ВОТ ЗДЕСЬ РАБОТАЕТ КНОПКА "ДАЛЕЕ"
             nextBtn.onclick = () => openLesson(type, parent, nextLesson.id);
         }
     }
 
+    // --- АВТОСОХРАНЕНИЕ ---
+    if (typeof autoSaveTimer !== 'undefined' && autoSaveTimer) clearTimeout(autoSaveTimer);
+
+    autoSaveTimer = setTimeout(() => {
+        let idForProgress = (type === 'book') ? currentBookId : (type === 'topic' ? parentId : currentSectionId);
+        
+        if (type === 'book' || type === 'topic') {
+            const idx = allLessons.findIndex(l => l.id === currentLessonId);
+            if (idx !== -1) {
+                for (let i = 0; i <= idx; i++) {
+                    markLessonDone(idForProgress, allLessons[i].id);
+                }
+            }
+        } else {
+            markLessonDone(idForProgress, currentLessonId);
+        }
+    }, 1500);
+
     showPage('lesson-page');
 }
 
+
+
 // ЭТА ФУНКЦИЯ ТЕПЕРЬ РАБОТАЕТ ИДЕАЛЬНО (ВОЗВРАЩАЕТ ВСЕГДА ТУДА, ОТКУДА ПРИШЛИ)
 function goBackFromLesson() {
+    // 1. Отменяем таймер
+    if (autoSaveTimer) clearTimeout(autoSaveTimer);
+
+    // 2. ПРИНУДИТЕЛЬНО СОХРАНЯЕМ ПРОГРЕСС, если мы были в уроке
+    if (currentLessonId && lessonType !== 'old') {
+        let idForProgress = (lessonType === 'book') ? currentBookId : parentId;
+        let allLessons = [];
+
+        if (lessonType === 'book') {
+            allLessons = booksData[currentBookId].lessons;
+        } else if (lessonType === 'topic') {
+            const topic = findTopic(parentId);
+            if (topic) allLessons = topic.lessons;
+        }
+
+        // Сохраняем все уроки до текущего включительно
+        if (allLessons.length > 0) {
+            const currentIndex = allLessons.findIndex(l => l.id === currentLessonId);
+            if (currentIndex !== -1) {
+                for (let i = 0; i <= currentIndex; i++) {
+                    markLessonDone(idForProgress, allLessons[i].id);
+                }
+            }
+        }
+    }
+
+    // 3. Возвращаемся назад (и интерфейс обновится с новыми галочками)
     if (lessonType === 'topic') {
         openTopic(parentId); 
     } 
@@ -306,10 +359,10 @@ function goBackFromLesson() {
         openBook(currentBookId);
     } 
     else if (lessonType === 'old') {
-        // currentSectionId содержит правильный ID (например, 'birth-page')
         showPage(currentSectionId);
     }
 }
+
 
 function changeLesson(direction) {
     if(!currentLessonId) return;
@@ -325,13 +378,34 @@ function changeLesson(direction) {
 function completeCurrentLesson() {
     if(!currentLessonId) return;
     
-    // Сохраняем прогресс
+    // Отменяем таймер (чтобы не сработал дважды)
+    if (autoSaveTimer) clearTimeout(autoSaveTimer);
+
+    // Мгновенно сохраняем всё, что до текущего
+    let allLessons = [];
     let idForProgress = (lessonType === 'book') ? currentBookId : parentId;
-    markLessonDone(idForProgress, currentLessonId);
-    
+
+    if (lessonType === 'book') {
+        allLessons = booksData[currentBookId].lessons;
+    } else if (lessonType === 'topic') {
+        const topic = findTopic(parentId);
+        if (topic) allLessons = topic.lessons;
+    }
+
+    if (allLessons.length > 0) {
+        const currentIndex = allLessons.findIndex(l => l.id === currentLessonId);
+        if (currentIndex !== -1) {
+            for (let i = 0; i <= currentIndex; i++) {
+                markLessonDone(idForProgress, allLessons[i].id);
+            }
+        }
+    }
+
     // Возвращаемся назад
     goBackFromLesson();
 }
+
+
 
 // ===== РЕНДЕР ПРОФИЛЯ =====
 function renderProfile() {
