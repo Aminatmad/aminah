@@ -180,3 +180,12 @@ body::before {
     .lesson-status { align-self: flex-end; }
     .nav-btn { font-size: 12px; padding: 10px 5px; }
 }
+/* Фикс для кнопки "Назад к урокам" */
+#lesson-back-btn {
+    position: relative !important;
+    z-index: 99999 !important;
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+

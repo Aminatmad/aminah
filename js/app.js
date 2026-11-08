@@ -9,7 +9,7 @@ const sectionOrders = {
 let currentLessonId = 1;
 let currentSectionId = 'islam-start-page';
 let currentBookId = null;
-let lessonType = 'old'; // 'old' or 'book'
+let lessonType = 'old'; 
 let parentId = null;
 
 // ===== ЛОГИКА ПРОГРЕССА И PRO =====
@@ -71,7 +71,6 @@ function openBook(id) {
     `;
     document.getElementById('book-content').innerHTML = html;
 
-    // Рендер уроков внутри книги
     let lessonsHtml = '';
     let progress = getProgress()[id] || { done: [] };
     let proStatus = isPro();
@@ -84,6 +83,7 @@ function openBook(id) {
         if(isLocked) {
             action = `onclick="showProModal()"`;
         } else {
+            // ВАЖНО: передаем 'book'
             action = `onclick="openLesson('book', ${id}, '${lesson.id}')"`;
         }
 
@@ -95,7 +95,7 @@ function openBook(id) {
                     ${lesson.isPro ? '<span class="lesson-badge badge-pro">PRO</span>' : '<span class="lesson-badge badge-free">FREE</span>'}
                 </div>
                 <div class="lesson-status ${isDone ? 'done' : ''}">
-                    ${isLocked ? '🔒' : (isDone ? '✓' : '▶')}
+                    ${lesson.isPro ? '🔒' : (isDone ? '✓' : '▶')}
                 </div>
             </div>
         `;
@@ -116,7 +116,87 @@ function openBook(id) {
     showPage('book-page');
 }
 
-// ===== СТАРАЯ ЛОГИКА УРОКОВ =====
+// ===== ФУНКЦИИ ДЛЯ РАЗДЕЛОВ ЗНАНИЙ (Акыда, Фикх, Сира) =====
+function openSection(id) {
+    const section = sectionsData[id];
+    if (!section) return;
+
+    document.getElementById('section-title').innerText = section.title;
+    document.getElementById('section-desc').innerText = section.desc;
+
+    let topicsHtml = '';
+    section.topics.forEach(topic => {
+        topicsHtml += `
+            <div class="square-card" onclick="openTopic(${topic.id})">
+                <div class="square-icon">
+                    <svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="20" stroke="#d4af37" stroke-width="2.5"/><path d="M32 20V44M20 32H44" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/></svg>
+                </div>
+                <div class="square-title">${topic.title}</div>
+            </div>
+        `;
+    });
+
+    document.getElementById('section-topics').innerHTML = topicsHtml;
+    showPage('section-page');
+}
+
+function openTopic(topicId) {
+    const topic = findTopic(topicId);
+    if (!topic) return;
+
+    document.getElementById('content-title').innerText = topic.title;
+    document.getElementById('content-author').innerText = "Все уроки этого раздела доступны бесплатно";
+    document.getElementById('content-body').innerHTML = ""; 
+
+    let lessonsHtml = '';
+    let progress = getProgress()[topicId] || { done: [] };
+
+    topic.lessons.forEach((lesson, index) => {
+        const isDone = progress.done.includes(lesson.id);
+        
+        // ВАЖНО: передаем 'topic'
+        lessonsHtml += `
+            <div class="lesson-item" onclick="openLesson('topic', ${topicId}, '${lesson.id}')">
+                <div class="lesson-item-info">
+                    <h4>${index + 1}. ${lesson.title}</h4>
+                    <p>${lesson.desc}</p>
+                    <span class="lesson-badge badge-free">FREE</span>
+                </div>
+                <div class="lesson-status ${isDone ? 'done' : ''}">
+                    ${isDone ? '✓' : '▶'}
+                </div>
+            </div>
+        `;
+    });
+
+    const total = topic.lessons.length;
+    const doneCount = progress.done.length;
+    const percent = Math.round((doneCount / total) * 100);
+    
+    lessonsHtml = `
+        <div class="progress-container" style="margin-bottom: 20px;">
+            <div class="progress-bar" style="width: ${percent}%"></div>
+        </div>
+        <p style="font-size: 14px; margin-bottom: 15px; color: var(--text-muted-dark);">Пройдено: ${doneCount} из ${total} (${percent}%)</p>
+    ` + lessonsHtml;
+
+    document.getElementById('content-lessons-list').innerHTML = lessonsHtml;
+    showPage('content-page');
+}
+
+function findTopic(topicId) {
+    for (const sec of Object.values(sectionsData)) {
+        const t = sec.topics.find(x => x.id === topicId);
+        if(t) return t;
+    }
+    return null;
+}
+
+function goBackFromContent() {
+    showPage('section-page');
+}
+
+// ===== УРОКИ =====
 function showPage(pageId) {
     document.querySelectorAll('.page-section').forEach(page => {
         page.classList.remove('active');
@@ -132,38 +212,53 @@ function getSectionByLessonId(id) {
     return null;
 }
 
-
 function openLesson(type, parent, id) {
     let lesson = null;
     let totalLessons = 0;
     let currentIndex = 0;
     let allLessons = [];
 
+    // ЖЕСТКАЯ ПРОВЕРКА НА PRO (только для книг)
+    if (type === 'book') {
+        const book = booksData[parent];
+        if (book) {
+            const targetLesson = book.lessons.find(l => l.id === id);
+            if (targetLesson && targetLesson.isPro && !isPro()) {
+                showProModal(); 
+                return; 
+            }
+        }
+    }
+
+    // ЗАПОМИНАЕМ КОНТЕКСТ (чтобы кнопка Назад знала, куда идти)
     lessonType = type;
     parentId = parent;
+    currentLessonId = id;
 
     if (type === 'old') {
         allLessons = oldLessonsData[parent];
         currentIndex = allLessons.findIndex(l => l.id == id);
         lesson = allLessons[currentIndex];
         totalLessons = allLessons.length;
-    } else if (type === 'book') {
-        // Если это книга из каталога
-        if (booksData[parent]) {
-            allLessons = booksData[parent].lessons;
-        } 
-        // Если это тема из раздела (Акыда/Фикх/Сира)
-        else {
-            const topic = findTopic(parent);
-            if (topic) allLessons = topic.lessons;
-        }
-        
+        currentSectionId = parent + '-page';
+    } 
+    else if (type === 'book') {
+        currentBookId = parent;
+        allLessons = booksData[parent].lessons;
+        currentIndex = allLessons.findIndex(l => l.id === id);
+        lesson = allLessons[currentIndex];
+        totalLessons = allLessons.length;
+    } 
+    else if (type === 'topic') {
+        const topic = findTopic(parent);
+        if (topic) allLessons = topic.lessons;
         currentIndex = allLessons.findIndex(l => l.id === id);
         lesson = allLessons[currentIndex];
         totalLessons = allLessons.length;
     }
-    
-    // ... дальше идет остальной код функции (document.getElementById('lesson-title')... и т.д.)
+
+    if (!lesson) return;
+
     document.getElementById('lesson-title').innerText = lesson.title;
     document.getElementById('lesson-intro').innerText = lesson.desc || lesson.intro; 
     document.getElementById('lesson-content').innerHTML = lesson.content;
@@ -172,12 +267,14 @@ function openLesson(type, parent, id) {
     const nextBtn = document.getElementById('next-btn');
     const completeBtn = document.getElementById('complete-btn');
     
+    // Кнопка "Завершить" показывается только для книг и тем
     if (type === 'old') {
         if(completeBtn) completeBtn.style.display = 'none';
     } else {
         if(completeBtn) completeBtn.style.display = 'block';
     }
 
+    // Навигация Назад/Далее внутри урока
     prevBtn.disabled = (currentIndex <= 0);
     prevBtn.onclick = () => openLesson(type, parent, allLessons[currentIndex - 1].id);
     
@@ -200,19 +297,17 @@ function openLesson(type, parent, id) {
     showPage('lesson-page');
 }
 
+// ЭТА ФУНКЦИЯ ТЕПЕРЬ РАБОТАЕТ ИДЕАЛЬНО (ВОЗВРАЩАЕТ ВСЕГДА ТУДА, ОТКУДА ПРИШЛИ)
 function goBackFromLesson() {
-    if(!currentLessonId) return;
-    
-    if (lessonType === 'book' && currentBookId) {
+    if (lessonType === 'topic') {
+        openTopic(parentId); 
+    } 
+    else if (lessonType === 'book' && currentBookId) {
         openBook(currentBookId);
     } 
     else if (lessonType === 'old') {
-        const section = getSectionByLessonId(currentLessonId);
-        if (section) {
-            showPage(section);
-        } else {
-            showPage('knowledge-page');
-        }
+        // currentSectionId содержит правильный ID (например, 'birth-page')
+        showPage(currentSectionId);
     }
 }
 
@@ -229,8 +324,12 @@ function changeLesson(direction) {
 
 function completeCurrentLesson() {
     if(!currentLessonId) return;
-    markLessonDone(currentBookId, currentLessonId);
-    alert('Урок завершен!');
+    
+    // Сохраняем прогресс
+    let idForProgress = (lessonType === 'book') ? currentBookId : parentId;
+    markLessonDone(idForProgress, currentLessonId);
+    
+    // Возвращаемся назад
     goBackFromLesson();
 }
 
@@ -282,65 +381,3 @@ document.addEventListener('click', function(e) {
         e.target.classList.add('selected');
     }
 });
-// ===== ФУНКЦИИ ДЛЯ РАЗДЕЛОВ ЗНАНИЙ (Акыда, Фикх, Сира) =====
-function openSection(id) {
-    const section = sectionsData[id];
-    if (!section) return;
-
-    document.getElementById('section-title').innerText = section.title;
-    document.getElementById('section-desc').innerText = section.desc;
-
-    let topicsHtml = '';
-    section.topics.forEach(topic => {
-        topicsHtml += `
-            <div class="square-card" onclick="openTopic(${topic.id})">
-                <div class="square-icon">
-                    <svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="20" stroke="#d4af37" stroke-width="2.5"/><path d="M32 20V44M20 32H44" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/></svg>
-                </div>
-                <div class="square-title">${topic.title}</div>
-            </div>
-        `;
-    });
-
-    document.getElementById('section-topics').innerHTML = topicsHtml;
-    showPage('section-page');
-}
-
-function openTopic(topicId) {
-    const topic = findTopic(topicId);
-    if (!topic) return;
-
-    document.getElementById('content-title').innerText = topic.title;
-    document.getElementById('content-author').innerText = "Список уроков";
-    document.getElementById('content-body').innerHTML = ""; 
-
-    let lessonsHtml = '';
-    topic.lessons.forEach((lesson, index) => {
-        // Для уроков разделов мы используем тип 'book' и передаем ID темы как parentId
-        lessonsHtml += `
-            <div class="lesson-item" onclick="openLesson('book', ${topicId}, '${lesson.id}')">
-                <div class="lesson-item-info">
-                    <h4>${index + 1}. ${lesson.title}</h4>
-                    <p>${lesson.desc}</p>
-                    ${lesson.isPro ? '<span class="lesson-badge badge-pro">PRO</span>' : '<span class="lesson-badge badge-free">FREE</span>'}
-                </div>
-                <div class="lesson-status">▶</div>
-            </div>
-        `;
-    });
-
-    document.getElementById('content-lessons-list').innerHTML = lessonsHtml;
-    showPage('content-page');
-}
-
-function findTopic(topicId) {
-    for (const sec of Object.values(sectionsData)) {
-        const t = sec.topics.find(x => x.id === topicId);
-        if(t) return t;
-    }
-    return null;
-}
-
-function goBackFromContent() {
-    showPage('knowledge-page');
-}
