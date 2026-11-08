@@ -150,10 +150,14 @@ function openSection(id) {
 
     let topicsHtml = '';
     section.topics.forEach(topic => {
+        // Отрисовываем карточку с плюсиком (иконка внутри SVG)
         topicsHtml += `
             <div class="square-card" onclick="openTopic(${topic.id})">
                 <div class="square-icon">
-                    <svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="20" stroke="#d4af37" stroke-width="2.5"/><path d="M32 20V44M20 32H44" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/></svg>
+                    <svg viewBox="0 0 64 64" fill="none">
+                        <circle cx="32" cy="32" r="20" stroke="#d4af37" stroke-width="2.5"/>
+                        <path d="M32 20V44M20 32H44" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/>
+                    </svg>
                 </div>
                 <div class="square-title">${topic.title}</div>
             </div>
@@ -163,6 +167,7 @@ function openSection(id) {
     document.getElementById('section-topics').innerHTML = topicsHtml;
     showPage('section-page');
 }
+
 
 function openTopic(topicId) {
     const topic = findTopic(topicId);
@@ -228,8 +233,17 @@ function showPage(pageId) {
         p.classList.remove('active');
     });
     page.classList.add('active');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Если мы переключились на страницу Знаний, восстанавливаем скролл
+    if (pageId === 'knowledge-page') {
+        restoreScroll();
+    } else {
+        // Для всех остальных страниц скроллим наверх
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 }
+
+
 
 function getSectionByLessonId(id) {
     for (const [section, ids] of Object.entries(sectionOrders)) {
@@ -481,5 +495,45 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             openBook(bookId); 
         }
+    }
+});
+// ===== СОХРАНЕНИЕ И ВОССТАНОВЛЕНИЕ ПОЗИЦИИ СКРОЛЛА =====
+
+// 1. Функция, которая вызывается при клике на книгу
+function saveScrollAndOpenBook(bookId) {
+    // Запоминаем текущую позицию прокрутки
+    const scrollPos = window.scrollY || document.documentElement.scrollTop;
+    sessionStorage.setItem('catalog_scroll_pos', scrollPos);
+    
+    // Открываем книгу
+    openBook(bookId);
+}
+
+// 2. Функция, которая возвращает скролл на место при загрузке страницы
+function restoreScroll() {
+    const savedPos = sessionStorage.getItem('catalog_scroll_pos');
+    
+    if (savedPos !== null) {
+        // Ждем долю секунды, чтобы DOM обновился, и скроллим
+        setTimeout(() => {
+            window.scrollTo({
+                top: parseInt(savedPos),
+                behavior: 'instant' // Мгновенный скролл, чтобы не было видно, как страница едет
+            });
+            
+            // После восстановления удаляем позицию, чтобы при следующем заходе с меню 
+            // страница открывалась сверху
+            sessionStorage.removeItem('catalog_scroll_pos');
+        }, 50); 
+    }
+}
+
+
+// 3. Запускаем восстановление при загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+    // Проверяем, открыта ли сейчас страница со списком книг
+    const knowledgePage = document.getElementById('knowledge-page');
+    if (knowledgePage && knowledgePage.classList.contains('active')) {
+        restoreScroll();
     }
 });
