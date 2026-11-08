@@ -11,14 +11,16 @@
     <link rel="manifest" href="manifest.webmanifest">
     <meta name="theme-color" content="#1a3312">
 
+
     <!-- Иконки для разных устройств -->
     <link rel="icon" type="image/jpg" href="images/ico-192.jpg">
     <link rel="apple-touch-icon" href="images/ico-192.jpg">
-    
+   
     <!-- Для iOS (чтобы открывалось как приложение) -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="AMANAH">
+
 
 </head>
 <body>
@@ -27,9 +29,10 @@
             <div class="logo-img" style="background-image: url('images/ico-180.png');"></div>
             <div class="logo-wrapper">
                 <span class="logo-text">AMANAH</span>
-                <span class="logo-subtext">ТВОЯ ЖИЗНЬ — ТВОЙ АМАНАТ</span>
+                <span class="logo-subtext">ТВОЯ РЕЛИГИЯ — ТВОЙ АМАНАТ</span>
             </div>
         </header>
+
 
         <!-- ЗНАНИЯ -->
         <section id="knowledge-page" class="page-section active">
@@ -38,6 +41,7 @@
             </div>
             <h2 class="section-title">Знания</h2>
             <p class="section-subtitle">Изучай основы религии и классические труды.</p>
+
 
             <div class="square-grid">
                 <div class="square-card" onclick="openSection(1)">
@@ -54,71 +58,78 @@
                 </div>
             </div>
 
+
             <div class="section-divider"></div>
+
 
             <h2 class="section-title">Разбор исламских книг</h2>
             <p class="section-subtitle">Изучай классические труды с подробными уроками.</p>
 
+
             <h3 class="block-title" style="margin: 20px 0 15px; font-size: 18px;">Акыда и единобожие</h3>
             <div class="square-grid">
-                <div class="square-card" onclick="openBook(1)">
+                <!-- ЗДЕСЬ ИЗМЕНЕН onclick НА saveScrollAndOpenBook -->
+                <div class="square-card" onclick="saveScrollAndOpenBook(1)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="20" stroke="#d4af37" stroke-width="2.5"/><circle cx="32" cy="32" r="6" fill="#d4af37"/></svg></div>
                     <div class="square-title">Китаб ат-Таухид</div>
                 </div>
-                <div class="square-card" onclick="openBook(2)">
+                <div class="square-card" onclick="saveScrollAndOpenBook(2)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 8L40 24H56L44 36L50 52L32 42L14 52L20 36L8 24H24L32 8Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/></svg></div>
                     <div class="square-title">Аль-Акыда аль-Васитыйя</div>
                 </div>
-                <div class="square-card" onclick="openBook(3)">
+                <div class="square-card" onclick="saveScrollAndOpenBook(3)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="8" fill="#d4af37"/><path d="M32 8V18M32 46V56M8 32H18M46 32H56M15 15L22 22M42 42L49 49M49 15L42 22M22 42L15 49" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/></svg></div>
                     <div class="square-title">Аль-Акыда ат-Тахавийя</div>
                 </div>
             </div>
 
+
             <h3 class="block-title" style="margin: 20px 0 15px; font-size: 18px;">Фикх и поклонение</h3>
             <div class="square-grid">
-                <div class="square-card" onclick="openBook(4)">
+                <div class="square-card" onclick="saveScrollAndOpenBook(4)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M12 16C12 12 16 10 20 12C26 14 32 16 32 16C32 16 38 14 44 12C48 10 52 12 52 16V50C52 52 48 52 44 50C38 48 32 50 32 50C32 50 26 48 20 50C16 52 12 52 12 50V16Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 16V50" stroke="#d4af37" stroke-width="2.5"/></svg></div>
                     <div class="square-title">Важные уроки для всей уммы</div>
                 </div>
-                <div class="square-card" onclick="openBook(5)">
+                <div class="square-card" onclick="saveScrollAndOpenBook(5)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M16 8H40L48 16V56H16V8Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M40 8V16H48M22 28H42M22 36H42M22 44H34" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/></svg></div>
                     <div class="square-title">Умдат аль-Ахкам</div>
                 </div>
-                <div class="square-card" onclick="openBook(6)">
+                <div class="square-card" onclick="saveScrollAndOpenBook(6)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 52C32 52 12 40 12 26C12 19 17 14 24 14C27.5 14 32 17 32 17C32 17 36.5 14 40 14C47 14 52 19 52 26C52 40 32 52 32 52Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 24L33.5 28L38 29L34.5 32L35.5 36L32 34L28.5 36L29.5 32L26 29L30.5 28L32 24Z" fill="#d4af37"/></svg></div>
                     <div class="square-title">Рияд ас-Салихин</div>
                 </div>
-                <div class="square-card" onclick="openBook(7)">
+                <div class="square-card" onclick="saveScrollAndOpenBook(7)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="22" stroke="#d4af37" stroke-width="2.5"/><path d="M32 14V32L42 42" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/></svg></div>
                     <div class="square-title">Сорок хадисов</div>
                 </div>
-                <div class="square-card" onclick="openBook(8)">
+                <div class="square-card" onclick="saveScrollAndOpenBook(8)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 10C32 10 16 30 16 40C16 48.837 23.163 56 32 56C40.837 56 48 48.837 48 40C48 30 32 10 32 10Z" stroke="#d4af37" stroke-width="2.5"/></svg></div>
                     <div class="square-title">Булюг аль-Марам</div>
                 </div>
-                <div class="square-card" onclick="openBook(9)">
+                <div class="square-card" onclick="saveScrollAndOpenBook(9)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 52C32 52 12 40 12 26C12 19 17 14 24 14C27.5 14 32 17 32 17C32 17 36.5 14 40 14C47 14 52 19 52 26C52 40 32 52 32 52Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 24L33.5 28L38 29L34.5 32L35.5 36L32 34L28.5 36L29.5 32L26 29L30.5 28L32 24Z" fill="#d4af37"/></svg></div>
                     <div class="square-title">Аль-Адаб аль-Муфрад</div>
                 </div>
             </div>
 
+
             <h3 class="block-title" style="margin: 20px 0 15px; font-size: 18px;">Сира — жизнеописание Пророка Мухаммада ﷺ</h3>
             <div class="square-grid">
-                <div class="square-card" onclick="openBook(10)">
+                <div class="square-card" onclick="saveScrollAndOpenBook(10)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 20C32 20 24 14 12 14V46C24 46 32 52 32 52C32 52 40 46 52 46V14C40 14 32 20 32 20Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 20V52" stroke="#d4af37" stroke-width="2.5"/><path d="M44 10L45.2 13.8L49 15L45.2 16.2L44 20L42.8 16.2L39 15L42.8 13.8L44 10Z" fill="#d4af37"/></svg></div>
                     <div class="square-title">Запечатанный нектар</div>
                 </div>
-                <div class="square-card" onclick="openBook(11)">
+                <div class="square-card" onclick="saveScrollAndOpenBook(11)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 20C32 20 24 14 12 14V46C24 46 32 52 32 52C32 52 40 46 52 46V14C40 14 32 20 32 20Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 20V52" stroke="#d4af37" stroke-width="2.5"/><path d="M44 10L45.2 13.8L49 15L45.2 16.2L44 20L42.8 16.2L39 15L42.8 13.8L44 10Z" fill="#d4af37"/></svg></div>
                     <div class="square-title">Жизнеописание Пророка</div>
                 </div>
-                <div class="square-card" onclick="openBook(12)">
+                <div class="square-card" onclick="saveScrollAndOpenBook(12)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 20C32 20 24 14 12 14V46C24 46 32 52 32 52C32 52 40 46 52 46V14C40 14 32 20 32 20Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 20V52" stroke="#d4af37" stroke-width="2.5"/><path d="M44 10L45.2 13.8L49 15L45.2 16.2L44 20L42.8 16.2L39 15L42.8 13.8L44 10Z" fill="#d4af37"/></svg></div>
                     <div class="square-title">Пророческая сира</div>
                 </div>
             </div>
         </section>
+
 
         <!-- СТРАНИЦЫ ДЛЯ ОТКРЫТИЯ КНИГ И РАЗДЕЛОВ (скрыты) -->
         <section id="book-page" class="page-section">
@@ -135,6 +146,7 @@
                 <div id="book-lessons-list"></div>
             </div>
         </section>
+
 
         <section id="section-page" class="page-section">
             <div class="back-btn" onclick="showPage('knowledge-page')">
@@ -159,7 +171,8 @@
                 <div id="content-lessons-list"></div>
             </div>
         </section>
-        
+       
+
 
         <!-- УРОК (нужен для отображения урока книги) -->
         <section id="lesson-page" class="page-section">
@@ -182,6 +195,7 @@
         </section>
     </div>
 
+
     <!-- Модалка PRO -->
     <div class="modal-overlay" id="pro-modal">
         <div class="modal-content">
@@ -192,7 +206,9 @@
         </div>
     </div>
 
+
     <div class="mosque-footer"></div>
+
 
     <nav class="bottom-nav">
         <a href="index.html" class="nav-item">
@@ -204,6 +220,7 @@
         <a href="dua.html" class="nav-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg><span>Дуа</span></a>
         <a href="profile.html" class="nav-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Профиль</span></a>
     </nav>
+
 
     <script src="js/data.js"></script>
     <script src="js/app.js"></script>
