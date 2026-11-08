@@ -59,7 +59,7 @@ body::before {
 .epigraph-author { font-size: 14px; font-weight: 600; color: var(--text-muted-dark); text-transform: uppercase; letter-spacing: 1px; }
 .section-title { font-size: 34px; color: var(--gold); margin-bottom: 15px; font-weight: 700; }
 .section-subtitle { font-size: 16px; color: var(--text-light); line-height: 1.6; margin-bottom: 40px; opacity: 0.9; }
-.block-card { background-color: var(--card-bg); border-radius: 16px; padding: 25px; margin-bottom: 25px; box-shadow: 0 8px 25px rgba(0,0,0,0.2); border: 1px solid var(--border-color); }
+.block-card { background-color: var(--card-bg); border-radius: 16px; padding: 25px; margin-bottom: 25px; box-shadow: 0 8px 25px rgba(0,0,0,0.2); border: 1px solid var(--border-color); cursor: pointer; }
 .block-header { margin-bottom: 20px; }
 .block-title { font-size: 22px; color: var(--text-dark); margin-bottom: 8px; font-weight: 700; }
 .block-subtitle { font-size: 15px; color: var(--text-muted-dark); margin-bottom: 15px; font-style: italic; line-height: 1.4; }

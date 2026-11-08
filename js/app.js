@@ -1,4 +1,3 @@
-
 const sectionOrders = {
     'islam-start-page': [1,2,3,4,5,6,7,8,9,10,11,12,13],
     'family-page':      [14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40],
@@ -11,7 +10,7 @@ let currentSectionId = 'islam-start-page';
 let currentBookId = null;
 let lessonType = 'old'; 
 let parentId = null;
-let autoSaveTimer = null; // Переменная для таймера автосохранения
+let autoSaveTimer = null;
 
 // ===== ЛОГИКА ПРОГРЕССА И PRO =====
 function getProgress() {
@@ -63,6 +62,31 @@ function openBook(id) {
     document.getElementById('book-title').innerText = book.title;
     document.getElementById('book-author').innerText = book.author;
     
+    // ПРОВЕРКА: ОТКУДА МЫ ПРИШЛИ
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('from') === 'profile' || window.isFromProfile) {
+        sessionStorage.setItem('amanah_from_profile', 'true');
+    }
+    
+    const isFromProfile = sessionStorage.getItem('amanah_from_profile') === 'true';
+    const backBtn = document.querySelector('#book-page .back-btn');
+    
+    if (backBtn) {
+        if (isFromProfile) {
+            backBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Назад в профиль';
+            backBtn.onclick = () => {
+                sessionStorage.removeItem('amanah_from_profile'); 
+                window.location.href = 'profile.html';
+            };
+        } else {
+            backBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Назад к знаниям';
+            backBtn.onclick = () => {
+                sessionStorage.removeItem('amanah_from_profile');
+                showPage('knowledge-page');
+            };
+        }
+    }
+
     let html = `
         <p><strong>О книге:</strong> ${book.desc}</p>
         <div class="important-block">
@@ -102,7 +126,7 @@ function openBook(id) {
     });
 
     const total = book.lessons.length;
-    const doneCount = progress.done.length;
+    const doneCount = progress.done.filter(id => book.lessons.some(l => l.id === id)).length;
     const percent = Math.round((doneCount / total) * 100);
     
     lessonsHtml = `
@@ -116,7 +140,7 @@ function openBook(id) {
     showPage('book-page');
 }
 
-// ===== ФУНКЦИИ ДЛЯ РАЗДЕЛОВ ЗНАНИЙ =====
+// ===== ФУНКЦИИ ДЛЯ РАЗДЕЛОВ ЗНАНИЙ (Акыда, Фикх, Сира) =====
 function openSection(id) {
     const section = sectionsData[id];
     if (!section) return;
@@ -169,7 +193,7 @@ function openTopic(topicId) {
     });
 
     const total = topic.lessons.length;
-    const doneCount = progress.done.length;
+    const doneCount = progress.done.filter(id => topic.lessons.some(l => l.id === id)).length;
     const percent = Math.round((doneCount / total) * 100);
     
     lessonsHtml = `
@@ -198,10 +222,7 @@ function goBackFromContent() {
 // ===== УРОКИ =====
 function showPage(pageId) {
     const page = document.getElementById(pageId);
-    if (!page) {
-        console.error("Ошибка: Не найден HTML-блок с id=" + pageId);
-        return;
-    }
+    if (!page) return;
 
     document.querySelectorAll('.page-section').forEach(p => {
         p.classList.remove('active');
@@ -217,7 +238,6 @@ function getSectionByLessonId(id) {
     return null;
 }
 
-// Функция сохранения всех предыдущих уроков (для автосохранения и кнопки "Завершить")
 function saveProgressUpToCurrent(type, parent, currentId, allLessons) {
     let idForProgress = (type === 'book') ? parent : (type === 'topic' ? parent : currentSectionId);
     
@@ -239,7 +259,6 @@ function openLesson(type, parent, id) {
     let currentIndex = 0;
     let allLessons = [];
 
-    // ЖЕСТКАЯ ПРОВЕРКА НА PRO
     if (type === 'book') {
         const book = booksData[parent];
         if (book) {
@@ -251,7 +270,6 @@ function openLesson(type, parent, id) {
         }
     }
 
-    // ЗАПОМИНАЕМ КОНТЕКСТ
     lessonType = type;
     parentId = parent;
     currentLessonId = id;
@@ -280,7 +298,6 @@ function openLesson(type, parent, id) {
 
     if (!lesson) return;
 
-    // Выводим контент
     document.getElementById('lesson-title').innerText = lesson.title;
     document.getElementById('lesson-intro').innerText = lesson.desc || lesson.intro; 
     document.getElementById('lesson-content').innerHTML = lesson.content;
@@ -295,7 +312,6 @@ function openLesson(type, parent, id) {
         if(completeBtn) completeBtn.style.display = 'block';
     }
 
-    // --- НАСТРОЙКА КНОПОК НАВИГАЦИИ ---
     prevBtn.disabled = (currentIndex <= 0);
     prevBtn.onclick = () => openLesson(type, parent, allLessons[currentIndex - 1].id);
     
@@ -314,7 +330,6 @@ function openLesson(type, parent, id) {
         }
     }
 
-    // --- АВТОСОХРАНЕНИЕ (ЧЕРЕЗ 1.5 СЕКУНДЫ) ---
     if (autoSaveTimer) clearTimeout(autoSaveTimer);
     autoSaveTimer = setTimeout(() => {
         saveProgressUpToCurrent(type, parent, id, allLessons);
@@ -323,59 +338,12 @@ function openLesson(type, parent, id) {
     showPage('lesson-page');
 }
 
-// ВОЗВРАТ ИЗ УРОКА (сохраняет прогресс перед выходом)
-function goBackFromLesson() {
-    // Отменяем таймер автосохранения
-    if (autoSaveTimer) clearTimeout(autoSaveTimer);
-
-    // Принудительно сохраняем перед выходом
-    if (currentLessonId) {
-        let allLessons = [];
-        let idForProgress = (lessonType === 'book') ? currentBookId : parentId;
-
-        if (lessonType === 'book') {
-            allLessons = booksData[currentBookId].lessons;
-        } else if (lessonType === 'topic') {
-            const topic = findTopic(parentId);
-            if (topic) allLessons = topic.lessons;
-        }
-
-        if (allLessons.length > 0) {
-            saveProgressUpToCurrent(lessonType, parentId, currentLessonId, allLessons);
-        }
-    }
-
-    // ЛОГИКА ВОЗВРАТА
-    if (lessonType === 'topic') {
-        openTopic(parentId); 
-    } 
-    else if (lessonType === 'book' && currentBookId) {
-        openBook(currentBookId);
-    } 
-    else if (lessonType === 'old') {
-        // ЖЕСТКАЯ ПРОВЕРКА ДЛЯ СТАРЫХ РАЗДЕЛОВ
-        if (parentId === 'islam') {
-            showPage('islam-start-page');
-        } else if (parentId === 'family') {
-            showPage('family-page');
-        } else if (parentId === 'birth') {
-            showPage('birth-page');
-        } else if (parentId === 'loss') {
-            showPage('loss-page');
-        } else {
-            // На всякий случай, если это что-то другое
-            const section = getSectionByLessonId(currentLessonId);
-            if (section) showPage(section);
-        }
-    }
-}
+// ВОЗВРАТ ИЗ УРОКА (всегда ведет в список уроков)
 function goBackFromLesson() {
     if (autoSaveTimer) clearTimeout(autoSaveTimer);
 
     if (currentLessonId) {
         let allLessons = [];
-        let idForProgress = (lessonType === 'book') ? currentBookId : parentId;
-
         if (lessonType === 'book') {
             allLessons = booksData[currentBookId].lessons;
         } else if (lessonType === 'topic') {
@@ -395,21 +363,16 @@ function goBackFromLesson() {
         openBook(currentBookId);
     } 
     else if (lessonType === 'old') {
-        if (parentId === 'islam') {
-            showPage('islam-start-page');
-        } else if (parentId === 'family') {
-            showPage('family-page');
-        } else if (parentId === 'birth') {
-            showPage('birth-page');
-        } else if (parentId === 'loss') {
-            showPage('loss-page');
-        } else {
+        if (parentId === 'islam') showPage('islam-start-page');
+        else if (parentId === 'family') showPage('family-page');
+        else if (parentId === 'birth') showPage('birth-page');
+        else if (parentId === 'loss') showPage('loss-page');
+        else {
             const section = getSectionByLessonId(currentLessonId);
             if (section) showPage(section);
         }
     }
 }
-
 
 function changeLesson(direction) {
     if(!currentLessonId) return;
@@ -436,20 +399,41 @@ function renderProfile() {
 
     for (const [bookId, book] of Object.entries(booksData)) {
         const bProgress = progress[bookId] || { done: [], last: null };
-        const doneCount = bProgress.done.length;
+        
+        const validDoneIds = book.lessons.map(l => l.id);
+        const doneCount = bProgress.done.filter(id => validDoneIds.includes(id)).length;
+        
         totalDone += doneCount;
         const percent = Math.round((doneCount / book.lessons.length) * 100);
 
+        // Ссылки для кнопок (передаем from=profile)
+        let targetAction = `window.location.href='catalog.html?book=${bookId}&from=profile'`; 
+        let btnText = "Начать";
+        
+        if (bProgress.last && validDoneIds.includes(bProgress.last)) {
+            targetAction = `window.location.href='catalog.html?book=${bookId}&lesson=${bProgress.last}&from=profile'`;
+            btnText = "Продолжить";
+        }
+
         html += `
-            <div class="block-card" style="margin-bottom: 15px; padding: 15px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <div class="block-card" style="margin-bottom: 15px; padding: 15px; display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
                     <h4 style="color: var(--text-dark); margin: 0;">${book.title}</h4>
-                    <span style="font-size: 13px; color: var(--text-muted-dark);">${doneCount}/${book.lessons.length}</span>
+                    <span style="font-size: 13px; color: var(--text-muted-dark); font-weight: bold;">${doneCount}/${book.lessons.length}</span>
                 </div>
-                <div class="progress-container">
+                
+                <div class="progress-container" style="margin-top: 0;">
                     <div class="progress-bar" style="width: ${percent}%"></div>
                 </div>
-                ${bProgress.last ? `<p style="font-size: 12px; margin-top: 8px; color: var(--text-muted-dark);">Последний урок: ${bProgress.last}</p>` : ''}
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
+                    <span style="font-size: 12px; color: var(--text-muted-dark);">
+                        ${bProgress.last && validDoneIds.includes(bProgress.last) ? 'Последний урок: ' + bProgress.last : ''}
+                    </span>
+                    <button onclick="${targetAction}" style="background: var(--bg-color); color: var(--gold); border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: inherit;">
+                        ${btnText}
+                    </button>
+                </div>
             </div>
         `;
     }
@@ -458,7 +442,10 @@ function renderProfile() {
         html = `<div class="important-block" style="text-align: center;">Вы еще не начали обучение. Перейдите в раздел "Знания" и выберите книгу!</div>` + html;
     }
 
-    document.getElementById('profile-content').innerHTML = html;
+    const profileEl = document.getElementById('profile-content');
+    if (profileEl) {
+        profileEl.innerHTML = html;
+    }
 }
 
 const originalShowPage = showPage;
@@ -474,5 +461,25 @@ document.addEventListener('click', function(e) {
         let parent = e.target.parentElement;
         parent.querySelectorAll('.quiz-option').forEach(opt => opt.classList.remove('selected'));
         e.target.classList.add('selected');
+    }
+});
+
+// ===== АВТОЗАПУСК ИЗ ПРОФИЛЯ =====
+document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const bookId = urlParams.get('book');
+    const lessonId = urlParams.get('lesson');
+    const fromProfile = urlParams.get('from') === 'profile';
+
+    if (bookId) {
+        if (fromProfile) {
+            window.isFromProfile = true; // Запоминаем для openBook
+        }
+        
+        if (lessonId) {
+            openLesson('book', bookId, lessonId); 
+        } else {
+            openBook(bookId); 
+        }
     }
 });
