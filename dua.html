@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1a3312">
+    <title>AMANAH - Дуа</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header" onclick="window.location.href='index.html'">
+            <div class="logo-img"></div>
+            <div class="logo-wrapper">
+                <span class="logo-text">AMANAH</span>
+                <span class="logo-subtext">ТВОЯ ЖИЗНЬ — ТВОЙ АМАНАТ</span>
+            </div>
+        </header>
+
+        <!-- ЭКРАН 1: СПИСОК РАЗДЕЛОВ (ПЛАШКИ) -->
+        <section id="dua-main-page" class="page-section active">
+            <div class="greeting">
+                <h1>Дуа и Азкары</h1>
+                <p>Обращение к Всевышнему в любых ситуациях</p>
+            </div>
+
+            <main class="list-layout">
+                <div class="card" onclick="openDuaSection('morning')">
+                    <div class="icon-box"><svg viewBox="0 0 64 64" fill="none"><path d="M32 52C32 52 12 40 12 26C12 19 17 14 24 14C27.5 14 32 17 32 17C32 17 36.5 14 40 14C47 14 52 19 52 26C52 40 32 52 32 52Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><circle cx="32" cy="30" r="6" fill="#d4af37"/></svg></div>
+                    <div class="card-content"><h3>Утренние азкары</h3><p>Дуа для благословенного начала дня</p></div>
+                </div>
+
+                <div class="card" onclick="alert('Раздел в разработке')">
+                    <div class="icon-box"><svg viewBox="0 0 64 64" fill="none"><path d="M32 52C32 52 12 40 12 26C12 19 17 14 24 14C27.5 14 32 17 32 17C32 17 36.5 14 40 14C47 14 52 19 52 26C52 40 32 52 32 52Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 22V38M24 30H40" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+                    <div class="card-content"><h3>Вечерние азкары</h3><p>Дуа для защиты и спокойствия перед сном</p></div>
+                </div>
+
+                <div class="card" onclick="alert('Раздел в разработке')">
+                    <div class="icon-box"><svg viewBox="0 0 64 64" fill="none"><path d="M32 8V52" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/><path d="M12 18H52" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/><path d="M12 18L6 32C6 35.314 8.686 38 12 38C15.314 38 18 35.314 18 32L12 18Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M52 18L46 32C46 35.314 48.686 38 52 38C55.314 38 58 35.314 58 32L52 18Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M22 52H42" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+                    <div class="card-content"><h3>Дуа после обязательных молитв</h3><p>Поминание Аллаха после намаза</p></div>
+                </div>
+
+                <div class="card" onclick="alert('Раздел в разработке')">
+                    <div class="icon-box"><svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="20" stroke="#d4af37" stroke-width="2.5"/><circle cx="32" cy="32" r="6" fill="#d4af37"/></svg></div>
+                    <div class="card-content"><h3>Дуа на все случаи жизни</h3><p>Повседневные просьбы и благодарности</p></div>
+                </div>
+
+                <div class="card" onclick="alert('Раздел в разработке')">
+                    <div class="icon-box"><svg viewBox="0 0 64 64" fill="none"><path d="M32 10C32 10 16 30 16 40C16 48.837 23.163 56 32 56C40.837 56 48 48.837 48 40C48 30 32 10 32 10Z" stroke="#d4af37" stroke-width="2.5"/></svg></div>
+                    <div class="card-content"><h3>Дуа для покаяния (истигфар)</h3><p>Просьбы о прощении грехов</p></div>
+                </div>
+
+                <div class="card" onclick="alert('Раздел в разработке')">
+                    <div class="icon-box"><svg viewBox="0 0 64 64" fill="none"><path d="M32 56C32 56 8 42 8 24C8 15.163 15.163 8 24 8C28.418 8 32 10.5 32 10.5C32 10.5 35.582 8 40 8C48.837 8 56 15.163 56 24C56 42 32 56 32 56Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 24L33.5 28L38 29L34.5 32L35.5 36L32 34L28.5 36L29.5 32L26 29L30.5 28L32 24Z" fill="#d4af37"/></svg></div>
+                    <div class="card-content"><h3>От тревоги, грусти и долгов</h3><p>Дуа для успокоения души и облегчения</p></div>
+                </div>
+
+                <div class="card" onclick="alert('Раздел в разработке')">
+                    <div class="icon-box"><svg viewBox="0 0 64 64" fill="none"><path d="M32 8L40 24H56L44 36L50 52L32 42L14 52L20 36L8 24H24L32 8Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/></svg></div>
+                    <div class="card-content"><h3>Защита от зла и сглаза</h3><p>Дуа от шайтана, зависти и порчи</p></div>
+                </div>
+
+                <div class="card" onclick="alert('Раздел в разработке')">
+                    <div class="icon-box"><svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="22" stroke="#d4af37" stroke-width="2.5"/><path d="M32 14V32L42 42" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+                    <div class="card-content"><h3>Знания и облегчение в делах</h3><p>Дуа для успеха и мудрости</p></div>
+                </div>
+
+                <div class="card" onclick="alert('Раздел в разработке')">
+                    <div class="icon-box"><svg viewBox="0 0 64 64" fill="none"><path d="M16 8H40L48 16V56H16V8Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M40 8V16H48M22 28H42M22 36H42M22 44H34" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+                    <div class="card-content"><h3>О семье, родителях и потомстве</h3><p>Молитвы за близких и детей</p></div>
+                </div>
+
+                <div class="card" onclick="alert('Раздел в разработке')">
+                    <div class="icon-box"><svg viewBox="0 0 64 64" fill="none"><path d="M32 20C32 20 24 14 12 14V46C24 46 32 52 32 52C32 52 40 46 52 46V14C40 14 32 20 32 20Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 20V52" stroke="#d4af37" stroke-width="2.5"/><path d="M44 10L45.2 13.8L49 15L45.2 16.2L44 20L42.8 16.2L39 15L42.8 13.8L44 10Z" fill="#d4af37"/></svg></div>
+                    <div class="card-content"><h3>Здоровье и исцеление</h3><p>Дуа от болезней и для укрепления тела</p></div>
+                </div>
+
+                <div class="card" onclick="alert('Раздел в разработке')">
+                    <div class="icon-box"><svg viewBox="0 0 64 64" fill="none"><path d="M32 52C32 52 12 40 12 26C12 19 17 14 24 14C27.5 14 32 17 32 17C32 17 36.5 14 40 14C47 14 52 19 52 26C52 40 32 52 32 52Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 24L33.5 28L38 29L34.5 32L35.5 36L32 34L28.5 36L29.5 32L26 29L30.5 28L32 24Z" fill="#d4af37"/></svg></div>
+                    <div class="card-content"><h3>Укрепление имана</h3><p>Дуа для укрепления веры в сердце</p></div>
+                </div>
+            </main>
+        </section>
+
+        <!-- ЭКРАН 2: ВНУТРИ РАЗДЕЛА (АККОРДЕОН) -->
+        <section id="dua-inner-page" class="page-section">
+            <div class="back-btn" onclick="closeDuaSection()">
+                <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Назад ко всем разделам
+            </div>
+            
+            <h2 class="section-title" id="dua-section-title">Название раздела</h2>
+            <p class="section-subtitle" id="dua-section-desc">Описание</p>
+
+            <div id="dua-list-container"></div>
+        </section>
+    </div>
+
+    <div class="mosque-footer"></div>
+
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Главная</span>
+        </a>
+        <a href="catalog.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Знания</span>
+        </a>
+        <a href="dua.html" class="nav-item active">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg><span>Дуа</span>
+        </a>
+        <a href="profile.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Профиль</span>
+        </a>
+    </nav>
+
+    <script>
+        // Теперь у каждого элемента есть короткий `benefitTitle` для заголовка
+        const duasData = {
+            morning: {
+                title: "Утренние азкары",
+                desc: "Дуа для благословенного начала дня",
+                items: [
+                    {
+                        title: "Дуа Адама (мир ему) о прощении",
+                        benefitTitle: "Для искреннего покаяния и исправления ошибок", // То, что ты просила
+                        arabic: "رَبَّنَا ظَلَمْنَا أَنفُسَنَا وَإِن لَّمْ تَغْفِرْ لَنَا وَتَرْحَمْنَا لَنَكُونَنَّ مِنَ الْخَاسِرِينَ",
+                        translit: "Раббана золямна анфусана ва иллям тагфир ляна ва тархамна лянакунанна миналь-хасирин",
+                        translate: "«Господь наш! Мы поступили несправедливо по отношению к самим себе. Если Ты не простишь нас и не смилостивишься над нами, то мы непременно окажемся в числе потерпевших убыток».",
+                        story: "Это первая мольба о прощении в истории человечества. Адам и Хавва (мир им) произнесли её после того, как вкусили запретный плод, осознали свою ошибку и искренне раскаялись.",
+                        benefit: "Учит нас брать ответственность за свои ошибки, не отчаиваться и сразу обращаться к Аллаху с покаянием.",
+                        source: "Коран, сура 7 «Аль-Араф», аят 23"
+                    },
+                    {
+                        title: "Дуа Юнуса (мир ему) в чреве кита",
+                        benefitTitle: "Для выхода из безвыходных ситуаций", // Коротко и понятно
+                        arabic: "لَّا إِلَٰهَ إِلَّا أَنتَ سُبْحَانَكَ إِنِّي كُنتُ مِنَ الظَّالِمِينَ",
+                        translit: "Ля иляха илля анта субханака инни кунту миназ-залимин",
+                        translate: "«Нет божества, кроме Тебя! Пречист Ты! Поистине, я был одним из несправедливых!».",
+                        story: "Пророк Юнус (мир ему) оказался в чреве огромного кита в кромешной тьме. Он не потерял надежду, а начал повторять эти слова, признавая величие Аллаха и свою слабость.",
+                        benefit: "Это дуа для снятия стресса и печали. Хадис гласит: «Кто бы ни произнес эту мольбу, Аллах ответит ему».",
+                        source: "Коран, сура 21 «Аль-Анбия», аят 87; ат-Тирмизи"
+                    }
+                ]
+            }
+        };
+
+        function openDuaSection(sectionId) {
+            const section = duasData[sectionId];
+            if (!section) return;
+
+            document.getElementById('dua-section-title').innerText = section.title;
+            document.getElementById('dua-section-desc').innerText = section.desc;
+
+            let html = '';
+            section.items.forEach(dua => {
+                // Вот здесь мы выводим ДВА заголовка: Название и Краткая польза
+                html += `
+                    <div class="dua-item">
+                        <div class="dua-header" onclick="toggleDua(this)">
+                            <div class="dua-header-text">
+                                <span class="dua-title">${dua.title}</span>
+                                <span class="dua-subtitle">${dua.benefitTitle}</span>
+                            </div>
+                            <span class="arrow">▼</span>
+                        </div>
+                        <div class="dua-content">
+                            <div class="arabic-text">${dua.arabic}</div>
+                            <div class="transliteration">${dua.translit}</div>
+                            <div class="translation">${dua.translate}</div>
+                            
+                            <div class="dua-info-block">
+                                <strong>История</strong>
+                                ${dua.story}
+                            </div>
+                            <div class="dua-info-block" style="background: #fff3cd; border-left-color: #ffc107;">
+                                <strong>Польза</strong>
+                                ${dua.benefit}
+                            </div>
+                            
+                            <div class="source">Источник: ${dua.source}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('dua-list-container').innerHTML = html;
+            
+            document.getElementById('dua-main-page').classList.remove('active');
+            document.getElementById('dua-inner-page').classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function closeDuaSection() {
+            document.getElementById('dua-inner-page').classList.remove('active');
+            document.getElementById('dua-main-page').classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleDua(element) {
+            const parentItem = element.parentElement;
+            parentItem.classList.toggle('active');
+        }
+    </script>
+</body>
+</html>

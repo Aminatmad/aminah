@@ -188,4 +188,133 @@ body::before {
     visibility: visible !important;
     opacity: 1 !important;
 }
+/* ===== СТИЛИ ДЛЯ ДУА (АККОРДЕОН) ===== */
+.dua-item {
+    background-color: var(--inner-card-bg);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    border: 1px solid #e0e0e0;
+    overflow: hidden;
+}
 
+.dua-header {
+    padding: 15px 20px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    color: var(--text-dark);
+    background: #fff;
+    transition: background 0.2s;
+}
+
+.dua-header:hover {
+    background: #faf8f1;
+}
+
+.dua-header .arrow {
+    transition: transform 0.3s ease;
+    color: var(--gold);
+}
+
+.dua-item.active .dua-header .arrow {
+    transform: rotate(180deg);
+}
+
+.dua-content {
+    display: none; /* Блок скрыт по умолчанию */
+    background-color: #fcfbf8;
+    padding: 20px;
+    border-top: 1px solid #eee;
+    animation: fadeIn 0.3s ease; /* Оставим только плавное появление текста */
+}
+
+/* Когда добавляется класс active, блок просто показывается */
+.dua-item.active .dua-content {
+    display: block; 
+}
+
+/* Анимация для текста внутри */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+
+
+/* Тексты внутри дуа */
+.dua-content .arabic-text {
+    font-size: 26px;
+    text-align: right;
+    margin-bottom: 15px;
+    color: var(--text-dark);
+    font-family: serif;
+    direction: rtl;
+    line-height: 1.8;
+}
+
+.dua-content .transliteration {
+    font-style: italic;
+    color: #555;
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 15px;
+}
+
+.dua-content .translation {
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f4f1e6;
+    border-left: 4px solid var(--gold);
+    border-radius: 4px;
+    line-height: 1.6;
+}
+
+/* Блок с историей и пользой */
+.dua-info-block {
+    background: #eef2ec;
+    border-left: 4px solid var(--bg-color);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    color: var(--text-dark);
+    line-height: 1.6;
+}
+
+.dua-info-block strong {
+    color: var(--text-muted-dark);
+    display: block;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 1px;
+}
+
+.dua-content .source {
+    font-size: 13px;
+    color: #666;
+    font-style: italic;
+    text-align: right;
+}
+/* Добавляем стили для подзаголовка (пользы) в аккордеоне */
+.dua-header-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.dua-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.dua-subtitle {
+    font-size: 13px;
+    color: var(--text-muted-dark);
+    font-weight: 500;
+}
