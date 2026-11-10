@@ -366,6 +366,7 @@ body::before {
         width: 100%;
     }
 }
+
 /* ===== СТИЛИ ДЛЯ КОМПАСА ===== */
 .compass-container {
     position: relative;
@@ -374,7 +375,7 @@ body::before {
     margin: 0 auto;
 }
 
-/* Зеленая метка, всегда смотрит вверх */
+/* Зеленая метка (всегда наверху) */
 .compass-target {
     position: absolute;
     top: -15px;
@@ -385,32 +386,18 @@ body::before {
     background: #4CAF50;
     border-radius: 3px;
     z-index: 10;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
 }
 
-/* Вращающийся блок (круг + стрелка) */
+/* Вращающаяся шкала вместе с Каабой */
 .compass-dial {
     position: relative;
     width: 100%;
     height: 100%;
     transition: transform 0.1s linear;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    z-index: 1;
 }
 
-/* Стрелка внутри круга */
-.compass-needle {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    /* Центрируем стрелку */
-    transform: translate(-50%, -50%);
-    /* Точка вращения стрелки (хвост) */
-    transform-origin: center center;
-    /* Изначально стрелка смотрит вверх (на 0 градусов) */
-    margin-top: -30px; /* Сдвигаем вверх, чтобы хвост был в центре */
-}
 
 
 /* Вращение стрелки (мы будем крутить её один раз через JS) */

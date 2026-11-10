@@ -79,14 +79,13 @@
             <p id="qibla-direction-text" style="color: #ddd; font-size: 14px; margin-bottom: 20px;">Поверните телефон...</p>
            
             <!-- Контейнер для компаса -->
-            <div class="compass-container">
-                
-                <!-- Зеленая метка (неподвижная) -->
+        <div class="compass-container">
+                <!-- Неподвижная зеленая метка сверху -->
                 <div class="compass-target"></div>
 
-                <!-- Вращающийся блок: шкала + стрелка -->
+                <!-- Вращающаяся шкала с Каабой (id="compass-dial") -->
                 <div class="compass-dial" id="compass-dial">
-                    <svg viewBox="0 0 200 200" style="width: 100%; height: 100%;">
+                    <svg viewBox="0 0 200 200" style="width: 100%; height: 100%; filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.3));">
                         <!-- Внешнее белое кольцо -->
                         <circle cx="100" cy="100" r="95" fill="#ffffff" stroke="#d4af37" stroke-width="2"/>
                         <!-- Внутренний бежевый круг -->
@@ -103,19 +102,19 @@
                         <text x="185" y="105" fill="#666" font-size="8" text-anchor="middle">90°</text>
                         <text x="100" y="188" fill="#666" font-size="8" text-anchor="middle">180°</text>
                         <text x="15" y="105" fill="#666" font-size="8" text-anchor="middle">270°</text>
+
+                        <!-- ИКОНКА КААБЫ (Прикреплена к 0°, будет крутиться вместе со шкалой) -->
+                        <!-- Белый кружок-подложка для Каабы, чтобы она выделялась на фоне -->
+                        <circle cx="100" cy="100" r="18" fill="#ffffff" stroke="#d4af37" stroke-width="2"/>
+                        <!-- Сама Кааба (черный квадрат с золотой полоской) -->
+                        <rect x="90" y="90" width="20" height="20" rx="2" fill="#1a1a1a"/>
+                        <rect x="90" y="97" width="20" height="4" fill="#d4af37"/>
+                        <!-- Золотая стрелочка, указывающая от Каабы к краю -->
+                        <path d="M95 80 L100 65 L105 80 Z" fill="#d4af37"/>
                     </svg>
-
-                    <!-- СТРЕЛКА С КААБОЙ (Внутри шкалы, смотрит вверх) -->
-                    <div class="compass-needle" id="needle-qibla">
-                        <svg viewBox="0 0 100 160" style="width: 40px; height: 120px; filter: drop-shadow(0px 5px 5px rgba(0,0,0,0.3));">
-                            <rect x="35" y="10" width="30" height="30" rx="3" fill="#1a1a1a" stroke="#d4af37" stroke-width="2"/>
-                            <rect x="35" y="22" width="30" height="5" fill="#d4af37"/>
-                            <path d="M50 150 L80 50 L50 65 L20 50 Z" fill="#d4af37"/>
-                        </svg>
-                    </div>
                 </div>
+            </div> 
 
-            </div>
            
             <div style="margin-top: 15px; font-size: 14px;">
                 Угол Киблы: <strong id="qibla-angle-text" style="color: var(--gold);">--</strong>°
