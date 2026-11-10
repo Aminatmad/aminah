@@ -8,7 +8,7 @@ const sectionOrders = {
 let currentLessonId = 1;
 let currentSectionId = 'islam-start-page';
 let currentBookId = null;
-let lessonType = 'old'; 
+let lessonType = 'old';
 let parentId = null;
 let autoSaveTimer = null;
 
@@ -61,21 +61,21 @@ function openBook(id) {
 
     document.getElementById('book-title').innerText = book.title;
     document.getElementById('book-author').innerText = book.author;
-    
+   
     // ПРОВЕРКА: ОТКУДА МЫ ПРИШЛИ
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('from') === 'profile' || window.isFromProfile) {
         sessionStorage.setItem('amanah_from_profile', 'true');
     }
-    
+   
     const isFromProfile = sessionStorage.getItem('amanah_from_profile') === 'true';
     const backBtn = document.querySelector('#book-page .back-btn');
-    
+   
     if (backBtn) {
         if (isFromProfile) {
             backBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Назад в профиль';
             backBtn.onclick = () => {
-                sessionStorage.removeItem('amanah_from_profile'); 
+                sessionStorage.removeItem('amanah_from_profile');
                 window.location.href = 'profile.html';
             };
         } else {
@@ -103,7 +103,7 @@ function openBook(id) {
     book.lessons.forEach((lesson, index) => {
         const isDone = progress.done.includes(lesson.id);
         const isLocked = lesson.isPro && !proStatus;
-        
+       
         let action = '';
         if(isLocked) {
             action = `onclick="showProModal()"`;
@@ -128,7 +128,7 @@ function openBook(id) {
     const total = book.lessons.length;
     const doneCount = progress.done.filter(id => book.lessons.some(l => l.id === id)).length;
     const percent = Math.round((doneCount / total) * 100);
-    
+   
     lessonsHtml = `
         <div class="progress-container" style="margin-bottom: 20px;">
             <div class="progress-bar" style="width: ${percent}%"></div>
@@ -150,7 +150,6 @@ function openSection(id) {
 
     let topicsHtml = '';
     section.topics.forEach(topic => {
-        // Отрисовываем карточку с плюсиком (иконка внутри SVG)
         topicsHtml += `
             <div class="square-card" onclick="openTopic(${topic.id})">
                 <div class="square-icon">
@@ -168,21 +167,20 @@ function openSection(id) {
     showPage('section-page');
 }
 
-
 function openTopic(topicId) {
     const topic = findTopic(topicId);
     if (!topic) return;
 
     document.getElementById('content-title').innerText = topic.title;
     document.getElementById('content-author').innerText = "Все уроки этого раздела доступны бесплатно";
-    document.getElementById('content-body').innerHTML = ""; 
+    document.getElementById('content-body').innerHTML = "";
 
     let lessonsHtml = '';
     let progress = getProgress()[topicId] || { done: [] };
 
     topic.lessons.forEach((lesson, index) => {
         const isDone = progress.done.includes(lesson.id);
-        
+       
         lessonsHtml += `
             <div class="lesson-item" onclick="openLesson('topic', ${topicId}, '${lesson.id}')">
                 <div class="lesson-item-info">
@@ -200,7 +198,7 @@ function openTopic(topicId) {
     const total = topic.lessons.length;
     const doneCount = progress.done.filter(id => topic.lessons.some(l => l.id === id)).length;
     const percent = Math.round((doneCount / total) * 100);
-    
+   
     lessonsHtml = `
         <div class="progress-container" style="margin-bottom: 20px;">
             <div class="progress-bar" style="width: ${percent}%"></div>
@@ -234,16 +232,12 @@ function showPage(pageId) {
     });
     page.classList.add('active');
 
-    // Если мы переключились на страницу Знаний, восстанавливаем скролл
     if (pageId === 'knowledge-page') {
         restoreScroll();
     } else {
-        // Для всех остальных страниц скроллим наверх
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 }
-
-
 
 function getSectionByLessonId(id) {
     for (const [section, ids] of Object.entries(sectionOrders)) {
@@ -254,7 +248,7 @@ function getSectionByLessonId(id) {
 
 function saveProgressUpToCurrent(type, parent, currentId, allLessons) {
     let idForProgress = (type === 'book') ? parent : (type === 'topic' ? parent : currentSectionId);
-    
+   
     if (type === 'book' || type === 'topic') {
         const idx = allLessons.findIndex(l => l.id === currentId);
         if (idx !== -1) {
@@ -278,8 +272,8 @@ function openLesson(type, parent, id) {
         if (book) {
             const targetLesson = book.lessons.find(l => l.id === id);
             if (targetLesson && targetLesson.isPro && !isPro()) {
-                showProModal(); 
-                return; 
+                showProModal();
+                return;
             }
         }
     }
@@ -294,14 +288,14 @@ function openLesson(type, parent, id) {
         lesson = allLessons[currentIndex];
         totalLessons = allLessons.length;
         currentSectionId = parent + '-page';
-    } 
+    }
     else if (type === 'book') {
         currentBookId = parent;
         allLessons = booksData[parent].lessons;
         currentIndex = allLessons.findIndex(l => l.id === id);
         lesson = allLessons[currentIndex];
         totalLessons = allLessons.length;
-    } 
+    }
     else if (type === 'topic') {
         const topic = findTopic(parent);
         if (topic) allLessons = topic.lessons;
@@ -313,13 +307,13 @@ function openLesson(type, parent, id) {
     if (!lesson) return;
 
     document.getElementById('lesson-title').innerText = lesson.title;
-    document.getElementById('lesson-intro').innerText = lesson.desc || lesson.intro; 
+    document.getElementById('lesson-intro').innerText = lesson.desc || lesson.intro;
     document.getElementById('lesson-content').innerHTML = lesson.content;
 
     const prevBtn = document.getElementById('prev-btn');
     const nextBtn = document.getElementById('next-btn');
     const completeBtn = document.getElementById('complete-btn');
-    
+   
     if (type === 'old') {
         if(completeBtn) completeBtn.style.display = 'none';
     } else {
@@ -328,14 +322,14 @@ function openLesson(type, parent, id) {
 
     prevBtn.disabled = (currentIndex <= 0);
     prevBtn.onclick = () => openLesson(type, parent, allLessons[currentIndex - 1].id);
-    
+   
     if (currentIndex >= totalLessons - 1) {
         nextBtn.disabled = true;
         nextBtn.onclick = null;
     } else {
         const nextLesson = allLessons[currentIndex + 1];
         const isNextLocked = (type === 'book') && nextLesson.isPro && !isPro();
-        
+       
         nextBtn.disabled = false;
         if (isNextLocked) {
             nextBtn.onclick = () => showProModal();
@@ -352,7 +346,6 @@ function openLesson(type, parent, id) {
     showPage('lesson-page');
 }
 
-// ВОЗВРАТ ИЗ УРОКА (всегда ведет в список уроков)
 function goBackFromLesson() {
     if (autoSaveTimer) clearTimeout(autoSaveTimer);
 
@@ -371,11 +364,11 @@ function goBackFromLesson() {
     }
 
     if (lessonType === 'topic') {
-        openTopic(parentId); 
-    } 
+        openTopic(parentId);
+    }
     else if (lessonType === 'book' && currentBookId) {
         openBook(currentBookId);
-    } 
+    }
     else if (lessonType === 'old') {
         if (parentId === 'islam') showPage('islam-start-page');
         else if (parentId === 'family') showPage('family-page');
@@ -413,17 +406,16 @@ function renderProfile() {
 
     for (const [bookId, book] of Object.entries(booksData)) {
         const bProgress = progress[bookId] || { done: [], last: null };
-        
+       
         const validDoneIds = book.lessons.map(l => l.id);
         const doneCount = bProgress.done.filter(id => validDoneIds.includes(id)).length;
-        
+       
         totalDone += doneCount;
         const percent = Math.round((doneCount / book.lessons.length) * 100);
 
-        // Ссылки для кнопок (передаем from=profile)
-        let targetAction = `window.location.href='catalog.html?book=${bookId}&from=profile'`; 
+        let targetAction = `window.location.href='catalog.html?book=${bookId}&from=profile'`;
         let btnText = "Начать";
-        
+       
         if (bProgress.last && validDoneIds.includes(bProgress.last)) {
             targetAction = `window.location.href='catalog.html?book=${bookId}&lesson=${bProgress.last}&from=profile'`;
             btnText = "Продолжить";
@@ -435,11 +427,11 @@ function renderProfile() {
                     <h4 style="color: var(--text-dark); margin: 0;">${book.title}</h4>
                     <span style="font-size: 13px; color: var(--text-muted-dark); font-weight: bold;">${doneCount}/${book.lessons.length}</span>
                 </div>
-                
+               
                 <div class="progress-container" style="margin-top: 0;">
                     <div class="progress-bar" style="width: ${percent}%"></div>
                 </div>
-                
+               
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
                     <span style="font-size: 12px; color: var(--text-muted-dark);">
                         ${bProgress.last && validDoneIds.includes(bProgress.last) ? 'Последний урок: ' + bProgress.last : ''}
@@ -487,53 +479,167 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (bookId) {
         if (fromProfile) {
-            window.isFromProfile = true; // Запоминаем для openBook
+            window.isFromProfile = true;
         }
-        
+       
         if (lessonId) {
-            openLesson('book', bookId, lessonId); 
+            openLesson('book', bookId, lessonId);
         } else {
-            openBook(bookId); 
+            openBook(bookId);
         }
     }
 });
-// ===== СОХРАНЕНИЕ И ВОССТАНОВЛЕНИЕ ПОЗИЦИИ СКРОЛЛА =====
 
-// 1. Функция, которая вызывается при клике на книгу
+// ===== СОХРАНЕНИЕ И ВОССТАНОВЛЕНИЕ ПОЗИЦИИ СКРОЛЛА =====
 function saveScrollAndOpenBook(bookId) {
-    // Запоминаем текущую позицию прокрутки
     const scrollPos = window.scrollY || document.documentElement.scrollTop;
     sessionStorage.setItem('catalog_scroll_pos', scrollPos);
-    
-    // Открываем книгу
     openBook(bookId);
 }
 
-// 2. Функция, которая возвращает скролл на место при загрузке страницы
 function restoreScroll() {
     const savedPos = sessionStorage.getItem('catalog_scroll_pos');
-    
     if (savedPos !== null) {
-        // Ждем долю секунды, чтобы DOM обновился, и скроллим
         setTimeout(() => {
             window.scrollTo({
                 top: parseInt(savedPos),
-                behavior: 'instant' // Мгновенный скролл, чтобы не было видно, как страница едет
+                behavior: 'instant'
             });
-            
-            // После восстановления удаляем позицию, чтобы при следующем заходе с меню 
-            // страница открывалась сверху
             sessionStorage.removeItem('catalog_scroll_pos');
-        }, 50); 
+        }, 50);
     }
 }
 
-
-// 3. Запускаем восстановление при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
-    // Проверяем, открыта ли сейчас страница со списком книг
     const knowledgePage = document.getElementById('knowledge-page');
     if (knowledgePage && knowledgePage.classList.contains('active')) {
         restoreScroll();
     }
 });
+
+// ===== НАМАЗ И КИБЛА =====
+let qiblaAngle = 0;
+let deviceHeading = 0;
+
+function openQiblaModal() { document.getElementById('qibla-modal').classList.add('active'); }
+function closeQiblaModal() { document.getElementById('qibla-modal').classList.remove('active'); }
+
+async function initPrayerAndQibla() {
+    const nextNameEl = document.getElementById('next-prayer-name');
+    const nextTimeEl = document.getElementById('next-prayer-time');
+   
+    // Функция для загрузки данных (чтобы не дублировать код)
+    const fetchTimes = async (lat, lng) => {
+        const today = new Date();
+        const dateStr = `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`;
+
+        try {
+            const response = await fetch(`https://api.aladhan.com/v1/timings/${dateStr}?latitude=${lat}&longitude=${lng}&method=3`);
+            const data = await response.json();
+           
+            if (data.code === 200) {
+                const timings = data.data.timings;
+                const now = new Date();
+                const currentTime = now.getHours() * 60 + now.getMinutes();
+               
+                const prayers = [
+                    { name: 'Фаджр', time: timings.Fajr },
+                    { name: 'Зухр', time: timings.Dhuhr },
+                    { name: 'Аср', time: timings.Asr },
+                    { name: 'Магриб', time: timings.Maghrib },
+                    { name: 'Иша', time: timings.Isha }
+                ];
+
+                let nextPrayer = prayers.find(p => {
+                    const [h, m] = p.time.split(':').map(Number);
+                    return (h * 60 + m) > currentTime;
+                });
+
+                if (!nextPrayer) nextPrayer = { name: 'Фаджр', time: timings.Fajr };
+
+                if(nextNameEl) nextNameEl.innerText = nextPrayer.name;
+                if(nextTimeEl) nextTimeEl.innerText = nextPrayer.time;
+            }
+
+            const qiblaRes = await fetch(`https://api.aladhan.com/v1/qibla/${lat}/${lng}`);
+            const qiblaData = await qiblaRes.json();
+            if (qiblaData.code === 200) {
+                qiblaAngle = qiblaData.data.direction;
+                startCompass();
+            }
+        } catch (error) {
+            console.error("Ошибка загрузки данных:", error);
+        }
+    };
+
+    // 1. Пытаемся получить GPS
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => fetchTimes(position.coords.latitude, position.coords.longitude),
+            () => {
+                // 2. ЕСЛИ GPS ЗАПРЕЩЕН ИЛИ НЕ РАБОТАЕТ (например, на ПК) - ставим координаты Москвы
+                console.log("GPS недоступен, используем координаты по умолчанию (Москва)");
+                fetchTimes(55.7558, 37.6173); 
+            }
+        );
+    } else {
+        // Если геолокация вообще не поддерживается
+        fetchTimes(55.7558, 37.6173);
+    }
+}
+
+
+function startCompass() {
+    const compassDial = document.getElementById('compass-dial');
+    const qiblaNeedle = document.getElementById('needle-qibla');
+    const dirText = document.getElementById('qibla-direction-text');
+    const angleText = document.getElementById('qibla-angle-text');
+
+    if (angleText) angleText.innerText = Math.round(qiblaAngle);
+
+    // 1. ФИКСИРУЕМ СТРЕЛКУ КИБЛЫ НА НУЖНОМ УГЛЕ
+    if (qiblaNeedle) {
+        qiblaNeedle.style.transform = `rotate(${qiblaAngle}deg)`;
+    }
+
+    // Если нет датчика (ПК)
+    if (window.DeviceOrientationEvent === undefined) {
+        if (dirText) dirText.innerText = "Компас доступен только на телефоне.";
+        return;
+    }
+
+    window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+    window.addEventListener('deviceorientation', handleOrientation, true);
+
+    function handleOrientation(event) {
+        let heading = null;
+        
+        if (event.webkitCompassHeading) {
+            heading = event.webkitCompassHeading;
+        } else if (event.alpha !== null) {
+            heading = 360 - event.alpha;
+        }
+
+        if (heading !== null) {
+            // 2. ВРАЩАЕМ ТОЛЬКО ШКАЛУ
+            // Если мы повернулись на Восток (heading = 90), шкала должна крутиться на -90
+            if (compassDial) {
+                compassDial.style.transform = `rotate(${-heading}deg)`;
+            }
+
+            // Текстовая подсказка
+            if (dirText) {
+                // Разница между направлением телефона и Киблой
+                let diff = Math.abs(qiblaAngle - heading);
+                // Если разница близка к 0 или 360
+                if (diff < 10 || diff > 350) {
+                    dirText.innerText = "Вы смотрите прямо на Киблу!";
+                    dirText.style.color = "#4CAF50";
+                } else {
+                    dirText.innerText = "Поворачивайтесь, пока Кааба не совпадет с зеленой меткой";
+                    dirText.style.color = "#ddd";
+                }
+            }
+        }
+    }
+}

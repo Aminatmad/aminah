@@ -318,3 +318,103 @@ body::before {
     color: var(--text-muted-dark);
     font-weight: 500;
 }
+
+/* Компас Киблы */
+.qibla-compass {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    border-left: 1px solid var(--border-color);
+    padding-left: 20px;
+}
+
+.compass-circle {
+    width: 40px;
+    height: 40px;
+    border: 2px solid var(--gold);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.5s ease;
+    background: rgba(255,255,255,0.5);
+}
+
+.compass-circle svg {
+    width: 24px;
+    height: 24px;
+}
+
+.qibla-text {
+    font-size: 12px;
+    color: var(--text-muted-dark);
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .prayer-widget {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px;
+    }
+    .qibla-compass {
+        border-left: none;
+        padding-left: 0;
+        border-top: 1px solid var(--border-color);
+        padding-top: 10px;
+        width: 100%;
+    }
+}
+/* ===== СТИЛИ ДЛЯ КРАСИВОГО КОМПАСА ===== */
+.compass-container {
+    position: relative;
+    width: 260px;
+    height: 260px;
+    margin: 0 auto;
+}
+
+/* Вращающаяся шкала */
+.compass-dial {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.1s linear;
+    z-index: 1; /* Шкала под стрелкой */
+}
+
+/* Стрелка Киблы (всегда в центре) */
+.compass-needle {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2; /* Стрелка поверх шкалы */
+    pointer-events: none;
+}
+
+/* Вращение стрелки (мы будем крутить её один раз через JS) */
+.compass-needle svg {
+    position: absolute;
+    /* Центрируем SVG */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    /* Вращение вокруг центра */
+    transform-origin: center center;
+    transition: transform 0.5s ease;
+}
+/* Иконка мини-компаса в шапке */
+.compass-icon-mini {
+    width: 35px;
+    height: 35px;
+    transition: transform 0.3s ease;
+}
+.compass-icon-mini svg {
+    width: 100%;
+    height: 100%;
+}
