@@ -519,17 +519,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ===== НАМАЗ И КИБЛА =====
 let qiblaAngle = 0;
-let deviceHeading = 0;
+let todayPrayers = []; 
+let isGeolocationRequested = false;
 
-function openQiblaModal() { document.getElementById('qibla-modal').classList.add('active'); }
-function closeQiblaModal() { document.getElementById('qibla-modal').classList.remove('active'); }
+function openQiblaModal() { 
+    document.getElementById('qibla-modal').classList.add('active');
+    // Если гео еще не запрашивали, просим его при открытии компаса
+    if (!isGeolocationRequested) {
+        initPrayerAndQibla(true); 
+    } else {
+        startCompass();
+    }
+}
 
-async function initPrayerAndQibla() {
+function closeQiblaModal() { 
+    document.getElementById('qibla-modal').classList.remove('active'); 
+}
+
+async function initPrayerAndQibla(askGeo = false) {
     const nextNameEl = document.getElementById('next-prayer-name');
     const nextTimeEl = document.getElementById('next-prayer-time');
    
-    // Функция для загрузки данных (чтобы не дублировать код)
     const fetchTimes = async (lat, lng) => {
+        isGeolocationRequested = true;
         const today = new Date();
         const dateStr = `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`;
 
@@ -542,23 +554,24 @@ async function initPrayerAndQibla() {
                 const now = new Date();
                 const currentTime = now.getHours() * 60 + now.getMinutes();
                
-                const prayers = [
-                    { name: 'Фаджр', time: timings.Fajr },
-                    { name: 'Зухр', time: timings.Dhuhr },
-                    { name: 'Аср', time: timings.Asr },
-                    { name: 'Магриб', time: timings.Maghrib },
-                    { name: 'Иша', time: timings.Isha }
+                todayPrayers = [
+                    { name: 'Фаджр (Рассвет)', time: timings.Fajr },
+                    { name: 'Зухр (Полдень)', time: timings.Dhuhr },
+                    { name: 'Аср (После полудня)', time: timings.Asr },
+                    { name: 'Магриб (Закат)', time: timings.Maghrib },
+                    { name: 'Иша (Ночь)', time: timings.Isha }
                 ];
 
-                let nextPrayer = prayers.find(p => {
+                let nextPrayer = todayPrayers.find(p => {
                     const [h, m] = p.time.split(':').map(Number);
                     return (h * 60 + m) > currentTime;
                 });
 
-                if (!nextPrayer) nextPrayer = { name: 'Фаджр', time: timings.Fajr };
+                if (!nextPrayer) nextPrayer = { name: 'Фаджр', time: todayPrayers[0].time };
 
-                if(nextNameEl) nextNameEl.innerText = nextPrayer.name;
+                if(nextNameEl) nextNameEl.innerText = nextPrayer.name.split(' ')[0];
                 if(nextTimeEl) nextTimeEl.innerText = nextPrayer.time;
+                renderPrayerList();
             }
 
             const qiblaRes = await fetch(`https://api.aladhan.com/v1/qibla/${lat}/${lng}`);
@@ -572,22 +585,33 @@ async function initPrayerAndQibla() {
         }
     };
 
-    // 1. Пытаемся получить GPS
-    if (navigator.geolocation) {
+    if (navigator.geolocation && !isGeolocationRequested) {
         navigator.geolocation.getCurrentPosition(
             (position) => fetchTimes(position.coords.latitude, position.coords.longitude),
             () => {
-                // 2. ЕСЛИ GPS ЗАПРЕЩЕН ИЛИ НЕ РАБОТАЕТ (например, на ПК) - ставим координаты Москвы
-                console.log("GPS недоступен, используем координаты по умолчанию (Москва)");
-                fetchTimes(55.7558, 37.6173); 
+                fetchTimes(55.7558, 37.6173); // Резерв: Москва
             }
         );
-    } else {
-        // Если геолокация вообще не поддерживается
+    } else if (!navigator.geolocation) {
         fetchTimes(55.7558, 37.6173);
     }
 }
 
+function renderPrayerList() {
+    const container = document.getElementById('prayer-list-container');
+    if (!container) return;
+
+    let html = '';
+    todayPrayers.forEach(p => {
+        html += `
+            <div style="display: flex; justify-content: space-between; background: rgba(255,255,255,0.1); padding: 10px 15px; border-radius: 8px; border: 1px solid rgba(212, 175, 55, 0.3);">
+                <span style="color: #ddd; font-weight: 500;">${p.name}</span>
+                <span style="color: var(--gold); font-weight: bold;">${p.time}</span>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+}
 
 function startCompass() {
     const compassDial = document.getElementById('compass-dial');
@@ -597,23 +621,26 @@ function startCompass() {
 
     if (angleText) angleText.innerText = Math.round(qiblaAngle);
 
-    // 1. ФИКСИРУЕМ СТРЕЛКУ КИБЛЫ НА НУЖНОМ УГЛЕ
-    if (qiblaNeedle) {
-        qiblaNeedle.style.transform = `rotate(${qiblaAngle}deg)`;
-    }
-
-    // Если нет датчика (ПК)
     if (window.DeviceOrientationEvent === undefined) {
-        if (dirText) dirText.innerText = "Компас доступен только на телефоне.";
+        if (dirText) dirText.innerText = "Компас доступен только на телефоне. Ориентируйтесь на угол Киблы.";
         return;
     }
 
-    window.addEventListener('deviceorientationabsolute', handleOrientation, true);
-    window.addEventListener('deviceorientation', handleOrientation, true);
+    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission()
+            .then(permissionState => {
+                if (permissionState === 'granted') {
+                    window.addEventListener('deviceorientation', handleOrientation, true);
+                }
+            })
+            .catch(console.error);
+    } else {
+        window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+        window.addEventListener('deviceorientation', handleOrientation, true);
+    }
 
     function handleOrientation(event) {
         let heading = null;
-        
         if (event.webkitCompassHeading) {
             heading = event.webkitCompassHeading;
         } else if (event.alpha !== null) {
@@ -621,17 +648,11 @@ function startCompass() {
         }
 
         if (heading !== null) {
-            // 2. ВРАЩАЕМ ТОЛЬКО ШКАЛУ
-            // Если мы повернулись на Восток (heading = 90), шкала должна крутиться на -90
-            if (compassDial) {
-                compassDial.style.transform = `rotate(${-heading}deg)`;
-            }
+            if (compassDial) compassDial.style.transform = `rotate(${-heading}deg)`;
+            if (qiblaNeedle) qiblaNeedle.style.transform = `rotate(${qiblaAngle}deg)`;
 
-            // Текстовая подсказка
             if (dirText) {
-                // Разница между направлением телефона и Киблой
                 let diff = Math.abs(qiblaAngle - heading);
-                // Если разница близка к 0 или 360
                 if (diff < 10 || diff > 350) {
                     dirText.innerText = "Вы смотрите прямо на Киблу!";
                     dirText.style.color = "#4CAF50";
@@ -643,3 +664,8 @@ function startCompass() {
         }
     }
 }
+
+// Запуск при загрузке страницы (без запроса гео, чтобы не пугать пользователя)
+document.addEventListener('DOMContentLoaded', () => {
+    initPrayerAndQibla(false); 
+});

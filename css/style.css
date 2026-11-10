@@ -418,3 +418,9 @@ body::before {
     width: 100%;
     height: 100%;
 }
+/* Фикс для кнопок в профиле */
+#profile-content button {
+    position: relative;
+    z-index: 999 !important; /* Поднимает кнопку выше всех слоев */
+    pointer-events: auto !important; /* Разрешает клики */
+}

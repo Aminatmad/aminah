@@ -48,10 +48,12 @@
 
 
             <!-- ПРАВАЯ ЧАСТЬ: ВРЕМЯ НАМАЗА -->
-            <div class="header-prayer" style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center;">
+          <!-- ПРАВАЯ ЧАСТЬ: ВРЕМЯ НАМАЗА -->
+            <div class="header-prayer" onclick="document.getElementById('prayer-modal').classList.add('active')" style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer;">
                 <span id="next-prayer-name" style="font-size: 11px; color: var(--gold); font-weight: bold; text-transform: uppercase;">Намаз</span>
                 <span id="next-prayer-time" style="font-size: 20px; color: var(--text-light); font-weight: bold;">--:--</span>
             </div>
+
         </header>
         <!-- ЭКРАН 1: СПИСОК РАЗДЕЛОВ (ПЛАШКИ) -->
         <section id="dua-main-page" class="page-section active">
@@ -296,5 +298,16 @@
             <button class="modal-btn" style="margin-top: 20px;" onclick="closeQiblaModal()">Закрыть</button>
         </div>
     </div>
+    <!-- МОДАЛКА ВСЕХ НАМАЗОВ -->
+    <div class="modal-overlay" id="prayer-modal">
+        <div class="modal-content" style="background: var(--bg-color); border: 2px solid var(--gold); color: white; max-width: 360px; padding: 20px;">
+            <h3 style="color: var(--gold); margin-bottom: 20px;">Намазы на сегодня</h3>
+            <div id="prayer-list-container" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+                <!-- Сюда скрипт вставит список намазов -->
+            </div>
+            <button class="modal-btn" onclick="document.getElementById('prayer-modal').classList.remove('active')">Закрыть</button>
+        </div>
+    </div>
+
 </body>
 </html>
