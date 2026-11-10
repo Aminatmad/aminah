@@ -7,10 +7,10 @@
     <title>AMANAH - Знания</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
-   <!-- PWA / установка на домашний экран -->
+   
+    <!-- PWA / установка на домашний экран -->
     <link rel="manifest" href="manifest.webmanifest">
     <meta name="theme-color" content="#1a3312">
-
 
     <!-- Иконки для разных устройств -->
     <link rel="icon" type="image/jpg" href="images/ico-192.jpg">
@@ -20,11 +20,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="AMANAH">
-
-
 </head>
 <body>
     <div class="container">
+        <!-- ШАПКА С КОМПАСОМ -->
         <header class="header" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; margin-bottom: 20px;">
             <!-- ЛЕВАЯ ЧАСТЬ: ИКОНКА КОМПАСА -->
             <div class="header-qibla" onclick="openQiblaModal()" style="flex: 1; display: flex; flex-direction: column; align-items: center; cursor: pointer;">
@@ -46,16 +45,11 @@
             </div>
 
             <!-- ПРАВАЯ ЧАСТЬ: ВРЕМЯ НАМАЗА -->
-           <!-- ПРАВАЯ ЧАСТЬ: ВРЕМЯ НАМАЗА -->
             <div class="header-prayer" onclick="document.getElementById('prayer-modal').classList.add('active')" style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer;">
                 <span id="next-prayer-name" style="font-size: 11px; color: var(--gold); font-weight: bold; text-transform: uppercase;">Намаз</span>
                 <span id="next-prayer-time" style="font-size: 20px; color: var(--text-light); font-weight: bold;">--:--</span>
             </div>
-
-
         </header>
-
-
 
         <!-- ЗНАНИЯ -->
         <section id="knowledge-page" class="page-section active">
@@ -64,7 +58,6 @@
             </div>
             <h2 class="section-title">Знания</h2>
             <p class="section-subtitle">Изучай основы религии и классические труды.</p>
-
 
             <div class="square-grid">
                 <div class="square-card" onclick="openSection(1)">
@@ -81,17 +74,13 @@
                 </div>
             </div>
 
-
             <div class="section-divider"></div>
-
 
             <h2 class="section-title">Разбор исламских книг</h2>
             <p class="section-subtitle">Изучай классические труды с подробными уроками.</p>
 
-
             <h3 class="block-title" style="margin: 20px 0 15px; font-size: 18px;">Акыда и единобожие</h3>
             <div class="square-grid">
-                <!-- ЗДЕСЬ ИЗМЕНЕН onclick НА saveScrollAndOpenBook -->
                 <div class="square-card" onclick="saveScrollAndOpenBook(1)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="20" stroke="#d4af37" stroke-width="2.5"/><circle cx="32" cy="32" r="6" fill="#d4af37"/></svg></div>
                     <div class="square-title">Китаб ат-Таухид</div>
@@ -105,7 +94,6 @@
                     <div class="square-title">Аль-Акыда ат-Тахавийя</div>
                 </div>
             </div>
-
 
             <h3 class="block-title" style="margin: 20px 0 15px; font-size: 18px;">Фикх и поклонение</h3>
             <div class="square-grid">
@@ -135,7 +123,6 @@
                 </div>
             </div>
 
-
             <h3 class="block-title" style="margin: 20px 0 15px; font-size: 18px;">Сира — жизнеописание Пророка Мухаммада ﷺ</h3>
             <div class="square-grid">
                 <div class="square-card" onclick="saveScrollAndOpenBook(10)">
@@ -153,8 +140,7 @@
             </div>
         </section>
 
-
-        <!-- СТРАНИЦЫ ДЛЯ ОТКРЫТИЯ КНИГ И РАЗДЕЛОВ (скрыты) -->
+        <!-- СТРАНИЦЫ ДЛЯ ОТКРЫТИЯ КНИГ И РАЗДЕЛОВ -->
         <section id="book-page" class="page-section">
             <div class="back-btn" onclick="showPage('knowledge-page')">
                 <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Назад к знаниям
@@ -170,7 +156,6 @@
             </div>
         </section>
 
-
         <section id="section-page" class="page-section">
             <div class="back-btn" onclick="showPage('knowledge-page')">
                 <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Назад
@@ -179,7 +164,7 @@
             <p class="section-subtitle" id="section-desc">Описание</p>
             <div class="square-grid" id="section-topics"></div>
         </section>
-<!-- КОНТЕНТ (для уроков из разделов Акыда, Фикх и т.д.) -->
+
         <section id="content-page" class="page-section">
             <div class="back-btn" onclick="goBackFromContent()">
                 <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Назад
@@ -194,10 +179,7 @@
                 <div id="content-lessons-list"></div>
             </div>
         </section>
-       
 
-
-        <!-- УРОК (нужен для отображения урока книги) -->
         <section id="lesson-page" class="page-section">
             <div class="back-btn" id="lesson-back-btn" onclick="goBackFromLesson()">
                 <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
@@ -218,7 +200,6 @@
         </section>
     </div>
 
-
     <!-- Модалка PRO -->
     <div class="modal-overlay" id="pro-modal">
         <div class="modal-content">
@@ -229,9 +210,59 @@
         </div>
     </div>
 
+    <!-- МОДАЛКА БОЛЬШОГО КОМПАСА -->
+    <div class="modal-overlay" id="qibla-modal">
+        <div class="modal-content" style="background: var(--bg-color); border: 2px solid var(--gold); color: white; max-width: 360px; padding: 20px;">
+            <h3 style="color: var(--gold); margin-bottom: 5px;">Направление Киблы</h3>
+            <p id="qibla-direction-text" style="color: #ddd; font-size: 14px; margin-bottom: 20px;">Поверните телефон...</p>
+           
+            <div class="compass-container">
+                <div class="compass-target"></div>
+                <div class="compass-dial" id="compass-dial">
+                    <svg viewBox="0 0 200 200" style="width: 100%; height: 100%; filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.3));">
+                        <circle cx="100" cy="100" r="95" fill="#ffffff" stroke="#d4af37" stroke-width="2"/>
+                        <circle cx="100" cy="100" r="75" fill="#f4f1e6" stroke="#d4af37" stroke-width="2"/>
+                       
+                        <text x="100" y="40" fill="#1a3312" font-size="18" font-weight="bold" text-anchor="middle">С</text>
+                        <text x="155" y="106" fill="#1a3312" font-size="18" font-weight="bold" text-anchor="middle">В</text>
+                        <text x="100" y="172" fill="#1a3312" font-size="18" font-weight="bold" text-anchor="middle">Ю</text>
+                        <text x="45" y="106" fill="#1a3312" font-size="18" font-weight="bold" text-anchor="middle">З</text>
+
+                        <text x="100" y="18" fill="#666" font-size="8" text-anchor="middle">0°</text>
+                        <text x="185" y="105" fill="#666" font-size="8" text-anchor="middle">90°</text>
+                        <text x="100" y="188" fill="#666" font-size="8" text-anchor="middle">180°</text>
+                        <text x="15" y="105" fill="#666" font-size="8" text-anchor="middle">270°</text>
+
+                        <circle cx="100" cy="100" r="18" fill="#ffffff" stroke="#d4af37" stroke-width="2"/>
+                        <rect x="90" y="90" width="20" height="20" rx="2" fill="#1a1a1a"/>
+                        <rect x="90" y="97" width="20" height="4" fill="#d4af37"/>
+                        <path d="M95 80 L100 65 L105 80 Z" fill="#d4af37"/>
+                    </svg>
+                </div>
+            </div>
+           
+            <div style="margin-top: 15px; font-size: 14px;">
+                Угол Киблы: <strong id="qibla-angle-text" style="color: var(--gold);">--</strong>°
+            </div>
+            <!-- СТРОКА ДЛЯ КООРДИНАТ (добавлена) -->
+            <div id="gps-debug-text" style="font-size: 11px; color: #888; margin-top: 5px;"></div>
+
+            <button class="modal-btn" style="margin-top: 20px;" onclick="closeQiblaModal()">Закрыть</button>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА ВСЕХ НАМАЗОВ (вынесена из компаса) -->
+    <div class="modal-overlay" id="prayer-modal">
+        <div class="modal-content" style="background: var(--bg-color); border: 2px solid var(--gold); color: white; max-width: 360px; padding: 20px;">
+            <h3 style="color: var(--gold); margin-bottom: 20px;">Намазы на сегодня</h3>
+            <div id="prayer-list-container" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+                <!-- Сюда скрипт вставит список намазов -->
+            </div>
+            <button class="modal-btn" onclick="document.getElementById('prayer-modal').classList.remove('active')">Закрыть</button>
+        </div>
+    </div>
 
     <div class="mosque-footer"></div>
-
 
     <nav class="bottom-nav">
         <a href="index.html" class="nav-item">
@@ -244,64 +275,8 @@
         <a href="profile.html" class="nav-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Профиль</span></a>
     </nav>
 
-
+    <!-- СКРИПТЫ СТРОГО В САМОМ КОНЦЕ -->
     <script src="js/data.js"></script>
     <script src="js/app.js"></script>
-<!-- МОДАЛКА БОЛЬШОГО КОМПАСА -->
-    <div class="modal-overlay" id="qibla-modal">
-        <div class="modal-content" style="background: var(--bg-color); border: 2px solid var(--gold); color: white; max-width: 360px; padding: 20px;">
-            <h3 style="color: var(--gold); margin-bottom: 5px;">Направление Киблы</h3>
-            <p id="qibla-direction-text" style="color: #ddd; font-size: 14px; margin-bottom: 20px;">Поверните телефон...</p>
-         <div class="compass-container">
-                <!-- Неподвижная зеленая метка сверху -->
-                <div class="compass-target"></div>
-
-                <!-- Вращающаяся шкала с Каабой (id="compass-dial") -->
-                <div class="compass-dial" id="compass-dial">
-                    <svg viewBox="0 0 200 200" style="width: 100%; height: 100%; filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.3));">
-                        <!-- Внешнее белое кольцо -->
-                        <circle cx="100" cy="100" r="95" fill="#ffffff" stroke="#d4af37" stroke-width="2"/>
-                        <!-- Внутренний бежевый круг -->
-                        <circle cx="100" cy="100" r="75" fill="#f4f1e6" stroke="#d4af37" stroke-width="2"/>
-                       
-                        <!-- Буквы -->
-                        <text x="100" y="40" fill="#1a3312" font-size="18" font-weight="bold" text-anchor="middle">С</text>
-                        <text x="155" y="106" fill="#1a3312" font-size="18" font-weight="bold" text-anchor="middle">В</text>
-                        <text x="100" y="172" fill="#1a3312" font-size="18" font-weight="bold" text-anchor="middle">Ю</text>
-                        <text x="45" y="106" fill="#1a3312" font-size="18" font-weight="bold" text-anchor="middle">З</text>
-
-                        <!-- ТВОИ ГРАДУСЫ -->
-                        <text x="100" y="18" fill="#666" font-size="8" text-anchor="middle">0°</text>
-                        <text x="185" y="105" fill="#666" font-size="8" text-anchor="middle">90°</text>
-                        <text x="100" y="188" fill="#666" font-size="8" text-anchor="middle">180°</text>
-                        <text x="15" y="105" fill="#666" font-size="8" text-anchor="middle">270°</text>
-
-                        <!-- ИКОНКА КААБЫ (Прикреплена к 0°, будет крутиться вместе со шкалой) -->
-                        <!-- Белый кружок-подложка для Каабы, чтобы она выделялась на фоне -->
-                        <circle cx="100" cy="100" r="18" fill="#ffffff" stroke="#d4af37" stroke-width="2"/>
-                        <!-- Сама Кааба (черный квадрат с золотой полоской) -->
-                        <rect x="90" y="90" width="20" height="20" rx="2" fill="#1a1a1a"/>
-                        <rect x="90" y="97" width="20" height="4" fill="#d4af37"/>
-                        <!-- Золотая стрелочка, указывающая от Каабы к краю -->
-                        <path d="M95 80 L100 65 L105 80 Z" fill="#d4af37"/>
-                    </svg>
-                </div>
-            </div> 
-
-            <div style="margin-top: 15px; font-size: 14px;">Угол Киблы: <strong id="qibla-angle-text" style="color: var(--gold);">--</strong>°</div>
-            <button class="modal-btn" style="margin-top: 20px;" onclick="closeQiblaModal()">Закрыть</button>
-        </div>
-    </div>
-<!-- МОДАЛКА ВСЕХ НАМАЗОВ -->
-    <div class="modal-overlay" id="prayer-modal">
-        <div class="modal-content" style="background: var(--bg-color); border: 2px solid var(--gold); color: white; max-width: 360px; padding: 20px;">
-            <h3 style="color: var(--gold); margin-bottom: 20px;">Намазы на сегодня</h3>
-            <div id="prayer-list-container" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
-                <!-- Сюда скрипт вставит список намазов -->
-            </div>
-            <button class="modal-btn" onclick="document.getElementById('prayer-modal').classList.remove('active')">Закрыть</button>
-        </div>
-    </div>
-
 </body>
 </html>

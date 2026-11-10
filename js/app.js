@@ -519,29 +519,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ===== НАМАЗ И КИБЛА =====
 let qiblaAngle = 0;
-let todayPrayers = []; 
+let todayPrayers = [];
 let isGeolocationRequested = false;
 
-function openQiblaModal() { 
+function openQiblaModal() {
     document.getElementById('qibla-modal').classList.add('active');
-    // Если гео еще не запрашивали, просим его при открытии компаса
     if (!isGeolocationRequested) {
-        initPrayerAndQibla(true); 
+        initPrayerAndQibla(true);
     } else {
         startCompass();
     }
 }
 
-function closeQiblaModal() { 
-    document.getElementById('qibla-modal').classList.remove('active'); 
+function closeQiblaModal() {
+    document.getElementById('qibla-modal').classList.remove('active');
 }
 
 async function initPrayerAndQibla(askGeo = false) {
     const nextNameEl = document.getElementById('next-prayer-name');
     const nextTimeEl = document.getElementById('next-prayer-time');
+    const debugText = document.getElementById('gps-debug-text');
    
+    if (debugText) debugText.innerText = "Запрос GPS...";
+
     const fetchTimes = async (lat, lng) => {
         isGeolocationRequested = true;
+        if (debugText) debugText.innerText = `Координаты: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+
         const today = new Date();
         const dateStr = `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`;
 
@@ -582,17 +586,22 @@ async function initPrayerAndQibla(askGeo = false) {
             }
         } catch (error) {
             console.error("Ошибка загрузки данных:", error);
+            if (debugText) debugText.innerText = "Ошибка загрузки данных API";
         }
     };
 
-    if (navigator.geolocation && !isGeolocationRequested) {
+    if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             (position) => fetchTimes(position.coords.latitude, position.coords.longitude),
-            () => {
-                fetchTimes(55.7558, 37.6173); // Резерв: Москва
-            }
+            (error) => {
+                console.warn("GPS Ошибка:", error.message);
+                if (debugText) debugText.innerText = "GPS заблокирован. Используем Москву.";
+                fetchTimes(55.7558, 37.6173); 
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
         );
-    } else if (!navigator.geolocation) {
+    } else {
+        if (debugText) debugText.innerText = "Геолокация не поддерживается.";
         fetchTimes(55.7558, 37.6173);
     }
 }
@@ -620,13 +629,10 @@ function startCompass() {
 
     if (angleText) angleText.innerText = Math.round(qiblaAngle);
 
-    // Ставим Каабу на нужный градус (например, 176°). 
-    // Так как Кааба нарисована на 0°, крутим весь диск на 176°.
     if (compassDial) {
         compassDial.style.transform = `rotate(${qiblaAngle}deg)`;
     }
 
-    // Если нет датчика (ПК)
     if (window.DeviceOrientationEvent === undefined) {
         if (dirText) dirText.innerText = "Компас доступен только на телефоне. Ориентируйтесь на угол Киблы.";
         return;
@@ -647,7 +653,7 @@ function startCompass() {
 
     function handleOrientation(event) {
         let heading = null;
-        
+       
         if (event.webkitCompassHeading) {
             heading = event.webkitCompassHeading;
         } else if (event.alpha !== null) {
@@ -655,15 +661,11 @@ function startCompass() {
         }
 
         if (heading !== null) {
-            // Вращаем диск (и Каабу) относительно того, куда смотрит телефон.
-            // Если телефон смотрит на Север (0), диск стоит на 176°.
-            // Если телефон повернулся на 90 (Восток), диск поворачивается на 176 - 90 = 86°.
             if (compassDial) {
                 let rotation = qiblaAngle - heading;
                 compassDial.style.transform = `rotate(${rotation}deg)`;
             }
 
-            // Подсказка
             if (dirText) {
                 let diff = ((qiblaAngle - heading + 540) % 360) - 180;
                 if (Math.abs(diff) < 10) {
@@ -678,9 +680,6 @@ function startCompass() {
     }
 }
 
-
-
-// Запуск при загрузке страницы (без запроса гео, чтобы не пугать пользователя)
 document.addEventListener('DOMContentLoaded', () => {
-    initPrayerAndQibla(false); 
+    initPrayerAndQibla(false);
 });
