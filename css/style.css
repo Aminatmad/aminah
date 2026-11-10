@@ -366,7 +366,7 @@ body::before {
         width: 100%;
     }
 }
-/* ===== СТИЛИ ДЛЯ КРАСИВОГО КОМПАСА ===== */
+/* ===== СТИЛИ ДЛЯ КОМПАСА ===== */
 .compass-container {
     position: relative;
     width: 260px;
@@ -374,28 +374,44 @@ body::before {
     margin: 0 auto;
 }
 
-/* Вращающаяся шкала */
-.compass-dial {
+/* Зеленая метка, всегда смотрит вверх */
+.compass-target {
     position: absolute;
-    top: 0; left: 0;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 25px;
+    background: #4CAF50;
+    border-radius: 3px;
+    z-index: 10;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+/* Вращающийся блок (круг + стрелка) */
+.compass-dial {
+    position: relative;
     width: 100%;
     height: 100%;
     transition: transform 0.1s linear;
-    z-index: 1; /* Шкала под стрелкой */
-}
-
-/* Стрелка Киблы (всегда в центре) */
-.compass-needle {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%;
-    height: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 2; /* Стрелка поверх шкалы */
-    pointer-events: none;
 }
+
+/* Стрелка внутри круга */
+.compass-needle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    /* Центрируем стрелку */
+    transform: translate(-50%, -50%);
+    /* Точка вращения стрелки (хвост) */
+    transform-origin: center center;
+    /* Изначально стрелка смотрит вверх (на 0 градусов) */
+    margin-top: -30px; /* Сдвигаем вверх, чтобы хвост был в центре */
+}
+
 
 /* Вращение стрелки (мы будем крутить её один раз через JS) */
 .compass-needle svg {

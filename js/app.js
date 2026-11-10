@@ -615,15 +615,24 @@ function renderPrayerList() {
 
 function startCompass() {
     const compassDial = document.getElementById('compass-dial');
-    const qiblaNeedle = document.getElementById('needle-qibla');
     const dirText = document.getElementById('qibla-direction-text');
     const angleText = document.getElementById('qibla-angle-text');
 
     if (angleText) angleText.innerText = Math.round(qiblaAngle);
 
+    // Если нет датчика (ПК)
     if (window.DeviceOrientationEvent === undefined) {
-        if (dirText) dirText.innerText = "Компас доступен только на телефоне. Ориентируйтесь на угол Киблы.";
+        if (dirText) dirText.innerText = "Компас доступен только на телефоне.";
         return;
+    }
+
+    // --- ВАЖНО: Ставим стрелку на нужный градус Киблы ---
+    // Так как стрелка изначально смотрит вверх (на Север), мы поворачиваем её на угол Киблы.
+    // Шкала при этом остается на месте (0 градусов наверху).
+    if (compassDial) {
+        // Чтобы стрелка встала на 230 градусов на шкале, мы крутим весь блок на -230
+        // (потому что нам нужно, чтобы 230 оказалось наверху)
+        // Но мы сделаем проще: будем крутить шкалу при движении телефона.
     }
 
     if (typeof DeviceOrientationEvent.requestPermission === 'function') {
@@ -641,6 +650,7 @@ function startCompass() {
 
     function handleOrientation(event) {
         let heading = null;
+        
         if (event.webkitCompassHeading) {
             heading = event.webkitCompassHeading;
         } else if (event.alpha !== null) {
@@ -648,22 +658,40 @@ function startCompass() {
         }
 
         if (heading !== null) {
-            if (compassDial) compassDial.style.transform = `rotate(${-heading}deg)`;
-            if (qiblaNeedle) qiblaNeedle.style.transform = `rotate(${qiblaAngle}deg)`;
+            // Крутим весь компас (и шкалу, и стрелку) в зависимости от того, куда повернут телефон
+            // Если телефон смотрит на 0 (Север), мы поворачиваем компас так, 
+            // чтобы 0 оказался наверху.
+            // heading - это куда смотрит телефон.
+            // Мы крутим компас на -heading, чтобы Север всегда был наверху (относительно мира).
+            if (compassDial) {
+                compassDial.style.transform = `rotate(${-heading}deg)`;
+            }
+
+            // Проверяем, совпадает ли стрелка с зеленой меткой
+            // Стрелка стоит на угле qiblaAngle. Метка на 0.
+            // Нам нужно узнать, куда смотрит телефон относительно Киблы.
+            // Разница между направлением на Киблу и направлением телефона:
+            let diff = qiblaAngle - heading;
+            
+            // Приводим к диапазону от -180 до 180
+            diff = ((diff + 540) % 360) - 180;
 
             if (dirText) {
-                let diff = Math.abs(qiblaAngle - heading);
-                if (diff < 10 || diff > 350) {
+                if (Math.abs(diff) < 10) {
                     dirText.innerText = "Вы смотрите прямо на Киблу!";
                     dirText.style.color = "#4CAF50";
+                } else if (diff > 0) {
+                    dirText.innerText = "Поверните телефон ВПРАВО (по часовой стрелке)";
+                    dirText.style.color = "#ddd";
                 } else {
-                    dirText.innerText = "Поворачивайтесь, пока Кааба не совпадет с зеленой меткой";
+                    dirText.innerText = "Поверните телефон ВЛЕВО (против часовой стрелки)";
                     dirText.style.color = "#ddd";
                 }
             }
         }
     }
 }
+
 
 // Запуск при загрузке страницы (без запроса гео, чтобы не пугать пользователя)
 document.addEventListener('DOMContentLoaded', () => {
