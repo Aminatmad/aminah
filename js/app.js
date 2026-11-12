@@ -227,11 +227,23 @@ function showProModal() {
     const btn = modal.querySelector('.modal-btn');
     if (!btn) return;
 
-    if (!currentUser) {
+    // Проверяем в реальном времени
+    if (typeof currentUser === 'undefined' || !currentUser) {
         btn.innerText = 'Войти в аккаунт';
         btn.onclick = () => {
             closeProModal();
             if (typeof openAuthModal === 'function') openAuthModal();
+        };
+    } else if (isPro()) {
+        btn.innerText = 'У вас есть PRO (Продолжить)';
+        btn.onclick = () => {
+            closeProModal();
+            // Если урок выбран, открываем его
+            const urlParams = new URLSearchParams(window.location.search);
+            const bId = urlParams.get('book');
+            const lId = urlParams.get('lesson');
+            if (bId && lId) openLesson('book', bId, lId);
+            else if (currentBookId) openBook(currentBookId);
         };
     } else {
         btn.innerText = 'Активировать демо-PRO';
@@ -574,6 +586,12 @@ function openLesson(type, parent, id) {
 }
 
 async function goBackFromLesson() {
+    const backBtn = document.getElementById('lesson-back-btn');
+    if (backBtn && backBtn.dataset.clicked === 'true') return;
+    if (backBtn) {
+        backBtn.dataset.clicked = 'true';
+        setTimeout(() => { backBtn.dataset.clicked = 'false'; }, 500);
+    }
     if (autoSaveTimer) clearTimeout(autoSaveTimer);
 
     // 1. МГНОВЕННО переключаем экран
@@ -755,17 +773,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (bookId) {
         if (fromProfile) window.isFromProfile = true;
         
-        // Ждем, пока Firebase загрузит сессию (до 2 секунд)
         let attempts = 0;
         const checkAuth = setInterval(() => {
             attempts++;
-            if (typeof auth !== 'undefined' && auth !== null) {
+            // Ждем, пока Firebase загрузит пользователя (до 3 секунд)
+            if (typeof auth !== 'undefined' && auth !== null && auth.currentUser !== undefined) {
                 clearInterval(checkAuth);
                 if (lessonId) openLesson('book', bookId, lessonId);
                 else openBook(bookId);
-            } else if (attempts > 20) {
+            } else if (attempts > 30) {
                 clearInterval(checkAuth);
-                // Если Firebase так и не ответил, все равно пробуем открыть
                 if (lessonId) openLesson('book', bookId, lessonId);
                 else openBook(bookId);
             }
@@ -1261,13 +1278,42 @@ window.addEventListener('beforeunload', function () {
         console.error("beforeunload save error:", e);
     }
 });
-// Принудительная отрисовка профиля при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
-    if (document.getElementById('profile-content')) {
-        setTimeout(() => {
-            if (typeof currentUser !== 'undefined' && currentUser) {
-                renderProfile();
+    const urlParams = new URLSearchParams(window.location.search);
+    const bookId = urlParams.get('book');
+    const lessonId = urlParams.get('lesson');
+    const fromProfile = urlParams.get('from') === 'profile';
+
+    if (bookId) {
+        if (fromProfile) window.isFromProfile = true;
+
+        // Ждем, пока Firebase точно загрузит пользователя (до 3 секунд)
+        let attempts = 0;
+        const waitForAuth = setInterval(() => {
+            attempts++;
+            // Проверяем, что Firebase загружен и массив пользователей инициализирован
+            if (typeof auth !== 'undefined' && auth !== null) {
+                // Даем еще 300мс, чтобы local storage успел обновиться
+                setTimeout(() => {
+                    clearInterval(waitForAuth);
+                    if (lessonId) openLesson('book', bookId, lessonId);
+                    else openBook(bookId);
+                }, 300);
+            } else if (attempts > 30) {
+                // Если через 3 секунды Firebase так и не ответил, все равно открываем
+                clearInterval(waitForAuth);
+                if (lessonId) openLesson('book', bookId, lessonId);
+                else openBook(bookId);
             }
-        }, 500); // Небольшая пауза, чтобы Firebase успел подгрузить currentUser
+        }, 100);
+    }
+});
+// Автоматическая загрузка намаза в шапку (с задержкой, чтобы не тормозило)
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.getElementById('next-prayer-name')) {
+        setTimeout(() => {
+            // Запускаем загрузку, только если это не страница профиля/настроек (чтобы не тратить трафик зря)
+            initPrayerAndQibla(false); 
+        }, 1500); // Ждем 1.5 секунды после загрузки страницы
     }
 });
