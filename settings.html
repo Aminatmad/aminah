@@ -11,9 +11,7 @@
 </head>
 <body>
     <div class="container">
-        <!-- ШАПКА (КАК НА ГЛАВНОЙ) -->
         <header class="header" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; margin-bottom: 20px;">
-            <!-- ЛЕВАЯ ЧАСТЬ: КИБЛА -->
             <div class="header-qibla" onclick="openQiblaModal()" style="flex: 1; display: flex; flex-direction: column; align-items: center; cursor: pointer;">
                 <div class="compass-icon-mini">
                     <svg viewBox="0 0 40 40" fill="none">
@@ -25,24 +23,18 @@
                 <span style="font-size: 10px; color: var(--gold); font-weight: bold; margin-top: 4px;">КИБЛА</span>
             </div>
 
-
-            <!-- ЦЕНТР: ЛОГОТИП -->
             <div class="header-center" onclick="window.location.href='index.html'" style="flex: 2; display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer;">
                 <div class="logo-img" style="margin-bottom: 5px; width: 50px; height: 50px; background-image: url('images/ico-180.png');"></div>
                 <span class="logo-text" style="font-size: 20px; line-height: 1;">AMANAH</span>
                 <span class="logo-subtext" style="font-size: 8px; margin-top: 2px;">ТВОЯ РЕЛИГИЯ — ТВОЙ АМАНАТ</span>
             </div>
 
-
-            <!-- ПРАВАЯ ЧАСТЬ: ВРЕМЯ НАМАЗА -->
             <div class="header-prayer" onclick="openPrayerModal()" style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer;">
                 <span id="next-prayer-name" style="font-size: 11px; color: var(--gold); font-weight: bold; text-transform: uppercase;">Намаз</span>
                 <span id="next-prayer-time" style="font-size: 20px; color: var(--text-light); font-weight: bold;">--:--</span>
             </div>
         </header>
 
-
-        <!-- НАСТРОЙКИ -->
         <section id="settings-page" class="page-section active">
             <div class="back-btn" onclick="window.location.href='profile.html'">
                 <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Назад в профиль
@@ -50,9 +42,7 @@
             <h2 class="section-title">Настройки</h2>
             <p class="section-subtitle">Настрой приложение под себя</p>
 
-
             <main class="list-layout">
-                <!-- Профиль / Вход -->
                 <div class="card" onclick="openAccountSettings()">
                     <div class="icon-box" style="background: var(--bg-color);">
                         <svg viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -63,8 +53,6 @@
                     </div>
                 </div>
 
-
-                <!-- Тема -->
                 <div class="card" onclick="alert('Смена темы появится в следующем обновлении!')">
                     <div class="icon-box" style="background: var(--bg-color);">
                         <svg viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -75,8 +63,6 @@
                     </div>
                 </div>
 
-
-                <!-- Язык -->
                 <div class="card" onclick="alert('Смена языка появится позже!')">
                     <div class="icon-box" style="background: var(--bg-color);">
                         <svg viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
@@ -87,8 +73,6 @@
                     </div>
                 </div>
 
-
-                <!-- О приложении -->
                 <div class="card">
                     <div class="icon-box" style="background: var(--bg-color);">
                         <svg viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
@@ -102,13 +86,12 @@
         </section>
     </div>
 
-
-    <!-- МОДАЛКА БОЛЬШОГО КОМПАСА -->
+    <!-- МОДАЛКА КОМПАСА -->
     <div class="modal-overlay" id="qibla-modal">
         <div class="modal-content" style="background: var(--bg-color); border: 2px solid var(--gold); color: white; max-width: 360px; padding: 20px;">
             <h3 style="color: var(--gold); margin-bottom: 5px;">Направление Киблы</h3>
             <p id="qibla-direction-text" style="color: #ddd; font-size: 14px; margin-bottom: 20px;">Поверните телефон...</p>
-           
+
             <div class="compass-container">
                 <div class="compass-target"></div>
                 <div class="compass-dial" id="compass-dial">
@@ -130,7 +113,7 @@
                     </svg>
                 </div>
             </div>
-           
+
             <div style="margin-top: 15px; font-size: 14px;">
                 Угол Киблы: <strong id="qibla-angle-text" style="color: var(--gold);">--</strong>°
             </div>
@@ -138,7 +121,6 @@
             <button class="modal-btn" style="margin-top: 20px;" onclick="closeQiblaModal()">Закрыть</button>
         </div>
     </div>
-
 
     <!-- МОДАЛКА ВСЕХ НАМАЗОВ -->
     <div class="modal-overlay" id="prayer-modal">
@@ -157,18 +139,17 @@
         </div>
     </div>
 
-
     <!-- МОДАЛКА УПРАВЛЕНИЯ АККАУНТОМ -->
     <div class="modal-overlay" id="account-settings-modal">
         <div class="modal-content" style="background: var(--bg-color); border: 2px solid var(--gold); color: white; max-width: 360px; padding: 25px; max-height: 85vh; overflow-y: auto;">
-            
-            <!-- ФОРМА ВХОДА (Если не авторизован) -->
+
+            <!-- ВХОД -->
             <div id="settings-login-view">
                 <h3 style="color: var(--gold); margin-bottom: 5px;">Вход в аккаунт</h3>
                 <p style="font-size: 13px; color: #ccc; margin-bottom: 20px;">Войдите, чтобы сохранять прогресс</p>
-                
+
                 <input type="email" id="set-login-email" placeholder="Почта (Email)" style="width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--gold); background: rgba(255,255,255,0.1); color: white; font-family: inherit;">
-                
+
                 <div style="position: relative; margin-bottom: 20px;">
                     <input type="password" id="set-login-pass" placeholder="Пароль" style="width: 100%; padding: 12px; padding-right: 40px; border-radius: 8px; border: 1px solid var(--gold); background: rgba(255,255,255,0.1); color: white; font-family: inherit;">
                     <span onclick="togglePassword('set-login-pass', this)" style="position: absolute; right: 12px; top: 12px; cursor: pointer; color: #888;">
@@ -182,18 +163,16 @@
                         </svg>
                     </span>
                 </div>
-                
+
                 <button class="modal-btn" onclick="loginFromSettings()" style="margin-bottom: 10px;">Войти</button>
                 <button class="modal-btn" style="background: transparent; color: var(--gold); box-shadow: none; font-size: 14px;" onclick="window.location.href='profile.html'">Зарегистрироваться</button>
                 <button class="modal-btn" style="background: transparent; color: #888; box-shadow: none; font-size: 12px;" onclick="document.getElementById('account-settings-modal').classList.remove('active')">Отмена</button>
             </div>
 
-
-            <!-- ПАНЕЛЬ УПРАВЛЕНИЯ (Если авторизован) -->
+            <!-- АККАУНТ -->
             <div id="settings-account-view" style="display: none;">
                 <h3 style="color: var(--gold); margin-bottom: 15px;">Мой аккаунт</h3>
-                
-                <!-- Блок с именем -->
+
                 <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid rgba(212, 175, 55, 0.3);">
                     <label style="font-size: 12px; color: #aaa; display: block; margin-bottom: 5px;">Имя пользователя</label>
                     <div style="margin-bottom: 10px;">
@@ -203,14 +182,12 @@
                     <button class="modal-btn" onclick="saveNewName()" style="background: var(--gold); color: var(--bg-color); font-size: 14px; font-weight: bold;">Сохранить имя</button>
                 </div>
 
-
-                <!-- Блок с почтой -->
                 <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid rgba(212, 175, 55, 0.3);">
                     <label style="font-size: 12px; color: #aaa; display: block; margin-bottom: 5px;">Электронная почта</label>
                     <span id="set-user-email" style="font-weight: 500; font-size: 14px; color: #fff; display: block; margin-bottom: 10px;">email</span>
-                    
+
                     <input type="email" id="set-new-email" placeholder="Новая почта" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--gold); background: rgba(0,0,0,0.2); color: white; font-family: inherit;">
-                    
+
                     <div style="position: relative; margin-bottom: 10px;">
                         <input type="password" id="set-email-pass" placeholder="Текущий пароль" style="width: 100%; padding: 10px; padding-right: 40px; border-radius: 8px; border: 1px solid var(--gold); background: rgba(0,0,0,0.2); color: white; font-family: inherit;">
                         <span onclick="togglePassword('set-email-pass', this)" style="position: absolute; right: 12px; top: 10px; cursor: pointer; color: #888;">
@@ -218,16 +195,14 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-on" style="display: none;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                         </span>
                     </div>
-                    
+
                     <button class="modal-btn" onclick="saveNewEmail()" style="background: var(--gold); color: var(--bg-color); font-size: 14px; font-weight: bold;">Изменить почту</button>
                 </div>
 
-
-                <!-- Блок с паролем -->
                 <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(212, 175, 55, 0.3);">
                     <label style="font-size: 12px; color: #aaa; display: block; margin-bottom: 5px;">Пароль</label>
                     <span style="font-weight: 500; font-size: 14px; color: #fff; display: block; margin-bottom: 10px;">********</span>
-                    
+
                     <div style="position: relative; margin-bottom: 10px;">
                         <input type="password" id="set-old-pass" placeholder="Текущий пароль" style="width: 100%; padding: 10px; padding-right: 40px; border-radius: 8px; border: 1px solid var(--gold); background: rgba(0,0,0,0.2); color: white; font-family: inherit;">
                         <span onclick="togglePassword('set-old-pass', this)" style="position: absolute; right: 12px; top: 10px; cursor: pointer; color: #888;">
@@ -235,7 +210,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-on" style="display: none;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                         </span>
                     </div>
-                    
+
                     <div style="position: relative; margin-bottom: 10px;">
                         <input type="password" id="set-new-pass" placeholder="Новый пароль (мин. 6 симв.)" style="width: 100%; padding: 10px; padding-right: 40px; border-radius: 8px; border: 1px solid var(--gold); background: rgba(0,0,0,0.2); color: white; font-family: inherit;">
                         <span onclick="togglePassword('set-new-pass', this)" style="position: absolute; right: 12px; top: 10px; cursor: pointer; color: #888;">
@@ -243,10 +218,9 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-on" style="display: none;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                         </span>
                     </div>
-                    
+
                     <button class="modal-btn" onclick="saveNewPass()" style="background: var(--gold); color: var(--bg-color); font-size: 14px; font-weight: bold;">Изменить пароль</button>
                 </div>
-
 
                 <button class="modal-btn" style="background: #ff4c4c; color: white; font-size: 14px;" onclick="logoutFromSettings()">Выйти из аккаунта</button>
                 <button class="modal-btn" style="background: transparent; color: #888; box-shadow: none; font-size: 12px; margin-top: 10px;" onclick="document.getElementById('account-settings-modal').classList.remove('active')">Закрыть</button>
@@ -254,9 +228,7 @@
         </div>
     </div>
 
-
     <div class="mosque-footer"></div>
-
 
     <nav class="bottom-nav">
         <a href="index.html" class="nav-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Главная</span></a>
@@ -265,18 +237,14 @@
         <a href="profile.html" class="nav-item active"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Профиль</span></a>
     </nav>
 
-
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-
     <script src="js/data.js"></script>
     <script src="js/app.js"></script>
-    
+
     <script>
-        // Скрипт для смены текста в настройках при загрузке
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 if (typeof currentUser !== 'undefined' && currentUser) {
@@ -292,4 +260,3 @@
     </script>
 </body>
 </html>
-
