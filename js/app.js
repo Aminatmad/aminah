@@ -575,37 +575,44 @@ function openLesson(type, parent, id) {
 
 async function goBackFromLesson() {
     if (autoSaveTimer) clearTimeout(autoSaveTimer);
-   // Защита от двойного клика
-    const backBtn = document.getElementById('lesson-back-btn');
-    if (backBtn && backBtn.dataset.clicking === 'true') return;
-    if (backBtn) backBtn.dataset.clicking = 'true';
 
-    if (autoSaveTimer) clearTimeout(autoSaveTimer);
-    // Сначала мгновенно переключаем экран (код переключения страниц)
+    // 1. МГНОВЕННО переключаем экран
     if (lessonType === 'topic') {
         openTopic(parentId);
     }
-    // ... и так далее ...
-    
-    // А в самом конце функции — сохранение:
-    if (currentLessonId) {
+    else if (lessonType === 'book' && currentBookId) {
+        openBook(currentBookId);
+    }
+    else if (lessonType === 'old') {
+        if (parentId === 'islam') showPage('islam-start-page');
+        else if (parentId === 'family') showPage('family-page');
+        else if (parentId === 'birth') showPage('birth-page');
+        else if (parentId === 'loss') showPage('loss-page');
+        else {
+            const section = getSectionByLessonId(currentLessonId);
+            if (section) showPage(section);
+        }
+        setTimeout(() => {
+            const savedScroll = sessionStorage.getItem(`scroll_${parentId}`);
+            if (savedScroll !== null) {
+                window.scrollTo({ top: parseInt(savedScroll), behavior: 'instant' });
+            }
+        }, 50);
+    }
+
+    // 2. В ФОНЕ сохраняем прогресс (без await, чтобы не вешать кнопку)
+    if (currentLessonId && currentUser) {
         let allLessons = [];
         if (lessonType === 'book' && currentBookId) allLessons = booksData[currentBookId].lessons;
         else if (lessonType === 'topic') {
             const topic = findTopic(parentId);
             if (topic) allLessons = topic.lessons;
         }
-
         if (allLessons.length > 0) {
-            // Без await, чтобы не тормозить кнопку "Назад"
             saveProgressUpToCurrent(lessonType, parentId, currentLessonId, allLessons);
-               setTimeout(() => {
-        if (backBtn) backBtn.dataset.clicking = 'false';
-    }, 500);
-}
         }
     }
-
+}
 
 function changeLesson(direction) {
     if(!currentLessonId) return;
@@ -618,51 +625,24 @@ function changeLesson(direction) {
     }
 }
 
-async function completeCurrentLesson() {
-    if (!currentLessonId) return;
-
-    // 1. Блокируем кнопку, чтобы не нажать дважды
-    const btn = document.getElementById('complete-btn');
-    if (btn) {
-        btn.disabled = true;
-        btn.innerText = "Сохранение...";
-    }
-
-    // 2. Отменяем фоновый таймер, чтобы не было конфликтов
+function completeCurrentLesson() {
+    if(!currentLessonId) return;
     if (autoSaveTimer) clearTimeout(autoSaveTimer);
-
-    // 3. Находим все уроки
-    let allLessons = [];
-    if (lessonType === 'book' && currentBookId) {
-        allLessons = booksData[currentBookId].lessons;
-    } else if (lessonType === 'topic') {
-        const topic = findTopic(parentId);
-        if (topic) allLessons = topic.lessons;
-    }
-
-    // 4. ЖЕСТКО СОХРАНЯЕМ (ждем ответа)
-    if (allLessons.length > 0) {
-        try {
-            // Напрямую вызываем сохранение в Firebase
-            await saveProgressUpToCurrent(lessonType, parentId, currentLessonId, allLessons);
-            
-            // Показываем уведомление об успехе
-            showToast('Урок завершен и сохранен!', 'success');
-        } catch (error) {
-            console.error("Ошибка при завершении:", error);
-            showToast('Ошибка сохранения. Проверьте интернет.', 'error');
+    
+    // Принудительно сохраняем текущий урок перед выходом
+    if (currentUser) {
+        let allLessons = [];
+        if (lessonType === 'book' && currentBookId) allLessons = booksData[currentBookId].lessons;
+        else if (lessonType === 'topic') {
+            const topic = findTopic(parentId);
+            if (topic) allLessons = topic.lessons;
         }
-    } else {
-        showToast('Урок завершен!', 'success');
+        if (allLessons.length > 0) {
+            saveProgressUpToCurrent(lessonType, parentId, currentLessonId, allLessons);
+        }
     }
 
-    // 5. Возвращаем кнопку в исходное состояние (на случай, если мы остались на странице)
-    if (btn) {
-        btn.disabled = false;
-        btn.innerText = "Завершить урок";
-    }
-
-    // 6. Переходим назад (назад к списку уроков)
+    // Вызываем функцию возврата
     goBackFromLesson();
 }
 
@@ -775,12 +755,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (bookId) {
         if (fromProfile) window.isFromProfile = true;
         
-        // ЖДЕМ, пока Firebase проверит авторизацию (максимум 1.5 секунды)
-        let checkAuth = setInterval(() => {
-            // Если Firebase уже загрузился (auth существует)
-            if (typeof auth !== 'undefined' && auth) {
-                clearInterval(checkAuth); // Останавливаем проверку
-                
+        // Ждем, пока Firebase загрузит сессию (до 2 секунд)
+        let attempts = 0;
+        const checkAuth = setInterval(() => {
+            attempts++;
+            if (typeof auth !== 'undefined' && auth !== null) {
+                clearInterval(checkAuth);
+                if (lessonId) openLesson('book', bookId, lessonId);
+                else openBook(bookId);
+            } else if (attempts > 20) {
+                clearInterval(checkAuth);
+                // Если Firebase так и не ответил, все равно пробуем открыть
                 if (lessonId) openLesson('book', bookId, lessonId);
                 else openBook(bookId);
             }
