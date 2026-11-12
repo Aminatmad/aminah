@@ -64,24 +64,7 @@
             </div>
 
             <div id="continue-block"></div>
-            <!-- Временная кнопка для проверки -->
-<button onclick="
-    let p = getProgress();
-    if (Object.keys(p).length === 0) {
-        alert('В памяти телефона ПУСТО. Пробуем скачать из базы...');
-        loadProgressFromCloud().then(() => {
-            let p2 = getProgress();
-            alert('После скачивания: ' + JSON.stringify(p2));
-            renderProfile();
-        }).catch(e => alert('ОШИБКА БАЗЫ: ' + e.message));
-    } else {
-        alert('В памяти телефона ЕСТЬ данные: ' + JSON.stringify(p));
-    }
-" style="background: red; color: white; padding: 10px; font-size: 16px; width: 100%; margin-bottom: 20px;">
-    НАЖМИ СЮДА ДЛЯ ПРОВЕРКИ
-</button>
-
-<div id="profile-content"></div>
+            <div id="profile-content"></div>
         </section>
     </div>
 
