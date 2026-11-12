@@ -488,3 +488,18 @@ body::before {
         position: relative;
     }
 }
+/* ЖЕСТКИЙ ФИКС ДЛЯ КНОПКИ НАЗАД НА МОБИЛЬНЫХ И В PWA */
+#lesson-back-btn {
+    position: relative !important;
+    z-index: 999999 !important; /* Поднимаем на самый верхний слой */
+    pointer-events: auto !important; /* Принудительно разрешаем клики */
+    touch-action: manipulation !important; /* Убираем задержку нажатия на телефонах (300мс) */
+    -webkit-tap-highlight-color: transparent;
+    cursor: pointer !important;
+}
+
+/* На всякий случай делаем саму страницу урока кликабельной */
+#lesson-page {
+    position: relative;
+    z-index: 10;
+}

@@ -128,12 +128,16 @@ function getProgress() {
 }
 
 async function saveProgress(data) {
-    if (!currentUser) return; // гость — не сохраняем
-    const key = `amanah_progress_${currentUser.uid}`;
-    localStorage.setItem(key, JSON.stringify(data)); // синхронно — успеет при закрытии вкладки
+    if (!currentUser) return;
 
+    const key = `amanah_progress_${currentUser.uid}`;
+    // 1. Сначала сохраняем в память телефона (это происходит мгновенно и не зависит от интернета)
+    localStorage.setItem(key, JSON.stringify(data));
+
+    // 2. Затем отправляем в облако Firebase
     if (db) {
         try {
+            // Ждем, пока сервер подтвердит запись
             await db.collection('users').doc(currentUser.uid).set(
                 {
                     progress: data,
@@ -143,6 +147,9 @@ async function saveProgress(data) {
             );
         } catch (err) {
             console.error("Ошибка сохранения в облако:", err);
+            // Если интернет плохой, ставим флаг, что надо синхронизировать позже
+            localStorage.setItem('amanah_progress_dirty', '1');
+            throw err; // Пробрасываем ошибку, чтобы кнопка "Завершить" знала о проблеме
         }
     }
 }
@@ -568,7 +575,12 @@ function openLesson(type, parent, id) {
 
 async function goBackFromLesson() {
     if (autoSaveTimer) clearTimeout(autoSaveTimer);
+   // Защита от двойного клика
+    const backBtn = document.getElementById('lesson-back-btn');
+    if (backBtn && backBtn.dataset.clicking === 'true') return;
+    if (backBtn) backBtn.dataset.clicking = 'true';
 
+    if (autoSaveTimer) clearTimeout(autoSaveTimer);
     // Сначала мгновенно переключаем экран (код переключения страниц)
     if (lessonType === 'topic') {
         openTopic(parentId);
@@ -587,9 +599,13 @@ async function goBackFromLesson() {
         if (allLessons.length > 0) {
             // Без await, чтобы не тормозить кнопку "Назад"
             saveProgressUpToCurrent(lessonType, parentId, currentLessonId, allLessons);
+               setTimeout(() => {
+        if (backBtn) backBtn.dataset.clicking = 'false';
+    }, 500);
+}
         }
     }
-}
+
 
 function changeLesson(direction) {
     if(!currentLessonId) return;
@@ -604,29 +620,49 @@ function changeLesson(direction) {
 
 async function completeCurrentLesson() {
     if (!currentLessonId) return;
-    
-    // 1. Отменяем таймер автосохранения
+
+    // 1. Блокируем кнопку, чтобы не нажать дважды
+    const btn = document.getElementById('complete-btn');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerText = "Сохранение...";
+    }
+
+    // 2. Отменяем фоновый таймер, чтобы не было конфликтов
     if (autoSaveTimer) clearTimeout(autoSaveTimer);
 
-    // 2. Собираем все уроки книги/темы, чтобы сохранить прогресс до текущего
+    // 3. Находим все уроки
     let allLessons = [];
-    if (lessonType === 'book' && currentBookId) allLessons = booksData[currentBookId].lessons;
-    else if (lessonType === 'topic') {
+    if (lessonType === 'book' && currentBookId) {
+        allLessons = booksData[currentBookId].lessons;
+    } else if (lessonType === 'topic') {
         const topic = findTopic(parentId);
         if (topic) allLessons = topic.lessons;
     }
 
-    // 3. ЖДЕМ, пока прогресс сохранится (чтобы на телефоне не было потерь)
+    // 4. ЖЕСТКО СОХРАНЯЕМ (ждем ответа)
     if (allLessons.length > 0) {
-        await saveProgressUpToCurrent(lessonType, parentId, currentLessonId, allLessons);
+        try {
+            // Напрямую вызываем сохранение в Firebase
+            await saveProgressUpToCurrent(lessonType, parentId, currentLessonId, allLessons);
+            
+            // Показываем уведомление об успехе
+            showToast('Урок завершен и сохранен!', 'success');
+        } catch (error) {
+            console.error("Ошибка при завершении:", error);
+            showToast('Ошибка сохранения. Проверьте интернет.', 'error');
+        }
+    } else {
+        showToast('Урок завершен!', 'success');
     }
 
-    // 4. Показываем уведомление
-    if (typeof showToast === 'function') {
-        showToast('Урок завершен и сохранен!', 'success');
+    // 5. Возвращаем кнопку в исходное состояние (на случай, если мы остались на странице)
+    if (btn) {
+        btn.disabled = false;
+        btn.innerText = "Завершить урок";
     }
 
-    // 5. Переходим назад
+    // 6. Переходим назад (назад к списку уроков)
     goBackFromLesson();
 }
 
