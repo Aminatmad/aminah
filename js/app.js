@@ -569,32 +569,13 @@ function openLesson(type, parent, id) {
 async function goBackFromLesson() {
     if (autoSaveTimer) clearTimeout(autoSaveTimer);
 
-    // 1. Сначала МГНОВЕННО переключаем экран (без await)
+    // Сначала мгновенно переключаем экран (код переключения страниц)
     if (lessonType === 'topic') {
         openTopic(parentId);
     }
-    else if (lessonType === 'book' && currentBookId) {
-        openBook(currentBookId);
-    }
-    else if (lessonType === 'old') {
-        if (parentId === 'islam') showPage('islam-start-page');
-        else if (parentId === 'family') showPage('family-page');
-        else if (parentId === 'birth') showPage('birth-page');
-        else if (parentId === 'loss') showPage('loss-page');
-        else {
-            const section = getSectionByLessonId(currentLessonId);
-            if (section) showPage(section);
-        }
-
-        setTimeout(() => {
-            const savedScroll = sessionStorage.getItem(`scroll_${parentId}`);
-            if (savedScroll !== null) {
-                window.scrollTo({ top: parseInt(savedScroll), behavior: 'instant' });
-            }
-        }, 50);
-    }
-
-    // 2. А теперь в ФОНЕ сохраняем прогресс (не ждем завершения)
+    // ... и так далее ...
+    
+    // А в самом конце функции — сохранение:
     if (currentLessonId) {
         let allLessons = [];
         if (lessonType === 'book' && currentBookId) allLessons = booksData[currentBookId].lessons;
@@ -604,7 +585,7 @@ async function goBackFromLesson() {
         }
 
         if (allLessons.length > 0) {
-            // Вот здесь мы убрали await, чтобы не тормозить
+            // Без await, чтобы не тормозить кнопку "Назад"
             saveProgressUpToCurrent(lessonType, parentId, currentLessonId, allLessons);
         }
     }
@@ -621,10 +602,32 @@ function changeLesson(direction) {
     }
 }
 
-function completeCurrentLesson() {
-    if(!currentLessonId) return;
+async function completeCurrentLesson() {
+    if (!currentLessonId) return;
+    
+    // 1. Отменяем таймер автосохранения
     if (autoSaveTimer) clearTimeout(autoSaveTimer);
-    goBackFromLesson(); // Она теперь работает мгновенно
+
+    // 2. Собираем все уроки книги/темы, чтобы сохранить прогресс до текущего
+    let allLessons = [];
+    if (lessonType === 'book' && currentBookId) allLessons = booksData[currentBookId].lessons;
+    else if (lessonType === 'topic') {
+        const topic = findTopic(parentId);
+        if (topic) allLessons = topic.lessons;
+    }
+
+    // 3. ЖДЕМ, пока прогресс сохранится (чтобы на телефоне не было потерь)
+    if (allLessons.length > 0) {
+        await saveProgressUpToCurrent(lessonType, parentId, currentLessonId, allLessons);
+    }
+
+    // 4. Показываем уведомление
+    if (typeof showToast === 'function') {
+        showToast('Урок завершен и сохранен!', 'success');
+    }
+
+    // 5. Переходим назад
+    goBackFromLesson();
 }
 
 // ===== РЕНДЕР ПРОФИЛЯ =====
@@ -735,8 +738,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (bookId) {
         if (fromProfile) window.isFromProfile = true;
-        if (lessonId) openLesson('book', bookId, lessonId);
-        else openBook(bookId);
+        
+        // ЖДЕМ, пока Firebase проверит авторизацию (максимум 1.5 секунды)
+        let checkAuth = setInterval(() => {
+            // Если Firebase уже загрузился (auth существует)
+            if (typeof auth !== 'undefined' && auth) {
+                clearInterval(checkAuth); // Останавливаем проверку
+                
+                if (lessonId) openLesson('book', bookId, lessonId);
+                else openBook(bookId);
+            }
+        }, 100);
     }
 });
 
