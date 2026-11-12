@@ -1,3 +1,93 @@
+// ===== НАСТРОЙКА FIREBASE =====
+const firebaseConfig = {
+  apiKey: "AIzaSyBIJ_vYodBTHob1fdqT4DvkRyEepsrhdDE",
+  authDomain: "amanah-f1d36.firebaseapp.com",
+  projectId: "amanah-f1d36",
+  storageBucket: "amanah-f1d36.firebasestorage.app",
+  messagingSenderId: "22483051323",
+  appId: "1:22483051323:web:d61bd32e5002cc4e5e8d1e",
+  measurementId: "G-M088TFP53N"
+};
+
+let auth = null;
+let db = null;
+let currentUser = null;
+
+function showToast(message, type = 'success') {
+    let container = document.querySelector('.toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerText = message;
+    container.appendChild(toast);
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Инициализируем Firebase
+if (typeof firebase !== 'undefined') {
+    firebase.initializeApp(firebaseConfig);
+    auth = firebase.auth();
+    
+    // Включаем сохранение в LOCAL (чтобы не выкидывало при F5)
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+        .catch((error) => console.error("Ошибка persistence:", error));
+
+    db = firebase.firestore();
+
+    // Следим за состоянием входа
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            currentUser = user;
+            localStorage.removeItem('pendingEmailChange'); // Очищаем, если успешно вошли
+            localStorage.removeItem('pendingPassword');    // Очищаем пароль
+            
+            const greetingEl = document.querySelector('.section-title');
+            if (greetingEl && greetingEl.innerText.includes('прогресс')) {
+                greetingEl.innerText = `Профиль: ${user.displayName || user.email}`;
+            }
+            loadProgressFromCloud();
+            
+            const accountView = document.getElementById('settings-account-view');
+            if (accountView && accountView.style.display === 'block') {
+                document.getElementById('set-user-email').innerText = user.email;
+                document.getElementById('set-user-name-display').innerText = user.displayName || "Не задано";
+            }
+        } else {
+            currentUser = null;
+            
+            // ХАК: Если Firebase выкинул нас, но в памяти есть данные для входа (после смены почты)
+            const pendingEmail = localStorage.getItem('pendingEmailChange');
+            const pendingPass = localStorage.getItem('pendingPassword');
+            
+            if (pendingEmail && pendingPass) {
+                auth.signInWithEmailAndPassword(pendingEmail, pendingPass)
+                    .then(() => {
+                        localStorage.removeItem('pendingEmailChange');
+                        localStorage.removeItem('pendingPassword');
+                        showToast('Почта успешно подтверждена! Добро пожаловать.', 'success');
+                    })
+                    .catch((err) => {
+                        console.error("Не удалось автоматически войти после смены почты:", err);
+                        // Если не удалось, просто чистим память, чтобы не циклилось
+                        localStorage.removeItem('pendingEmailChange');
+                        localStorage.removeItem('pendingPassword');
+                    });
+                return; 
+            }
+
+            if (typeof renderProfile === 'function') renderProfile();
+        }
+    });
+}
+
 const sectionOrders = {
     'islam-start-page': [1,2,3,4,5,6,7,8,9,10,11,12,13],
     'family-page':      [14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40],
@@ -14,34 +104,45 @@ let autoSaveTimer = null;
 
 // ===== ЛОГИКА ПРОГРЕССА И PRO =====
 function getProgress() {
-    let p = localStorage.getItem('amanah_progress');
+    const key = currentUser ? `amanah_progress_${currentUser.uid}` : 'amanah_progress_guest';
+    let p = localStorage.getItem(key);
     return p ? JSON.parse(p) : {};
 }
 
 function saveProgress(data) {
-    localStorage.setItem('amanah_progress', JSON.stringify(data));
+    const key = currentUser ? `amanah_progress_${currentUser.uid}` : 'amanah_progress_guest';
+    localStorage.setItem(key, JSON.stringify(data));
+    if (currentUser && db) {
+        db.collection('users').doc(currentUser.uid).set({ progress: data }, { merge: true })
+          .catch(err => console.error("Ошибка облака:", err));
+    }
 }
 
-function isPro() {
-    return localStorage.getItem('amanah_pro') === 'true';
+async function loadProgressFromCloud() {
+    if (!currentUser || !db) return;
+    try {
+        const doc = await db.collection('users').doc(currentUser.uid).get();
+        if (doc.exists && doc.data().progress) {
+            const key = `amanah_progress_${currentUser.uid}`;
+            localStorage.setItem(key, JSON.stringify(doc.data().progress));
+            if (typeof renderProfile === 'function') renderProfile();
+        }
+    } catch (error) {
+        console.error("Ошибка загрузки:", error);
+    }
 }
+
+function isPro() { return localStorage.getItem('amanah_pro') === 'true'; }
 
 function activatePro() {
     localStorage.setItem('amanah_pro', 'true');
     closeProModal();
-    if(currentBookId) {
-        openBook(currentBookId);
-    }
-    alert('PRO активирован! Все уроки теперь доступны.');
+    if(currentBookId) openBook(currentBookId);
+    showToast('PRO активирован!', 'success');
 }
 
-function showProModal() {
-    document.getElementById('pro-modal').classList.add('active');
-}
-
-function closeProModal() {
-    document.getElementById('pro-modal').classList.remove('active');
-}
+function showProModal() { document.getElementById('pro-modal').classList.add('active'); }
+function closeProModal() { document.getElementById('pro-modal').classList.remove('active'); }
 
 function markLessonDone(bookId, lessonId) {
     let progress = getProgress();
@@ -62,7 +163,6 @@ function openBook(id) {
     document.getElementById('book-title').innerText = book.title;
     document.getElementById('book-author').innerText = book.author;
    
-    // ПРОВЕРКА: ОТКУДА МЫ ПРИШЛИ
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('from') === 'profile' || window.isFromProfile) {
         sessionStorage.setItem('amanah_from_profile', 'true');
@@ -105,11 +205,8 @@ function openBook(id) {
         const isLocked = lesson.isPro && !proStatus;
        
         let action = '';
-        if(isLocked) {
-            action = `onclick="showProModal()"`;
-        } else {
-            action = `onclick="openLesson('book', ${id}, '${lesson.id}')"`;
-        }
+        if(isLocked) action = `onclick="showProModal()"`;
+        else action = `onclick="openLesson('book', ${id}, '${lesson.id}')"`;
 
         lessonsHtml += `
             <div class="lesson-item" ${action}>
@@ -140,7 +237,7 @@ function openBook(id) {
     showPage('book-page');
 }
 
-// ===== ФУНКЦИИ ДЛЯ РАЗДЕЛОВ ЗНАНИЙ (Акыда, Фикх, Сира) =====
+// ===== ФУНКЦИИ ДЛЯ РАЗДЕЛОВ ЗНАНИЙ =====
 function openSection(id) {
     const section = sectionsData[id];
     if (!section) return;
@@ -218,23 +315,23 @@ function findTopic(topicId) {
     return null;
 }
 
-function goBackFromContent() {
-    showPage('section-page');
-}
+function goBackFromContent() { showPage('section-page'); }
 
 // ===== УРОКИ =====
 function showPage(pageId) {
     const page = document.getElementById(pageId);
     if (!page) return;
 
-    document.querySelectorAll('.page-section').forEach(p => {
-        p.classList.remove('active');
-    });
+    document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
     page.classList.add('active');
 
     if (pageId === 'knowledge-page') {
         restoreScroll();
-    } else {
+    }
+    else if (['islam-start-page', 'family-page', 'birth-page', 'loss-page'].includes(pageId)) {
+        // скролл восстанавливается в goBackFromLesson
+    }
+    else {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 }
@@ -252,9 +349,7 @@ function saveProgressUpToCurrent(type, parent, currentId, allLessons) {
     if (type === 'book' || type === 'topic') {
         const idx = allLessons.findIndex(l => l.id === currentId);
         if (idx !== -1) {
-            for (let i = 0; i <= idx; i++) {
-                markLessonDone(idForProgress, allLessons[i].id);
-            }
+            for (let i = 0; i <= idx; i++) markLessonDone(idForProgress, allLessons[i].id);
         }
     } else {
         markLessonDone(idForProgress, currentId);
@@ -266,6 +361,11 @@ function openLesson(type, parent, id) {
     let totalLessons = 0;
     let currentIndex = 0;
     let allLessons = [];
+
+    if (type === 'old') {
+        const scrollPos = window.scrollY || document.documentElement.scrollTop;
+        sessionStorage.setItem(`scroll_${parent}`, scrollPos);
+    }
 
     if (type === 'book') {
         const book = booksData[parent];
@@ -351,9 +451,8 @@ function goBackFromLesson() {
 
     if (currentLessonId) {
         let allLessons = [];
-        if (lessonType === 'book') {
-            allLessons = booksData[currentBookId].lessons;
-        } else if (lessonType === 'topic') {
+        if (lessonType === 'book') allLessons = booksData[currentBookId].lessons;
+        else if (lessonType === 'topic') {
             const topic = findTopic(parentId);
             if (topic) allLessons = topic.lessons;
         }
@@ -378,6 +477,13 @@ function goBackFromLesson() {
             const section = getSectionByLessonId(currentLessonId);
             if (section) showPage(section);
         }
+
+        setTimeout(() => {
+            const savedScroll = sessionStorage.getItem(`scroll_${parentId}`);
+            if (savedScroll !== null) {
+                window.scrollTo({ top: parseInt(savedScroll), behavior: 'instant' });
+            }
+        }, 50);
     }
 }
 
@@ -406,7 +512,6 @@ function renderProfile() {
 
     for (const [bookId, book] of Object.entries(booksData)) {
         const bProgress = progress[bookId] || { done: [], last: null };
-       
         const validDoneIds = book.lessons.map(l => l.id);
         const doneCount = bProgress.done.filter(id => validDoneIds.includes(id)).length;
        
@@ -427,11 +532,9 @@ function renderProfile() {
                     <h4 style="color: var(--text-dark); margin: 0;">${book.title}</h4>
                     <span style="font-size: 13px; color: var(--text-muted-dark); font-weight: bold;">${doneCount}/${book.lessons.length}</span>
                 </div>
-               
                 <div class="progress-container" style="margin-top: 0;">
                     <div class="progress-bar" style="width: ${percent}%"></div>
                 </div>
-               
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
                     <span style="font-size: 12px; color: var(--text-muted-dark);">
                         ${bProgress.last && validDoneIds.includes(bProgress.last) ? 'Последний урок: ' + bProgress.last : ''}
@@ -449,16 +552,12 @@ function renderProfile() {
     }
 
     const profileEl = document.getElementById('profile-content');
-    if (profileEl) {
-        profileEl.innerHTML = html;
-    }
+    if (profileEl) profileEl.innerHTML = html;
 }
 
 const originalShowPage = showPage;
 showPage = function(pageId) {
-    if(pageId === 'profile-page') {
-        renderProfile();
-    }
+    if(pageId === 'profile-page') renderProfile();
     originalShowPage(pageId);
 };
 
@@ -470,7 +569,6 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// ===== АВТОЗАПУСК ИЗ ПРОФИЛЯ =====
 document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const bookId = urlParams.get('book');
@@ -478,19 +576,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const fromProfile = urlParams.get('from') === 'profile';
 
     if (bookId) {
-        if (fromProfile) {
-            window.isFromProfile = true;
-        }
-       
-        if (lessonId) {
-            openLesson('book', bookId, lessonId);
-        } else {
-            openBook(bookId);
-        }
+        if (fromProfile) window.isFromProfile = true;
+        if (lessonId) openLesson('book', bookId, lessonId);
+        else openBook(bookId);
     }
 });
 
-// ===== СОХРАНЕНИЕ И ВОССТАНОВЛЕНИЕ ПОЗИЦИИ СКРОЛЛА =====
 function saveScrollAndOpenBook(bookId) {
     const scrollPos = window.scrollY || document.documentElement.scrollTop;
     sessionStorage.setItem('catalog_scroll_pos', scrollPos);
@@ -501,10 +592,7 @@ function restoreScroll() {
     const savedPos = sessionStorage.getItem('catalog_scroll_pos');
     if (savedPos !== null) {
         setTimeout(() => {
-            window.scrollTo({
-                top: parseInt(savedPos),
-                behavior: 'instant'
-            });
+            window.scrollTo({ top: parseInt(savedPos), behavior: 'instant' });
             sessionStorage.removeItem('catalog_scroll_pos');
         }, 50);
     }
@@ -512,15 +600,213 @@ function restoreScroll() {
 
 document.addEventListener('DOMContentLoaded', () => {
     const knowledgePage = document.getElementById('knowledge-page');
-    if (knowledgePage && knowledgePage.classList.contains('active')) {
-        restoreScroll();
-    }
+    if (knowledgePage && knowledgePage.classList.contains('active')) restoreScroll();
 });
+
+// ===== АВТОРИЗАЦИЯ (Firebase) =====
+function openAuthModal() {
+    if (currentUser) {
+        if(confirm(`Вы вошли как ${currentUser.displayName || currentUser.email}.\nХотите выйти?`)) {
+            auth.signOut().then(() => { location.reload(); });
+        }
+    } else {
+        document.getElementById('auth-modal').classList.add('active');
+        toggleAuthForms(false);
+    }
+}
+
+function toggleAuthForms(showReg = null) {
+    const loginForm = document.getElementById('login-form');
+    const regForm = document.getElementById('register-form');
+    if (showReg === null) showReg = loginForm.style.display !== 'none';
+    if (showReg) {
+        loginForm.style.display = 'none'; regForm.style.display = 'block';
+    } else {
+        loginForm.style.display = 'block'; regForm.style.display = 'none';
+    }
+}
+
+function loginUser() {
+    const email = document.getElementById('login-email').value.trim();
+    const pass = document.getElementById('login-pass').value.trim();
+    if (!email || !pass) { showToast('Заполните поля!', 'error'); return; }
+    if (!auth) { showToast('Ошибка Firebase', 'error'); return; }
+
+    auth.signInWithEmailAndPassword(email, pass)
+        .then(() => { document.getElementById('auth-modal').classList.remove('active'); showToast('Добро пожаловать!', 'success'); setTimeout(() => location.reload(), 1000); })
+        .catch((error) => showToast('Неверная почта или пароль!', 'error'));
+}
+
+function registerUser() {
+    const email = document.getElementById('reg-email').value.trim();
+    const pass = document.getElementById('reg-pass').value.trim();
+    if (!email || !pass) { showToast('Заполните поля!', 'error'); return; }
+    if (pass.length < 6) { showToast('Пароль от 6 символов!', 'error'); return; }
+    if (!auth) { showToast('Ошибка Firebase', 'error'); return; }
+
+    auth.createUserWithEmailAndPassword(email, pass)
+        .then((userCredential) => {
+            userCredential.user.sendEmailVerification();
+            document.getElementById('auth-modal').classList.remove('active');
+            showToast('Регистрация успешна! Проверьте почту для подтверждения.', 'success');
+            setTimeout(() => location.reload(), 2000);
+        })
+        .catch((error) => showToast('Ошибка: ' + error.message, 'error'));
+}
+
+function togglePassword(inputId, iconContainer) {
+    const input = document.getElementById(inputId);
+    const eyeOff = iconContainer.querySelector('.eye-off');
+    const eyeOn = iconContainer.querySelector('.eye-on');
+
+    if (input.type === "password") {
+        input.type = "text";
+        iconContainer.style.color = "var(--gold)";
+        if(eyeOff) eyeOff.style.display = "none";
+        if(eyeOn) eyeOn.style.display = "block";
+    } else {
+        input.type = "password";
+        iconContainer.style.color = "#888";
+        if(eyeOff) eyeOff.style.display = "block";
+        if(eyeOn) eyeOn.style.display = "none";
+    }
+}
+
+// ===== УПРАВЛЕНИЕ АККАУНТОМ ИЗ НАСТРОЕК =====
+function openAccountSettings() {
+    const modal = document.getElementById('account-settings-modal');
+    const loginView = document.getElementById('settings-login-view');
+    const accountView = document.getElementById('settings-account-view');
+
+    if (!modal) return;
+    modal.classList.add('active');
+
+    if (currentUser) {
+        loginView.style.display = 'none';
+        accountView.style.display = 'block';
+       
+        document.getElementById('set-user-email').innerText = "Загрузка...";
+        document.getElementById('set-user-name-display').innerText = "Загрузка...";
+
+        currentUser.reload().then(() => {
+            const freshUser = firebase.auth().currentUser;
+            if (freshUser) {
+                document.getElementById('set-user-email').innerText = freshUser.email;
+                document.getElementById('set-user-name-display').innerText = freshUser.displayName || "Не задано";
+            }
+        }).catch((error) => {
+            console.error("Ошибка обновления:", error);
+            document.getElementById('set-user-email').innerText = currentUser.email;
+            document.getElementById('set-user-name-display').innerText = currentUser.displayName || "Не задано";
+        });
+    } else {
+        loginView.style.display = 'block';
+        accountView.style.display = 'none';
+    }
+}
+
+function loginFromSettings() {
+    const email = document.getElementById('set-login-email').value.trim();
+    const pass = document.getElementById('set-login-pass').value.trim();
+   
+    if (!email || !pass) { showToast('Заполните поля!', 'error'); return; }
+    if (!auth) { showToast('Ошибка Firebase', 'error'); return; }
+
+    auth.signInWithEmailAndPassword(email, pass)
+        .then(() => {
+            showToast('Добро пожаловать!', 'success');
+            document.getElementById('account-settings-modal').classList.remove('active');
+            setTimeout(() => location.reload(), 1000);
+        })
+        .catch(() => showToast('Неверная почта или пароль!', 'error'));
+}
+
+function logoutFromSettings() {
+    if (confirm('Вы уверены, что хотите выйти?')) {
+        auth.signOut().then(() => { location.reload(); });
+    }
+}
+
+function saveNewName() {
+    const newName = document.getElementById('set-new-name').value.trim();
+    if (!newName) { showToast('Введите имя!', 'error'); return; }
+    if (!currentUser) return;
+
+    currentUser.updateProfile({ displayName: newName })
+        .then(() => {
+            showToast('Имя успешно изменено!', 'success');
+            document.getElementById('set-user-name-display').innerText = newName;
+            document.getElementById('set-new-name').value = '';
+           
+            const greetingEl = document.querySelector('.section-title');
+            if (greetingEl && greetingEl.innerText.includes('Профиль:')) {
+                greetingEl.innerText = `Профиль: ${newName}`;
+            }
+        })
+        .catch((error) => showToast('Ошибка: ' + error.message, 'error'));
+}
+
+function saveNewEmail() {
+    const newEmail = document.getElementById('set-new-email').value.trim();
+    const pass = document.getElementById('set-email-pass').value.trim();
+   
+    if (!newEmail || !pass) { showToast('Заполните новую почту и текущий пароль!', 'error'); return; }
+    if (!currentUser) return;
+
+    const credential = firebase.auth.EmailAuthProvider.credential(currentUser.email, pass);
+   
+    currentUser.reauthenticateWithCredential(credential)
+        .then(() => {
+            return currentUser.verifyBeforeUpdateEmail(newEmail);
+        })
+        .then(() => {
+            showToast('Письмо с подтверждением отправлено на новую почту!', 'success');
+            document.getElementById('set-new-email').value = '';
+            document.getElementById('set-email-pass').value = '';
+           
+            // СОХРАНЯЕМ НОВУЮ ПОЧТУ И ПАРОЛЬ В ПАМЯТЬ БРАУЗЕРА
+            // Это нужно, чтобы после перехода по ссылке и перезагрузки страницы, 
+            // скрипт автоматически залогинил пользователя обратно
+            localStorage.setItem('pendingEmailChange', newEmail);
+            localStorage.setItem('pendingPassword', pass);
+
+            setTimeout(() => {
+                document.getElementById('account-settings-modal').classList.remove('active');
+            }, 2000);
+        })
+        .catch((error) => {
+            if (error.code === 'auth/wrong-password') showToast('Неверный текущий пароль!', 'error');
+            else showToast('Ошибка: ' + error.message, 'error');
+        });
+}
+
+function saveNewPass() {
+    const oldPass = document.getElementById('set-old-pass').value.trim();
+    const newPass = document.getElementById('set-new-pass').value.trim();
+   
+    if (!oldPass || !newPass) { showToast('Заполните поля!', 'error'); return; }
+    if (newPass.length < 6) { showToast('Новый пароль от 6 символов!', 'error'); return; }
+    if (!currentUser) return;
+
+    const credential = firebase.auth.EmailAuthProvider.credential(currentUser.email, oldPass);
+   
+    currentUser.reauthenticateWithCredential(credential)
+        .then(() => currentUser.updatePassword(newPass))
+        .then(() => {
+            showToast('Пароль успешно изменен!', 'success');
+            document.getElementById('set-old-pass').value = '';
+            document.getElementById('set-new-pass').value = '';
+        })
+        .catch(() => showToast('Ошибка: неверный текущий пароль!', 'error'));
+}
 
 // ===== НАМАЗ И КИБЛА =====
 let qiblaAngle = 0;
 let todayPrayers = [];
 let isGeolocationRequested = false;
+
+let currentPrayerDate = new Date();
+let userCoordinates = null;
 
 function openQiblaModal() {
     document.getElementById('qibla-modal').classList.add('active');
@@ -535,6 +821,12 @@ function closeQiblaModal() {
     document.getElementById('qibla-modal').classList.remove('active');
 }
 
+function openPrayerModal() {
+    document.getElementById('prayer-modal').classList.add('active');
+    currentPrayerDate = new Date();
+    if (userCoordinates) fetchPrayerTimesForDate(currentPrayerDate);
+}
+
 async function initPrayerAndQibla(askGeo = false) {
     const nextNameEl = document.getElementById('next-prayer-name');
     const nextTimeEl = document.getElementById('next-prayer-time');
@@ -542,68 +834,118 @@ async function initPrayerAndQibla(askGeo = false) {
    
     if (debugText) debugText.innerText = "Запрос GPS...";
 
-    const fetchTimes = async (lat, lng) => {
-        isGeolocationRequested = true;
-        if (debugText) debugText.innerText = `Координаты: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-
-        const today = new Date();
-        const dateStr = `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`;
-
-        try {
-            const response = await fetch(`https://api.aladhan.com/v1/timings/${dateStr}?latitude=${lat}&longitude=${lng}&method=3`);
-            const data = await response.json();
-           
-            if (data.code === 200) {
-                const timings = data.data.timings;
-                const now = new Date();
-                const currentTime = now.getHours() * 60 + now.getMinutes();
-               
-                todayPrayers = [
-                    { name: 'Фаджр (Рассвет)', time: timings.Fajr },
-                    { name: 'Зухр (Полдень)', time: timings.Dhuhr },
-                    { name: 'Аср (После полудня)', time: timings.Asr },
-                    { name: 'Магриб (Закат)', time: timings.Maghrib },
-                    { name: 'Иша (Ночь)', time: timings.Isha }
-                ];
-
-                let nextPrayer = todayPrayers.find(p => {
-                    const [h, m] = p.time.split(':').map(Number);
-                    return (h * 60 + m) > currentTime;
-                });
-
-                if (!nextPrayer) nextPrayer = { name: 'Фаджр', time: todayPrayers[0].time };
-
-                if(nextNameEl) nextNameEl.innerText = nextPrayer.name.split(' ')[0];
-                if(nextTimeEl) nextTimeEl.innerText = nextPrayer.time;
-                renderPrayerList();
-            }
-
-            const qiblaRes = await fetch(`https://api.aladhan.com/v1/qibla/${lat}/${lng}`);
-            const qiblaData = await qiblaRes.json();
-            if (qiblaData.code === 200) {
-                qiblaAngle = qiblaData.data.direction;
-                startCompass();
-            }
-        } catch (error) {
-            console.error("Ошибка загрузки данных:", error);
-            if (debugText) debugText.innerText = "Ошибка загрузки данных API";
-        }
-    };
-
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
-            (position) => fetchTimes(position.coords.latitude, position.coords.longitude),
+            (position) => {
+                userCoordinates = { lat: position.coords.latitude, lng: position.coords.longitude };
+                isGeolocationRequested = true;
+                if (debugText) debugText.innerText = `Координаты: ${userCoordinates.lat.toFixed(4)}, ${userCoordinates.lng.toFixed(4)}`;
+               
+                fetchPrayerTimesForDate(new Date());
+                fetchQibla(userCoordinates.lat, userCoordinates.lng);
+            },
             (error) => {
                 console.warn("GPS Ошибка:", error.message);
                 if (debugText) debugText.innerText = "GPS заблокирован. Используем Москву.";
-                fetchTimes(55.7558, 37.6173); 
+                userCoordinates = { lat: 55.7558, lng: 37.6173 };
+                isGeolocationRequested = true;
+               
+                fetchPrayerTimesForDate(new Date());
+                fetchQibla(userCoordinates.lat, userCoordinates.lng);
             },
             { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
         );
     } else {
         if (debugText) debugText.innerText = "Геолокация не поддерживается.";
-        fetchTimes(55.7558, 37.6173);
+        userCoordinates = { lat: 55.7558, lng: 37.6173 };
+        fetchPrayerTimesForDate(new Date());
+        fetchQibla(userCoordinates.lat, userCoordinates.lng);
     }
+}
+
+async function fetchPrayerTimesForDate(dateObj) {
+    if (!userCoordinates) return;
+   
+    currentPrayerDate = dateObj;
+    const nextNameEl = document.getElementById('next-prayer-name');
+    const nextTimeEl = document.getElementById('next-prayer-time');
+    const titleEl = document.getElementById('prayer-date-title');
+
+    const dateStr = `${String(dateObj.getDate()).padStart(2, '0')}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${dateObj.getFullYear()}`;
+   
+    const months = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
+    const today = new Date();
+    const isToday = dateObj.getDate() === today.getDate() && dateObj.getMonth() === today.getMonth() && dateObj.getFullYear() === today.getFullYear();
+   
+    if (titleEl) titleEl.innerText = isToday ? "Намазы сегодня" : `Намазы на ${dateObj.getDate()} ${months[dateObj.getMonth()]}`;
+
+    try {
+        const response = await fetch(`https://api.aladhan.com/v1/timings/${dateStr}?latitude=${userCoordinates.lat}&longitude=${userCoordinates.lng}&method=3`);
+        const data = await response.json();
+       
+        if (data.code === 200) {
+            const timings = data.data.timings;
+            todayPrayers = [
+                { name: 'Фаджр (Рассвет)', time: timings.Fajr },
+                { name: 'Зухр (Полдень)', time: timings.Dhuhr },
+                { name: 'Аср (После полудня)', time: timings.Asr },
+                { name: 'Магриб (Закат)', time: timings.Maghrib },
+                { name: 'Иша (Ночь)', time: timings.Isha }
+            ];
+
+            renderPrayerList();
+
+            if (isToday) {
+                const now = new Date();
+                const currentTime = now.getHours() * 60 + now.getMinutes();
+                let nextPrayer = todayPrayers.find(p => {
+                    const [h, m] = p.time.split(':').map(Number);
+                    return (h * 60 + m) > currentTime;
+                });
+                if (!nextPrayer) nextPrayer = { name: 'Фаджр', time: todayPrayers[0].time };
+
+                if(nextNameEl) nextNameEl.innerText = nextPrayer.name.split(' ')[0];
+                if(nextTimeEl) nextTimeEl.innerText = nextPrayer.time;
+            }
+        }
+    } catch (error) {
+        console.error("Ошибка загрузки намазов:", error);
+    }
+}
+
+async function fetchQibla(lat, lng) {
+    try {
+        const qiblaRes = await fetch(`https://api.aladhan.com/v1/qibla/${lat}/${lng}`);
+        const qiblaData = await qiblaRes.json();
+        if (qiblaData.code === 200) {
+            qiblaAngle = qiblaData.data.direction;
+            startCompass();
+        }
+    } catch (error) {
+        console.error("Ошибка загрузки Киблы:", error);
+    }
+}
+
+function changePrayerDate(days) {
+    const newDate = new Date(currentPrayerDate);
+    newDate.setDate(newDate.getDate() + days);
+    fetchPrayerTimesForDate(newDate);
+}
+
+function openCalendar() {
+    const picker = document.getElementById('prayer-date-picker');
+    const yyyy = currentPrayerDate.getFullYear();
+    const mm = String(currentPrayerDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(currentPrayerDate.getDate()).padStart(2, '0');
+    picker.value = `${yyyy}-${mm}-${dd}`;
+    picker.showPicker();
+}
+
+function setPrayerDateFromPicker(dateString) {
+    if (!dateString) return;
+    const [y, m, d] = dateString.split('-');
+    const newDate = new Date(y, m - 1, d);
+    fetchPrayerTimesForDate(newDate);
 }
 
 function renderPrayerList() {
@@ -628,10 +970,7 @@ function startCompass() {
     const angleText = document.getElementById('qibla-angle-text');
 
     if (angleText) angleText.innerText = Math.round(qiblaAngle);
-
-    if (compassDial) {
-        compassDial.style.transform = `rotate(${qiblaAngle}deg)`;
-    }
+    if (compassDial) compassDial.style.transform = `rotate(${qiblaAngle}deg)`;
 
     if (window.DeviceOrientationEvent === undefined) {
         if (dirText) dirText.innerText = "Компас доступен только на телефоне. Ориентируйтесь на угол Киблы.";
@@ -663,6 +1002,9 @@ function startCompass() {
         if (heading !== null) {
             if (compassDial) {
                 let rotation = qiblaAngle - heading;
+                if (rotation > 360) rotation -= 360;
+                if (rotation < 0) rotation += 360;
+               
                 compassDial.style.transform = `rotate(${rotation}deg)`;
             }
 

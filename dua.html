@@ -45,7 +45,7 @@
             </div>
 
             <!-- ПРАВАЯ ЧАСТЬ: ВРЕМЯ НАМАЗА -->
-            <div class="header-prayer" onclick="document.getElementById('prayer-modal').classList.add('active')" style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer;">
+            <div class="header-prayer" onclick="openPrayerModal()" style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer;">
                 <span id="next-prayer-name" style="font-size: 11px; color: var(--gold); font-weight: bold; text-transform: uppercase;">Намаз</span>
                 <span id="next-prayer-time" style="font-size: 20px; color: var(--text-light); font-weight: bold;">--:--</span>
             </div>
@@ -185,16 +185,32 @@
         </div>
     </div>
 
-    <!-- МОДАЛКА ВСЕХ НАМАЗОВ -->
+     <!-- МОДАЛКА ВСЕХ НАМАЗОВ -->
     <div class="modal-overlay" id="prayer-modal">
         <div class="modal-content" style="background: var(--bg-color); border: 2px solid var(--gold); color: white; max-width: 360px; padding: 20px;">
-            <h3 style="color: var(--gold); margin-bottom: 20px;">Намазы на сегодня</h3>
+            
+            <!-- Заголовок с датой и кнопкой календаря -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <button onclick="changePrayerDate(-1)" style="background: transparent; border: none; color: var(--gold); font-size: 20px; cursor: pointer;">←</button>
+                
+                <h3 style="color: var(--gold); margin: 0; font-size: 18px; display: flex; align-items: center; gap: 5px; cursor: pointer;" onclick="openCalendar()">
+                    <span id="prayer-date-title">Намазы сегодня</span>
+                    <span style="font-size: 14px;">📅</span>
+                </h3>
+                
+                <button onclick="changePrayerDate(1)" style="background: transparent; border: none; color: var(--gold); font-size: 20px; cursor: pointer;">→</button>
+            </div>
+
+            <!-- Скрытый инпут для календаря -->
+            <input type="date" id="prayer-date-picker" style="display: none;" onchange="setPrayerDateFromPicker(this.value)">
+
             <div id="prayer-list-container" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
                 <!-- Сюда скрипт вставит список намазов -->
             </div>
             <button class="modal-btn" onclick="document.getElementById('prayer-modal').classList.remove('active')">Закрыть</button>
         </div>
     </div>
+
 
     <!-- ПОДКЛЮЧЕНИЕ СКРИПТОВ -->
     <script src="js/data.js"></script>
