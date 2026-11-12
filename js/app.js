@@ -9,9 +9,32 @@ const firebaseConfig = {
   measurementId: "G-M088TFP53N"
 };
 
+const FIREBASE_VERSION = '8.10.1';
+
 let auth = null;
-let db = null;
+let db = null;            // появляется после ensureDb() (Firestore грузится лениво)
 let currentUser = null;
+
+// Firebase восстанавливает вход асинхронно. Пока authReady === false,
+// мы НЕ знаем, гость это или вошедший пользователь (поэтому раньше и
+// мелькало «Войти в аккаунт» у авторизованных).
+let authReady = false;
+let resolveAuthReady = null;
+const authReadyPromise = new Promise((resolve) => { resolveAuthReady = resolve; });
+
+// true, когда документ users/{uid} получен хотя бы один раз (из кэша или с сервера)
+let cloudReady = false;
+
+function markAuthReady() {
+    if (authReady) return;
+    authReady = true;
+    if (resolveAuthReady) resolveAuthReady();
+}
+
+// ===== Безопасные обёртки над localStorage (в PWA/приватном режиме он может падать) =====
+function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* ignore */ } }
+function lsDel(k) { try { localStorage.removeItem(k); } catch (e) { /* ignore */ } }
 
 function showToast(message, type = 'success') {
     let container = document.querySelector('.toast-container');
@@ -31,43 +54,66 @@ function showToast(message, type = 'success') {
     }, 3000);
 }
 
-// Инициализируем Firebase
+// ===== ЛЕНИВАЯ ЗАГРУЗКА FIRESTORE =====
+// Гостям Firestore не нужен (прогресс и PRO только для аккаунтов), поэтому его SDK
+// (самый тяжёлый из трёх) скачивается только когда пользователь вошёл.
+// Если на странице тег firebase-firestore.js уже есть — он просто используется.
+let dbPromise = null;
+
+function loadScriptOnce(src) {
+    return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = src;
+        s.async = true;
+        s.onload = resolve;
+        s.onerror = () => reject(new Error('Не удалось загрузить ' + src));
+        document.head.appendChild(s);
+    });
+}
+
+function ensureDb() {
+    if (db) return Promise.resolve(db);
+    if (dbPromise) return dbPromise;
+
+    dbPromise = (async () => {
+        if (typeof firebase === 'undefined') throw new Error('Firebase не загружен');
+        if (!firebase.firestore) {
+            await loadScriptOnce(`https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-firestore.js`);
+        }
+        const instance = firebase.firestore();
+        // Офлайн-кэш: данные открываются мгновенно, записи не теряются без интернета
+        try {
+            await instance.enablePersistence({ synchronizeTabs: true });
+        } catch (err) {
+            console.warn("Кэш Firestore не включен:", err && err.code);
+        }
+        db = instance;
+        return db;
+    })().catch((err) => {
+        dbPromise = null; // позволяем повторить попытку позже
+        throw err;
+    });
+
+    return dbPromise;
+}
+
+// ===== АВТОРИЗАЦИЯ: СОСТОЯНИЕ ВХОДА =====
 if (typeof firebase !== 'undefined') {
     firebase.initializeApp(firebaseConfig);
     auth = firebase.auth();
+    // LOCAL — режим по умолчанию в браузере, отдельный setPersistence() не нужен
+    // (он лишь задерживал старт).
 
-    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-        .catch((error) => console.error("Ошибка persistence:", error));
-
-       db = firebase.firestore();
-    
-    // Включаем кэширование для быстрой загрузки
-    db.enablePersistence({ synchronizeTabs: true }).catch((err) => {
-        console.warn("Кэш Firestore не включен:", err.code);
-    });
-
-    // Следим за состоянием входа
-    // Следим за состоянием входа
     auth.onAuthStateChanged((user) => {
         if (user) {
             currentUser = user;
-            localStorage.removeItem('pendingEmailChange'); 
-            localStorage.removeItem('pendingPassword');    
-            
-            // Загружаем данные ИЗ ОБЛАКА перед тем, как показать
-            loadProgressFromCloud().then(() => {
-                // Досинхронизация, если были изменения
-                if (localStorage.getItem('amanah_progress_dirty') === '1') {
-                    const local = getProgress();
-                    saveProgress(local).then(() => {
-                        localStorage.removeItem('amanah_progress_dirty');
-                    });
-                }
-                
-                // РИСУЕМ ПРОФИЛЬ ТОЛЬКО ПОСЛЕ ЗАГРУЗКИ ИЗ ОБЛАКА
-                if (typeof renderProfile === 'function') renderProfile();
-            });
-            
+            lsSet('amanah_last_uid', user.uid);
+            lsDel('pendingEmailChange');
+            lsDel('pendingPassword');
+
+            // Не блокирует интерфейс: прогресс/PRO подтягиваются в фоне
+            startCloudSync(user);
+
             const accountView = document.getElementById('settings-account-view');
             if (accountView && accountView.style.display === 'block') {
                 const emailEl = document.getElementById('set-user-email');
@@ -77,31 +123,47 @@ if (typeof firebase !== 'undefined') {
             }
         } else {
             currentUser = null;
-            
-            localStorage.removeItem('amanah_pro');
-            localStorage.removeItem('amanah_progress_guest');
-            
-            const pendingEmail = localStorage.getItem('pendingEmailChange');
-            const pendingPass = localStorage.getItem('pendingPassword');
-            
+            stopCloudSync();
+
+            lsDel('amanah_pro');
+            lsDel('amanah_progress_guest');
+
+            const pendingEmail = lsGet('pendingEmailChange');
+            const pendingPass = lsGet('pendingPassword');
+
             if (pendingEmail && pendingPass) {
                 auth.signInWithEmailAndPassword(pendingEmail, pendingPass)
                     .then(() => {
-                        localStorage.removeItem('pendingEmailChange');
-                        localStorage.removeItem('pendingPassword');
+                        lsDel('pendingEmailChange');
+                        lsDel('pendingPassword');
                         showToast('Почта успешно подтверждена! Добро пожаловать.', 'success');
                     })
                     .catch((err) => {
                         console.error("Не удалось автоматически войти:", err);
-                        localStorage.removeItem('pendingEmailChange');
-                        localStorage.removeItem('pendingPassword');
+                        lsDel('pendingEmailChange');
+                        lsDel('pendingPassword');
+                        markAuthReady();
+                        refreshUiAfterSync();
                     });
-                return; 
+                return;
             }
 
-            if (typeof renderProfile === 'function') renderProfile();
+            lsDel('amanah_last_uid');
+            markAuthReady();
+            refreshUiAfterSync();
         }
     });
+
+    // Страховка: если по какой-то причине Firebase не ответил, не оставляем интерфейс в «ожидании»
+    setTimeout(() => {
+        if (!authReady) {
+            markAuthReady();
+            refreshUiAfterSync();
+        }
+    }, 6000);
+} else {
+    // Firebase не загрузился (нет интернета при первом запуске) — работаем как гость
+    markAuthReady();
 }
 
 const sectionOrders = {
@@ -118,84 +180,270 @@ let lessonType = 'old';
 let parentId = null;
 let autoSaveTimer = null;
 
+let currentTopicId = null;
+let pendingAutoSave = null;
+
 // ===== ЛОГИКА ПРОГРЕССА И PRO =====
-// Гость прогресс НЕ сохраняет и НЕ читает (п.3 задания)
-function getProgress() {
-    if (!currentUser) return {};
-    const key = `amanah_progress_${currentUser.uid}`;
-    const p = localStorage.getItem(key);
-    return p ? JSON.parse(p) : {};
+// Источник правды — аккаунт в Firebase (Firestore: users/{uid}).
+//   users/{uid}.progress = { [bookId]: { done: [lessonId,...], last: lessonId, ts: <ms> } }
+//   users/{uid}.isPro    = true/false
+// localStorage — только быстрый кэш на этом устройстве (и офлайн-режим).
+// Гость прогресс НЕ сохраняет и НЕ читает.
+
+// uid, по которому читаем локальный кэш. Пока Firebase не восстановил вход,
+// используем последний известный uid, чтобы интерфейс не мигал.
+function getActiveUid() {
+    if (currentUser) return currentUser.uid;
+    if (!authReady) return lsGet('amanah_last_uid');
+    return null;
 }
 
-async function saveProgress(data) {
-    if (!currentUser) return;
-
-    const key = `amanah_progress_${currentUser.uid}`;
-    // 1. Сначала сохраняем в память телефона (это происходит мгновенно и не зависит от интернета)
-    localStorage.setItem(key, JSON.stringify(data));
-
-    // 2. Затем отправляем в облако Firebase
-    if (db) {
-        try {
-            // Ждем, пока сервер подтвердит запись
-            await db.collection('users').doc(currentUser.uid).set(
-                {
-                    progress: data,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                },
-                { merge: true }
-            );
-        } catch (err) {
-            console.error("Ошибка сохранения в облако:", err);
-            // Если интернет плохой, ставим флаг, что надо синхронизировать позже
-            localStorage.setItem('amanah_progress_dirty', '1');
-            throw err; // Пробрасываем ошибку, чтобы кнопка "Завершить" знала о проблеме
-        }
-    }
-}
-
-async function loadProgressFromCloud() {
-    if (!currentUser || !db) return;
+function readLocalProgress(uid) {
+    if (!uid) return {};
     try {
-        // Убираем старый глобальный флаг, если остался от предыдущей версии
-        localStorage.removeItem('amanah_pro');
-        localStorage.removeItem('amanah_progress_guest');
-
-        const doc = await db.collection('users').doc(currentUser.uid).get();
-
-        if (doc.exists) {
-            const data = doc.data();
-
-            // Прогресс
-            if (data.progress) {
-                localStorage.setItem(
-                    `amanah_progress_${currentUser.uid}`,
-                    JSON.stringify(data.progress)
-                );
-            }
-
-            // PRO-статус — привязан к uid
-            if (data.isPro) {
-                localStorage.setItem(`amanah_pro_${currentUser.uid}`, 'true');
-            } else {
-                localStorage.removeItem(`amanah_pro_${currentUser.uid}`);
-            }
-        } else {
-            // Документа ещё нет — значит PRO нет
-            localStorage.removeItem(`amanah_pro_${currentUser.uid}`);
-        }
-    } catch (error) {
-        console.error("Ошибка загрузки:", error);
+        const raw = lsGet(`amanah_progress_${uid}`);
+        const parsed = raw ? JSON.parse(raw) : {};
+        return (parsed && typeof parsed === 'object') ? parsed : {};
+    } catch (e) {
+        return {};
     }
 }
 
-// PRO читается из аккаунта, а не глобально (п.4 задания)
-function isPro() {
-    if (!currentUser) return false;
-    return localStorage.getItem(`amanah_pro_${currentUser.uid}`) === 'true';
+function writeLocalProgress(uid, data) {
+    if (!uid) return;
+    lsSet(`amanah_progress_${uid}`, JSON.stringify(data || {}));
 }
 
-function activatePro() {
+function getProgress() {
+    return readLocalProgress(getActiveUid());
+}
+
+// Объединение прогресса: пройденные уроки — объединение множеств (ничего не теряется
+// при работе с двух устройств), «последний урок» — от более свежей записи.
+function mergeProgress(a, b) {
+    const out = {};
+    const keys = new Set([...Object.keys(a || {}), ...Object.keys(b || {})]);
+    keys.forEach((k) => {
+        const x = (a && a[k]) || {};
+        const y = (b && b[k]) || {};
+        const done = Array.from(new Set([...(x.done || []), ...(y.done || [])]));
+        const tx = x.ts || 0;
+        const ty = y.ts || 0;
+        const newer = tx >= ty ? x : y;
+        const older = tx >= ty ? y : x;
+        let last = newer.last != null ? newer.last : (older.last != null ? older.last : null);
+        out[k] = { done: done, last: last, ts: Math.max(tx, ty) };
+    });
+    return out;
+}
+
+function sameProgress(a, b) {
+    const ka = Object.keys(a || {});
+    const kb = Object.keys(b || {});
+    if (ka.length !== kb.length) return false;
+    return ka.every((k) => {
+        const x = a[k] || {};
+        const y = b[k];
+        if (!y) return false;
+        return (x.done || []).length === (y.done || []).length &&
+               (x.last === y.last || (x.last == null && y.last == null)) &&
+               (x.ts || 0) === (y.ts || 0);
+    });
+}
+
+// Запись прогресса: мгновенно в локальный кэш, в облако — в фоне (с задержкой)
+function recordProgress(key, ids, lastId) {
+    if (!currentUser) return false;
+    const uid = currentUser.uid;
+    const progress = readLocalProgress(uid);
+    const entry = progress[key] || { done: [], last: null, ts: 0 };
+    if (!Array.isArray(entry.done)) entry.done = [];
+
+    let changed = false;
+    ids.forEach((id) => {
+        if (!entry.done.includes(id)) { entry.done.push(id); changed = true; }
+    });
+    if (entry.last !== lastId) { entry.last = lastId; changed = true; }
+
+    if (changed) {
+        entry.ts = Date.now();
+        progress[key] = entry;
+        writeLocalProgress(uid, progress);
+        scheduleCloudSync();
+    }
+    return changed;
+}
+
+// ----- Отправка в облако (в фоне, без await в интерфейсе) -----
+let cloudTimer = null;
+let cloudDirty = false;
+
+function dirtyKey(uid) { return `amanah_progress_dirty_${uid}`; }
+
+function scheduleCloudSync(delay = 1200) {
+    if (!currentUser) return;
+    cloudDirty = true;
+    lsSet(dirtyKey(currentUser.uid), '1');
+    if (cloudTimer) clearTimeout(cloudTimer);
+    cloudTimer = setTimeout(() => { flushCloudSync(false); }, delay);
+}
+
+async function flushCloudSync(immediate) {
+    if (cloudTimer) { clearTimeout(cloudTimer); cloudTimer = null; }
+    if (!currentUser || !cloudDirty) return;
+    const user = currentUser;
+
+    try {
+        // Не пишем «вслепую» до первой загрузки данных из облака (до 4 сек),
+        // кроме момента закрытия вкладки — тогда пишем сразу.
+        if (!immediate && !cloudReady) await whenAccountKnown(4000);
+        if (!currentUser || currentUser.uid !== user.uid) return;
+
+        const _db = await ensureDb();
+        cloudDirty = false;
+
+        const local = readLocalProgress(user.uid);
+        const payload = {};
+        Object.keys(local).forEach((k) => {
+            const e = local[k] || {};
+            const item = { last: e.last == null ? null : e.last, ts: e.ts || 0 };
+            // arrayUnion — «добавить недостающее»: два устройства не затрут друг друга
+            if (Array.isArray(e.done) && e.done.length > 0) {
+                item.done = firebase.firestore.FieldValue.arrayUnion(...e.done);
+            }
+            payload[k] = item;
+        });
+
+        await _db.collection('users').doc(user.uid).set(
+            { progress: payload, updatedAt: firebase.firestore.FieldValue.serverTimestamp() },
+            { merge: true }
+        );
+        lsDel(dirtyKey(user.uid));
+    } catch (err) {
+        console.error("Ошибка сохранения в облако:", err);
+        cloudDirty = true; // останется флаг в localStorage — досинхронизируем позже
+        if (!immediate) {
+            if (cloudTimer) clearTimeout(cloudTimer);
+            cloudTimer = setTimeout(() => { flushCloudSync(false); }, 15000);
+        }
+    }
+}
+
+// ----- Получение из облака в реальном времени (ПК <-> телефон) -----
+let cloudUnsub = null;
+let syncedUid = null;
+
+function startCloudSync(user) {
+    if (syncedUid === user.uid) return;
+    stopCloudSync();
+    syncedUid = user.uid;
+    cloudReady = false;
+
+    // Сразу показываем локальный кэш — облако подтянется в фоне
+    markAuthReady();
+    refreshUiAfterSync();
+
+    ensureDb().then((_db) => {
+        if (!currentUser || currentUser.uid !== user.uid) return;
+        cloudUnsub = _db.collection('users').doc(user.uid).onSnapshot(
+            (doc) => applyCloudDoc(user.uid, doc),
+            (err) => {
+                console.error("Ошибка чтения из облака:", err);
+                cloudReady = true;          // не вешаем интерфейс «в ожидании»
+                refreshUiAfterSync();
+            }
+        );
+    }).catch((err) => {
+        console.error("Firestore недоступен:", err);
+        cloudReady = true;
+        refreshUiAfterSync();
+    });
+}
+
+function stopCloudSync() {
+    if (cloudUnsub) { try { cloudUnsub(); } catch (e) { /* ignore */ } cloudUnsub = null; }
+    syncedUid = null;
+    cloudReady = false;
+}
+
+function applyCloudDoc(uid, doc) {
+    if (!currentUser || currentUser.uid !== uid) return;
+    const data = doc.exists ? (doc.data() || {}) : {};
+
+    // PRO: статус аккаунта лежит в облаке, локально — только копия
+    if (data.isPro === true) lsSet(`amanah_pro_${uid}`, 'true');
+    else lsDel(`amanah_pro_${uid}`);
+
+    // Прогресс: сливаем облако и локальный кэш (ничего не теряем)
+    const cloudProgress = (data.progress && typeof data.progress === 'object') ? data.progress : {};
+    const local = readLocalProgress(uid);
+    const merged = mergeProgress(local, cloudProgress);
+    if (!sameProgress(merged, local)) writeLocalProgress(uid, merged);
+
+    // Старый глобальный флаг -> флаг для этого аккаунта
+    if (lsGet('amanah_progress_dirty') === '1') {
+        lsDel('amanah_progress_dirty');
+        lsSet(dirtyKey(uid), '1');
+    }
+
+    const firstTime = !cloudReady;
+    cloudReady = true;
+
+    // В облаке чего-то не хватает (работали офлайн / с другого устройства)? Досинхронизируем
+    if (!sameProgress(merged, cloudProgress) || lsGet(dirtyKey(uid)) === '1') {
+        cloudDirty = true;
+        scheduleCloudSync(firstTime ? 300 : 1200);
+    }
+
+    refreshUiAfterSync();
+}
+
+// Ждём, пока станет известно, вошёл ли пользователь и получен ли его PRO-статус
+function whenAccountKnown(timeoutMs = 4000) {
+    return new Promise((resolve) => {
+        const t0 = Date.now();
+        (function check() {
+            if (authReady && (!currentUser || cloudReady)) return resolve(true);
+            if (Date.now() - t0 >= timeoutMs) return resolve(false);
+            setTimeout(check, 100);
+        })();
+    });
+}
+
+// Перерисовать то, что зависит от входа / PRO / прогресса
+function refreshUiAfterSync() {
+    try {
+        if (typeof renderProfile === 'function') renderProfile();
+
+        const bookPage = document.getElementById('book-page');
+        if (bookPage && bookPage.classList.contains('active') && currentBookId) {
+            openBook(currentBookId, true);
+        }
+        const contentPage = document.getElementById('content-page');
+        if (contentPage && contentPage.classList.contains('active') && currentTopicId != null) {
+            openTopic(currentTopicId, true);
+        }
+        const proModal = document.getElementById('pro-modal');
+        if (proModal && proModal.classList.contains('active')) renderProModal();
+    } catch (e) {
+        console.error("refreshUiAfterSync:", e);
+    }
+}
+
+// ===== PRO =====
+// Статус хранится в Firestore (users/{uid}.isPro); локальная копия — для скорости/офлайна.
+function isPro() {
+    const uid = getActiveUid();
+    if (!uid) return false;
+    return lsGet(`amanah_pro_${uid}`) === 'true';
+}
+
+let proTarget = null; // что открыть после «Продолжить»: { type, parent, id }
+
+async function activatePro() {
+    // Если вход ещё восстанавливается — подождём, а не отправляем «Войти в аккаунт»
+    if (!authReady) await whenAccountKnown(3000);
+
     if (!currentUser) {
         showToast('Войдите в аккаунт, чтобы активировать PRO', 'error');
         closeProModal();
@@ -203,71 +451,115 @@ function activatePro() {
         return;
     }
 
-    localStorage.setItem(`amanah_pro_${currentUser.uid}`, 'true');
+    const uid = currentUser.uid;
+    lsSet(`amanah_pro_${uid}`, 'true');   // мгновенно для интерфейса
     closeProModal();
-    if (currentBookId) openBook(currentBookId);
     showToast('PRO активирован!', 'success');
+    continueAfterPro();
 
-    if (db) {
-        db.collection('users').doc(currentUser.uid).set(
-            {
-                isPro: true,
-                proActivatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            },
+    // Запись в облако — в фоне; при офлайне Firestore сам доставит позже
+    ensureDb().then((_db) =>
+        _db.collection('users').doc(uid).set(
+            { isPro: true, proActivatedAt: firebase.firestore.FieldValue.serverTimestamp() },
             { merge: true }
-        ).catch(err => console.error("Ошибка сохранения PRO:", err));
+        )
+    ).catch((err) => {
+        console.error("Ошибка сохранения PRO:", err);
+        lsDel(`amanah_pro_${uid}`);
+        showToast('Не удалось сохранить PRO в аккаунте. Попробуйте ещё раз.', 'error');
+        refreshUiAfterSync();
+    });
+}
+
+function continueAfterPro() {
+    const target = proTarget;
+    proTarget = null;
+
+    if (target && target.type) {
+        openLesson(target.type, target.parent, target.id);
+        return;
+    }
+    // Запасной вариант: параметры адреса или текущая книга
+    const urlParams = new URLSearchParams(window.location.search);
+    const bId = urlParams.get('book');
+    const lId = urlParams.get('lesson');
+    if (bId && lId) openLesson('book', bId, lId);
+    else if (currentBookId) openBook(currentBookId);
+}
+
+// showProModal() можно вызывать без аргументов или с целью: showProModal('book', bookId, lessonId)
+function showProModal(type, parent, id) {
+    const modal = document.getElementById('pro-modal');
+    if (!modal) return;
+
+    proTarget = (type && parent != null && id != null) ? { type: type, parent: parent, id: id } : null;
+    modal.classList.add('active');
+    renderProModal();
+
+    // Если вход/PRO ещё определяются — подождём и перерисуем кнопку
+    if (!authReady || (currentUser && !cloudReady)) {
+        whenAccountKnown(4000).then((ok) => {
+            if (modal.classList.contains('active')) renderProModal(!ok);
+        });
     }
 }
 
-function showProModal() {
+// force = true: ждать больше нельзя (таймаут), показываем лучший из возможных вариантов
+function renderProModal(force) {
     const modal = document.getElementById('pro-modal');
     if (!modal) return;
-    modal.classList.add('active');
-
     const btn = modal.querySelector('.modal-btn');
     if (!btn) return;
 
-    // Проверяем в реальном времени
-    if (typeof currentUser === 'undefined' || !currentUser) {
+    btn.disabled = false;
+    btn.style.opacity = '';
+
+    const known = authReady && (!currentUser || cloudReady);
+    const hasUser = !!currentUser || (!authReady && !!getActiveUid());
+
+    // 1) Уже есть PRO (в облаке или в кэше этого аккаунта) — «Продолжить»
+    if (hasUser && isPro()) {
+        btn.innerText = 'У вас есть PRO (Продолжить)';
+        btn.onclick = () => { closeProModal(); continueAfterPro(); };
+        return;
+    }
+
+    // 2) Статус аккаунта ещё определяется — не предлагаем «Войти» преждевременно
+    if (!known && !force) {
+        btn.innerText = 'Проверяем аккаунт…';
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+        btn.onclick = null;
+        return;
+    }
+
+    // 3) Точно гость
+    if (!currentUser) {
         btn.innerText = 'Войти в аккаунт';
         btn.onclick = () => {
             closeProModal();
             if (typeof openAuthModal === 'function') openAuthModal();
         };
-    } else if (isPro()) {
-        btn.innerText = 'У вас есть PRO (Продолжить)';
-        btn.onclick = () => {
-            closeProModal();
-            // Если урок выбран, открываем его
-            const urlParams = new URLSearchParams(window.location.search);
-            const bId = urlParams.get('book');
-            const lId = urlParams.get('lesson');
-            if (bId && lId) openLesson('book', bId, lId);
-            else if (currentBookId) openBook(currentBookId);
-        };
-    } else {
-        btn.innerText = 'Активировать демо-PRO';
-        btn.onclick = activatePro;
+        return;
     }
+
+    // 4) Вошёл, PRO ещё нет
+    btn.innerText = 'Активировать демо-PRO';
+    btn.onclick = activatePro;
 }
+
 function closeProModal() {
     const modal = document.getElementById('pro-modal');
     if (modal) modal.classList.remove('active');
 }
 
-async function markLessonDone(bookId, lessonId) {
+function markLessonDone(bookId, lessonId) {
     if (!currentUser) return; // гость — не сохраняем
-    let progress = getProgress();
-    if (!progress[bookId]) progress[bookId] = { done: [], last: null };
-    if (!progress[bookId].done.includes(lessonId)) {
-        progress[bookId].done.push(lessonId);
-    }
-    progress[bookId].last = lessonId;
-    await saveProgress(progress);
+    recordProgress(bookId, [lessonId], lessonId);
 }
 
 // ===== ОТКРЫТИЕ КНИГ =====
-function openBook(id) {
+function openBook(id, silent = false) {
     currentBookId = id;
     const book = booksData[id];
     if (!book) return;
@@ -317,7 +609,7 @@ function openBook(id) {
         const isLocked = lesson.isPro && !proStatus;
 
         let action = '';
-        if (isLocked) action = `onclick="showProModal()"`;
+        if (isLocked) action = `onclick="showProModal('book', ${id}, '${lesson.id}')"`;
         else action = `onclick="openLesson('book', ${id}, '${lesson.id}')"`;
 
         // Замок показываем ТОЛЬКО если урок Pro и Pro не куплен (п.4)
@@ -349,7 +641,7 @@ function openBook(id) {
     ` + lessonsHtml;
 
     document.getElementById('book-lessons-list').innerHTML = lessonsHtml;
-    showPage('book-page');
+    if (!silent) showPage('book-page');
 }
 
 // ===== ФУНКЦИИ ДЛЯ РАЗДЕЛОВ ЗНАНИЙ =====
@@ -379,9 +671,10 @@ function openSection(id) {
     showPage('section-page');
 }
 
-function openTopic(topicId) {
+function openTopic(topicId, silent = false) {
     const topic = findTopic(topicId);
     if (!topic) return;
+    currentTopicId = topicId;
 
     document.getElementById('content-title').innerText = topic.title;
     document.getElementById('content-author').innerText = "Все уроки этого раздела доступны бесплатно";
@@ -419,12 +712,12 @@ function openTopic(topicId) {
     ` + lessonsHtml;
 
     document.getElementById('content-lessons-list').innerHTML = lessonsHtml;
-    showPage('content-page');
+    if (!silent) showPage('content-page');
 }
 
 function findTopic(topicId) {
     for (const sec of Object.values(sectionsData)) {
-        const t = sec.topics.find(x => x.id === topicId);
+        const t = sec.topics.find(x => String(x.id) === String(topicId));
         if(t) return t;
     }
     return null;
@@ -447,7 +740,7 @@ function showPage(pageId) {
         // скролл восстанавливается в goBackFromLesson
     }
     else {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo(0, 0); // мгновенно: плавная прокрутка «съедала» первый тап на iOS/PWA
     }
 }
 
@@ -458,92 +751,69 @@ function getSectionByLessonId(id) {
     return null;
 }
 
-async function saveProgressUpToCurrent(type, parent, currentId, allLessons) {
+// Сохранение прогресса «до текущего урока». Выполняется мгновенно (маленький JSON в
+// localStorage), а отправка в облако — в фоне и с задержкой (см. scheduleCloudSync).
+function saveProgressUpToCurrent(type, parent, currentId, allLessons) {
     if (!currentUser) return;
 
-    let idForProgress = (type === 'book') ? parent : (type === 'topic' ? parent : currentSectionId);
-    let progress = getProgress();
-    if (!progress[idForProgress]) progress[idForProgress] = { done: [], last: null };
+    const key = (type === 'book' || type === 'topic') ? parent : currentSectionId;
+    let ids = [];
 
     if (type === 'book' || type === 'topic') {
         const idx = allLessons.findIndex(l => l.id === currentId);
-        if (idx !== -1) {
-            for (let i = 0; i <= idx; i++) {
-                const lid = allLessons[i].id;
-                if (!progress[idForProgress].done.includes(lid)) {
-                    progress[idForProgress].done.push(lid);
-                }
-            }
-        }
+        if (idx !== -1) ids = allLessons.slice(0, idx + 1).map(l => l.id);
     } else {
-        if (!progress[idForProgress].done.includes(currentId)) {
-            progress[idForProgress].done.push(currentId);
-        }
+        ids = [currentId];
     }
-    progress[idForProgress].last = currentId;
+    recordProgress(key, ids, currentId);
+}
 
-    // Один раз синхронно пишем в память (мгновенно)
-    localStorage.setItem(`amanah_progress_${currentUser.uid}`, JSON.stringify(progress));
-    
-    // И один раз отправляем в облако (в фоне)
-    if (db) {
-        db.collection('users').doc(currentUser.uid).set(
-            { progress: progress },
-            { merge: true }
-        ).catch(err => console.error("Ошибка синхронизации:", err));
-    }
+function flushPendingAutoSave() {
+    if (autoSaveTimer) { clearTimeout(autoSaveTimer); autoSaveTimer = null; }
+    const p = pendingAutoSave;
+    pendingAutoSave = null;
+    if (p) saveProgressUpToCurrent(p.type, p.parent, p.id, p.allLessons);
 }
 
 function openLesson(type, parent, id) {
-    let lesson = null;
-    let totalLessons = 0;
-    let currentIndex = 0;
-    let allLessons = [];
-
     if (type === 'old') {
         const scrollPos = window.scrollY || document.documentElement.scrollTop;
         sessionStorage.setItem(`scroll_${parent}`, scrollPos);
     }
 
-    // Проверка Pro для книг
+    // Проверка PRO для книг
     if (type === 'book') {
         const book = booksData[parent];
         if (book) {
             const targetLesson = book.lessons.find(l => l.id === id);
             if (targetLesson && targetLesson.isPro && !isPro()) {
-                showProModal();
+                showProModal('book', parent, id);
                 return;
             }
         }
     }
 
+    let allLessons = [];
+    if (type === 'old') {
+        allLessons = oldLessonsData[parent] || [];
+    } else if (type === 'book') {
+        allLessons = (booksData[parent] && booksData[parent].lessons) || [];
+    } else if (type === 'topic') {
+        const topic = findTopic(parent);
+        if (topic) allLessons = topic.lessons;
+    }
+
+    const currentIndex = allLessons.findIndex(l => l.id == id);
+    const lesson = allLessons[currentIndex];
+    if (!lesson) return;
+    const totalLessons = allLessons.length;
+
+    // Состояние меняем только когда урок точно найден
     lessonType = type;
     parentId = parent;
     currentLessonId = id;
-
-    if (type === 'old') {
-        allLessons = oldLessonsData[parent];
-        currentIndex = allLessons.findIndex(l => l.id == id);
-        lesson = allLessons[currentIndex];
-        totalLessons = allLessons.length;
-        currentSectionId = parent + '-page';
-    }
-    else if (type === 'book') {
-        currentBookId = parent;
-        allLessons = booksData[parent].lessons;
-        currentIndex = allLessons.findIndex(l => l.id === id);
-        lesson = allLessons[currentIndex];
-        totalLessons = allLessons.length;
-    }
-    else if (type === 'topic') {
-        const topic = findTopic(parent);
-        if (topic) allLessons = topic.lessons;
-        currentIndex = allLessons.findIndex(l => l.id === id);
-        lesson = allLessons[currentIndex];
-        totalLessons = allLessons.length;
-    }
-
-    if (!lesson) return;
+    if (type === 'old') currentSectionId = parent + '-page';
+    if (type === 'book') currentBookId = parent;
 
     document.getElementById('lesson-title').innerText = lesson.title;
     document.getElementById('lesson-intro').innerText = lesson.desc || lesson.intro;
@@ -553,14 +823,12 @@ function openLesson(type, parent, id) {
     const nextBtn = document.getElementById('next-btn');
     const completeBtn = document.getElementById('complete-btn');
 
-    if (type === 'old') {
-        if(completeBtn) completeBtn.style.display = 'none';
-    } else {
-        if(completeBtn) completeBtn.style.display = 'block';
-    }
+    if (completeBtn) completeBtn.style.display = (type === 'old') ? 'none' : 'block';
 
     prevBtn.disabled = (currentIndex <= 0);
-    prevBtn.onclick = () => openLesson(type, parent, allLessons[currentIndex - 1].id);
+    prevBtn.onclick = currentIndex > 0
+        ? () => openLesson(type, parent, allLessons[currentIndex - 1].id)
+        : null;
 
     if (currentIndex >= totalLessons - 1) {
         nextBtn.disabled = true;
@@ -571,37 +839,38 @@ function openLesson(type, parent, id) {
 
         nextBtn.disabled = false;
         if (isNextLocked) {
-            nextBtn.onclick = () => showProModal();
+            nextBtn.onclick = () => showProModal(type, parent, nextLesson.id);
         } else {
             nextBtn.onclick = () => openLesson(type, parent, nextLesson.id);
         }
     }
 
+    // Автосохранение через 1.5 сек — в фоне, интерфейс не ждёт
     if (autoSaveTimer) clearTimeout(autoSaveTimer);
-    autoSaveTimer = setTimeout(() => {
-        saveProgressUpToCurrent(type, parent, id, allLessons);
-    }, 1500);
+    pendingAutoSave = { type: type, parent: parent, id: id, allLessons: allLessons };
+    autoSaveTimer = setTimeout(flushPendingAutoSave, 1500);
 
     showPage('lesson-page');
 }
 
-async function goBackFromLesson() {
-    const backBtn = document.getElementById('lesson-back-btn');
-    if (backBtn && backBtn.dataset.clicked === 'true') return;
-    if (backBtn) {
-        backBtn.dataset.clicked = 'true';
-        setTimeout(() => { backBtn.dataset.clicked = 'false'; }, 500);
-    }
-    if (autoSaveTimer) clearTimeout(autoSaveTimer);
+// ===== КНОПКА «НАЗАД К УРОКАМ» =====
+// Защита от двойного срабатывания считается по времени (а не по флагу со сбросом через
+// setTimeout: в PWA таймеры могут «замораживаться», и флаг оставался навсегда включённым).
+let lastBackTs = 0;
 
-    // 1. МГНОВЕННО переключаем экран
-    if (lessonType === 'topic') {
+function leaveLessonPage() {
+    if (lessonType === 'topic' && parentId != null) {
         openTopic(parentId);
+        return;
     }
-    else if (lessonType === 'book' && currentBookId) {
-        openBook(currentBookId);
+    if (lessonType === 'book') {
+        const bookId = currentBookId || parentId;
+        if (bookId != null && document.getElementById('book-page')) {
+            openBook(bookId);
+            return;
+        }
     }
-    else if (lessonType === 'old') {
+    if (lessonType === 'old') {
         if (parentId === 'islam') showPage('islam-start-page');
         else if (parentId === 'family') showPage('family-page');
         else if (parentId === 'birth') showPage('birth-page');
@@ -613,27 +882,68 @@ async function goBackFromLesson() {
         setTimeout(() => {
             const savedScroll = sessionStorage.getItem(`scroll_${parentId}`);
             if (savedScroll !== null) {
-                window.scrollTo({ top: parseInt(savedScroll), behavior: 'instant' });
+                window.scrollTo(0, parseInt(savedScroll, 10) || 0);
             }
         }, 50);
+        return;
     }
 
-    // 2. В ФОНЕ сохраняем прогресс (без await, чтобы не вешать кнопку)
-    if (currentLessonId && currentUser) {
-        let allLessons = [];
-        if (lessonType === 'book' && currentBookId) allLessons = booksData[currentBookId].lessons;
-        else if (lessonType === 'topic') {
-            const topic = findTopic(parentId);
-            if (topic) allLessons = topic.lessons;
-        }
-        if (allLessons.length > 0) {
-            saveProgressUpToCurrent(lessonType, parentId, currentLessonId, allLessons);
-        }
+    // Запасной выход — кнопка никогда не должна «молчать»
+    if (document.getElementById('knowledge-page')) showPage('knowledge-page');
+    else if (document.getElementById('main-page')) showPage('main-page');
+    else window.history.back();
+}
+
+function goBackFromLesson(ev) {
+    if (ev && ev.preventDefault) ev.preventDefault();
+
+    const now = Date.now();
+    if (now - lastBackTs < 350) return;   // двойной тап / touchend + click
+    lastBackTs = now;
+
+    // 1. МГНОВЕННО переключаем экран
+    try {
+        leaveLessonPage();
+    } catch (err) {
+        console.error("Ошибка возврата из урока:", err);
+        try {
+            if (document.getElementById('knowledge-page')) showPage('knowledge-page');
+            else if (document.getElementById('main-page')) showPage('main-page');
+        } catch (e2) { /* ignore */ }
     }
+
+    // 2. Сохранение — уже после смены экрана, в фоне
+    setTimeout(flushPendingAutoSave, 0);
+}
+
+// «Быстрый тап»: на iOS в режиме PWA click по div иногда теряется (после прокрутки/инерции).
+// Реагируем на touchend, если палец почти не сдвинулся; обычный click остаётся как запасной.
+function bindFastTap(el, handler) {
+    let startX = 0, startY = 0, moved = false;
+
+    el.addEventListener('touchstart', (e) => {
+        const t = e.touches[0];
+        startX = t.clientX;
+        startY = t.clientY;
+        moved = false;
+    }, { passive: true });
+
+    el.addEventListener('touchmove', (e) => {
+        const t = e.touches[0];
+        if (Math.abs(t.clientX - startX) > 10 || Math.abs(t.clientY - startY) > 10) moved = true;
+    }, { passive: true });
+
+    el.addEventListener('touchend', (e) => {
+        if (moved) return;
+        e.preventDefault();      // чтобы не пришёл второй, «синтетический» click
+        handler(e);
+    }, { passive: false });
+
+    el.addEventListener('click', (e) => handler(e));
 }
 
 function changeLesson(direction) {
-    if(!currentLessonId) return;
+    if (!currentLessonId) return;
     const order = sectionOrders[currentSectionId] || [];
     const idx = order.indexOf(currentLessonId);
     if (idx === -1) return;
@@ -644,23 +954,8 @@ function changeLesson(direction) {
 }
 
 function completeCurrentLesson() {
-    if(!currentLessonId) return;
-    if (autoSaveTimer) clearTimeout(autoSaveTimer);
-    
-    // Принудительно сохраняем текущий урок перед выходом
-    if (currentUser) {
-        let allLessons = [];
-        if (lessonType === 'book' && currentBookId) allLessons = booksData[currentBookId].lessons;
-        else if (lessonType === 'topic') {
-            const topic = findTopic(parentId);
-            if (topic) allLessons = topic.lessons;
-        }
-        if (allLessons.length > 0) {
-            saveProgressUpToCurrent(lessonType, parentId, currentLessonId, allLessons);
-        }
-    }
-
-    // Вызываем функцию возврата
+    if (!currentLessonId) return;
+    flushPendingAutoSave();   // быстро: запись в локальный кэш, облако — в фоне
     goBackFromLesson();
 }
 
@@ -681,6 +976,11 @@ function renderProfile() {
 
     // Если гость
     if (!currentUser) {
+        // Пока Firebase восстанавливает вход, не пугаем авторизованных надписью «Войдите»
+        if (!authReady) {
+            profileEl.innerHTML = `<div class="important-block" style="text-align: center;">Загрузка…</div>`;
+            return;
+        }
         profileEl.innerHTML = `
             <div class="important-block" style="text-align: center;">
                 Войдите в аккаунт, чтобы сохранять прогресс и видеть его здесь.
@@ -764,32 +1064,6 @@ document.addEventListener('click', function(e) {
     }
 });
 
-document.addEventListener('DOMContentLoaded', () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const bookId = urlParams.get('book');
-    const lessonId = urlParams.get('lesson');
-    const fromProfile = urlParams.get('from') === 'profile';
-
-    if (bookId) {
-        if (fromProfile) window.isFromProfile = true;
-        
-        let attempts = 0;
-        const checkAuth = setInterval(() => {
-            attempts++;
-            // Ждем, пока Firebase загрузит пользователя (до 3 секунд)
-            if (typeof auth !== 'undefined' && auth !== null && auth.currentUser !== undefined) {
-                clearInterval(checkAuth);
-                if (lessonId) openLesson('book', bookId, lessonId);
-                else openBook(bookId);
-            } else if (attempts > 30) {
-                clearInterval(checkAuth);
-                if (lessonId) openLesson('book', bookId, lessonId);
-                else openBook(bookId);
-            }
-        }, 100);
-    }
-});
-
 function saveScrollAndOpenBook(bookId) {
     const scrollPos = window.scrollY || document.documentElement.scrollTop;
     sessionStorage.setItem('catalog_scroll_pos', scrollPos);
@@ -805,11 +1079,6 @@ function restoreScroll() {
         }, 50);
     }
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-    const knowledgePage = document.getElementById('knowledge-page');
-    if (knowledgePage && knowledgePage.classList.contains('active')) restoreScroll();
-});
 
 // ===== АВТОРИЗАЦИЯ (Firebase) =====
 function openAuthModal() {
@@ -1014,27 +1283,292 @@ function saveNewPass() {
 }
 
 // ===== НАМАЗ И КИБЛА =====
+// Настройка: пока пользователь не разрешил геолокацию, показывать время для города по умолчанию,
+// чтобы в шапке не висело «--:--». Поставьте false, если лучше ничего не показывать до разрешения GPS.
+const SHOW_DEFAULT_CITY_UNTIL_GPS = true;
+const DEFAULT_COORDS = { lat: 55.7558, lng: 37.6173 }; // Москва
+
+const PRAYER_CACHE_KEY = 'amanah_prayer_cache_v2';
+const COORDS_KEY = 'amanah_coords_v1';
+const PRAYER_NAMES = [
+    ['Fajr', 'Фаджр (Рассвет)'],
+    ['Dhuhr', 'Зухр (Полдень)'],
+    ['Asr', 'Аср (После полудня)'],
+    ['Maghrib', 'Магриб (Закат)'],
+    ['Isha', 'Иша (Ночь)']
+];
+
 let qiblaAngle = 0;
-let todayPrayers = [];
+let todayPrayers = [];          // список для окна «Намазы» (может быть на любую дату)
+let headerPrayers = [];         // список на СЕГОДНЯ — для шапки
+let headerDateKey = null;
 let isGeolocationRequested = false;
+let usingDefaultCoords = false;
+let geoPending = false;
+let geoGestureArmed = false;
+let headerRetryCount = 0;
+let headerTickStarted = false;
+let prayerFetchSeq = 0;
 
 let currentPrayerDate = new Date();
 let userCoordinates = null;
 
+// ----- вспомогательное -----
+function pad2(n) { return String(n).padStart(2, '0'); }
+function dateKey(d) { return `${pad2(d.getDate())}-${pad2(d.getMonth() + 1)}-${d.getFullYear()}`; } // DD-MM-YYYY
+function coordsKey(c) { return `${c.lat.toFixed(2)},${c.lng.toFixed(2)}`; }
+function normTime(t) { return String(t || '').slice(0, 5); } // "05:12 (MSK)" -> "05:12"
+
+function computeQiblaAngle(lat, lng) {
+    // Азимут на Каабу считаем сами — без запроса в сеть
+    const rad = (d) => d * Math.PI / 180;
+    const deg = (r) => r * 180 / Math.PI;
+    const phi1 = rad(lat), phi2 = rad(21.4225), dl = rad(39.8262 - lng);
+    const y = Math.sin(dl) * Math.cos(phi2);
+    const x = Math.cos(phi1) * Math.sin(phi2) - Math.sin(phi1) * Math.cos(phi2) * Math.cos(dl);
+    return (deg(Math.atan2(y, x)) + 360) % 360;
+}
+
+// ----- кэш (чтобы шапка заполнялась мгновенно и без сети) -----
+function readPrayerCache() {
+    try { return JSON.parse(lsGet(PRAYER_CACHE_KEY)) || {}; } catch (e) { return {}; }
+}
+
+function getCachedPrayers(dateObj, coords) {
+    const entry = readPrayerCache()[`${dateKey(dateObj)}|${coordsKey(coords)}`];
+    return entry && Array.isArray(entry.list) && entry.list.length ? entry.list : null;
+}
+
+function setCachedPrayers(dateObj, coords, list) {
+    const map = readPrayerCache();
+    map[`${dateKey(dateObj)}|${coordsKey(coords)}`] = { t: Date.now(), list: list };
+    const keys = Object.keys(map).sort((a, b) => (map[b].t || 0) - (map[a].t || 0));
+    keys.slice(14).forEach((k) => delete map[k]);   // храним не больше 14 записей
+    lsSet(PRAYER_CACHE_KEY, JSON.stringify(map));
+}
+
+function readSavedCoords() {
+    try {
+        const c = JSON.parse(lsGet(COORDS_KEY));
+        if (c && typeof c.lat === 'number' && typeof c.lng === 'number') return { lat: c.lat, lng: c.lng };
+    } catch (e) { /* ignore */ }
+    return null;
+}
+
+function saveCoords(c) { lsSet(COORDS_KEY, JSON.stringify({ lat: c.lat, lng: c.lng })); }
+
+// ----- получение времени намаза (кэш -> сеть) -----
+async function getPrayersForDate(dateObj, coords) {
+    const cached = getCachedPrayers(dateObj, coords);
+    if (cached) return cached;
+
+    const ctrl = ('AbortController' in window) ? new AbortController() : null;
+    const timer = ctrl ? setTimeout(() => ctrl.abort(), 9000) : null;
+    try {
+        let tz = '';
+        try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) { /* ignore */ }
+        const url = `https://api.aladhan.com/v1/timings/${dateKey(dateObj)}` +
+            `?latitude=${coords.lat}&longitude=${coords.lng}&method=3` +
+            (tz ? `&timezonestring=${encodeURIComponent(tz)}` : '');
+
+        const res = await fetch(url, ctrl ? { signal: ctrl.signal } : undefined);
+        const data = await res.json();
+        if (data && data.code === 200 && data.data && data.data.timings) {
+            const t = data.data.timings;
+            const list = PRAYER_NAMES.map(([key, ru]) => ({ name: ru, time: normTime(t[key]) }));
+            setCachedPrayers(dateObj, coords, list);
+            return list;
+        }
+    } catch (error) {
+        console.warn("Ошибка загрузки намазов:", error && error.message);
+    } finally {
+        if (timer) clearTimeout(timer);
+    }
+    return null;
+}
+
+// ----- шапка: ближайший намаз -----
+function updateHeaderPrayer() {
+    const nameEl = document.getElementById('next-prayer-name');
+    const timeEl = document.getElementById('next-prayer-time');
+    if (!nameEl || !timeEl || !headerPrayers.length) return;
+
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    let next = headerPrayers.find((p) => {
+        const [h, m] = p.time.split(':').map(Number);
+        return (h * 60 + m) > currentMinutes;
+    });
+    if (!next) next = { name: 'Фаджр', time: headerPrayers[0].time };
+
+    nameEl.innerText = next.name.split(' ')[0];
+    timeEl.innerText = next.time;
+}
+
+async function loadHeaderPrayers() {
+    if (!userCoordinates) return;
+    const today = new Date();
+    const coords = userCoordinates;
+    const list = await getPrayersForDate(today, coords);
+    // Координаты могли смениться, пока шёл запрос (город по умолчанию -> реальный GPS)
+    if (!userCoordinates || coordsKey(coords) !== coordsKey(userCoordinates)) return;
+    if (list) {
+        headerPrayers = list;
+        headerDateKey = dateKey(today);
+        headerRetryCount = 0;
+        updateHeaderPrayer();
+    } else if (headerRetryCount < 5) {
+        headerRetryCount++;
+        setTimeout(loadHeaderPrayers, 20000);   // сеть недоступна — повторим позже
+    }
+}
+
+function tickHeaderPrayer() {
+    if (document.hidden) return;
+    if (headerDateKey && headerDateKey !== dateKey(new Date()) && userCoordinates) {
+        loadHeaderPrayers();   // наступил новый день
+        return;
+    }
+    updateHeaderPrayer();
+}
+
+// ----- координаты -----
+function applyCoords(c, real) {
+    const prevKey = userCoordinates ? coordsKey(userCoordinates) : null;
+    userCoordinates = c;
+    usingDefaultCoords = !real;
+    if (real) {
+        isGeolocationRequested = true;
+        saveCoords(c);
+    }
+
+    const debugText = document.getElementById('gps-debug-text');
+    if (debugText) {
+        debugText.innerText = real
+            ? `Координаты: ${c.lat.toFixed(4)}, ${c.lng.toFixed(4)}`
+            : "GPS недоступен. Используем Москву.";
+    }
+
+    qiblaAngle = computeQiblaAngle(c.lat, c.lng);
+    renderQiblaStatic();
+
+    if (prevKey !== coordsKey(c) || !headerPrayers.length) loadHeaderPrayers();
+
+    const prayerModal = document.getElementById('prayer-modal');
+    if (prayerModal && prayerModal.classList.contains('active')) {
+        fetchPrayerTimesForDate(currentPrayerDate);
+    }
+}
+
+function requestPosition() {
+    if (geoPending) return;
+    if (!navigator.geolocation) {
+        if (!userCoordinates) applyCoords(DEFAULT_COORDS, false);
+        return;
+    }
+    geoPending = true;
+    const debugText = document.getElementById('gps-debug-text');
+    if (debugText && !userCoordinates) debugText.innerText = "Запрос GPS...";
+
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            geoPending = false;
+            applyCoords({ lat: position.coords.latitude, lng: position.coords.longitude }, true);
+        },
+        (error) => {
+            geoPending = false;
+            console.warn("GPS Ошибка:", error && error.message);
+            if (!userCoordinates) applyCoords(DEFAULT_COORDS, false);
+        },
+        // Грубой точности достаточно для времени намаза и Киблы — так быстрее и экономнее
+        { enableHighAccuracy: false, timeout: 10000, maximumAge: 10 * 60 * 1000 }
+    );
+}
+
+// Оставлено для совместимости со старым кодом/страницами
+function initPrayerAndQibla() { requestPosition(); }
+
+async function getGeoPermissionState() {
+    try {
+        if (navigator.permissions && navigator.permissions.query) {
+            const status = await navigator.permissions.query({ name: 'geolocation' });
+            return status.state; // 'granted' | 'prompt' | 'denied'
+        }
+    } catch (e) { /* ignore */ }
+    return 'unknown';
+}
+
+// Запрос геолокации по первому касанию: без жеста браузеры часто молча игнорируют запрос
+// (из-за этого время появлялось только после нажатия на «Киблу»)
+function armGeoOnFirstGesture() {
+    if (geoGestureArmed || isGeolocationRequested) return;
+    geoGestureArmed = true;
+    document.addEventListener('click', () => {
+        if (!isGeolocationRequested) requestPosition();
+    }, { capture: true, once: true });
+}
+
+// ----- запуск при открытии страницы -----
+function initPrayerHeader() {
+    if (!document.getElementById('next-prayer-time')) return;
+
+    // 1) МГНОВЕННО и без сети: сохранённые координаты + закэшированное время на сегодня
+    const saved = readSavedCoords();
+    if (saved) {
+        userCoordinates = saved;
+        usingDefaultCoords = false;
+        isGeolocationRequested = true;
+        qiblaAngle = computeQiblaAngle(saved.lat, saved.lng);
+        const cached = getCachedPrayers(new Date(), saved);
+        if (cached) {
+            headerPrayers = cached;
+            headerDateKey = dateKey(new Date());
+            updateHeaderPrayer();
+        }
+    }
+
+    // Обновление текста шапки раз в 30 сек (дёшево, сети не использует)
+    if (!headerTickStarted) {
+        headerTickStarted = true;
+        setInterval(tickHeaderPrayer, 30000);
+    }
+
+    // 2) Всё остальное — после того, как страница отрисована, чтобы не тормозить загрузку
+    const boot = () => {
+        if (userCoordinates) loadHeaderPrayers();
+
+        getGeoPermissionState().then((state) => {
+            if (state === 'granted') {
+                requestPosition();                       // тихо уточняем координаты
+            } else if (state === 'denied') {
+                if (!userCoordinates) applyCoords(DEFAULT_COORDS, false);
+            } else {
+                // 'prompt' / неизвестно: не ждём ответа пользователя
+                if (!userCoordinates && SHOW_DEFAULT_CITY_UNTIL_GPS) {
+                    setTimeout(() => { if (!userCoordinates) applyCoords(DEFAULT_COORDS, false); }, 2500);
+                }
+                armGeoOnFirstGesture();
+            }
+        });
+    };
+
+    if ('requestIdleCallback' in window) requestIdleCallback(boot, { timeout: 2000 });
+    else setTimeout(boot, 600);
+}
+
+// ----- окна -----
 function openQiblaModal() {
     const m = document.getElementById('qibla-modal');
     if (!m) return;
     m.classList.add('active');
-    if (!isGeolocationRequested) {
-        initPrayerAndQibla(true);
-    } else {
-        startCompass();
-    }
+    if (!isGeolocationRequested) requestPosition();   // это нажатие пользователя — запрос сработает
+    startCompass();
 }
 
 function closeQiblaModal() {
     const m = document.getElementById('qibla-modal');
     if (m) m.classList.remove('active');
+    stopCompass();   // датчики не должны работать, когда компас закрыт
 }
 
 function openPrayerModal() {
@@ -1043,53 +1577,16 @@ function openPrayerModal() {
     m.classList.add('active');
     currentPrayerDate = new Date();
     if (userCoordinates) fetchPrayerTimesForDate(currentPrayerDate);
-}
-
-async function initPrayerAndQibla(askGeo = false) {
-    const nextNameEl = document.getElementById('next-prayer-name');
-    const nextTimeEl = document.getElementById('next-prayer-time');
-    const debugText = document.getElementById('gps-debug-text');
-
-    if (debugText) debugText.innerText = "Запрос GPS...";
-
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                userCoordinates = { lat: position.coords.latitude, lng: position.coords.longitude };
-                isGeolocationRequested = true;
-                if (debugText) debugText.innerText = `Координаты: ${userCoordinates.lat.toFixed(4)}, ${userCoordinates.lng.toFixed(4)}`;
-
-                fetchPrayerTimesForDate(new Date());
-                fetchQibla(userCoordinates.lat, userCoordinates.lng);
-            },
-            (error) => {
-                console.warn("GPS Ошибка:", error.message);
-                if (debugText) debugText.innerText = "GPS заблокирован. Используем Москву.";
-                userCoordinates = { lat: 55.7558, lng: 37.6173 };
-                isGeolocationRequested = true;
-
-                fetchPrayerTimesForDate(new Date());
-                fetchQibla(userCoordinates.lat, userCoordinates.lng);
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
-    } else {
-        if (debugText) debugText.innerText = "Геолокация не поддерживается.";
-        userCoordinates = { lat: 55.7558, lng: 37.6173 };
-        fetchPrayerTimesForDate(new Date());
-        fetchQibla(userCoordinates.lat, userCoordinates.lng);
-    }
+    else if (!isGeolocationRequested) requestPosition();
 }
 
 async function fetchPrayerTimesForDate(dateObj) {
     if (!userCoordinates) return;
 
     currentPrayerDate = dateObj;
-    const nextNameEl = document.getElementById('next-prayer-name');
-    const nextTimeEl = document.getElementById('next-prayer-time');
+    const seq = ++prayerFetchSeq;
     const titleEl = document.getElementById('prayer-date-title');
-
-    const dateStr = `${String(dateObj.getDate()).padStart(2, '0')}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${dateObj.getFullYear()}`;
+    const container = document.getElementById('prayer-list-container');
 
     const months = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
     const today = new Date();
@@ -1097,50 +1594,25 @@ async function fetchPrayerTimesForDate(dateObj) {
 
     if (titleEl) titleEl.innerText = isToday ? "Намазы сегодня" : `Намазы на ${dateObj.getDate()} ${months[dateObj.getMonth()]}`;
 
-    try {
-        const response = await fetch(`https://api.aladhan.com/v1/timings/${dateStr}?latitude=${userCoordinates.lat}&longitude=${userCoordinates.lng}&method=3`);
-        const data = await response.json();
-
-        if (data.code === 200) {
-            const timings = data.data.timings;
-            todayPrayers = [
-                { name: 'Фаджр (Рассвет)', time: timings.Fajr },
-                { name: 'Зухр (Полдень)', time: timings.Dhuhr },
-                { name: 'Аср (После полудня)', time: timings.Asr },
-                { name: 'Магриб (Закат)', time: timings.Maghrib },
-                { name: 'Иша (Ночь)', time: timings.Isha }
-            ];
-
-            renderPrayerList();
-
-            if (isToday) {
-                const now = new Date();
-                const currentTime = now.getHours() * 60 + now.getMinutes();
-                let nextPrayer = todayPrayers.find(p => {
-                    const [h, m] = p.time.split(':').map(Number);
-                    return (h * 60 + m) > currentTime;
-                });
-                if (!nextPrayer) nextPrayer = { name: 'Фаджр', time: todayPrayers[0].time };
-
-                if(nextNameEl) nextNameEl.innerText = nextPrayer.name.split(' ')[0];
-                if(nextTimeEl) nextTimeEl.innerText = nextPrayer.time;
-            }
-        }
-    } catch (error) {
-        console.error("Ошибка загрузки намазов:", error);
+    if (container && !getCachedPrayers(dateObj, userCoordinates)) {
+        container.innerHTML = '<div style="color:#ddd; text-align:center; padding:10px;">Загрузка…</div>';
     }
-}
 
-async function fetchQibla(lat, lng) {
-    try {
-        const qiblaRes = await fetch(`https://api.aladhan.com/v1/qibla/${lat}/${lng}`);
-        const qiblaData = await qiblaRes.json();
-        if (qiblaData.code === 200) {
-            qiblaAngle = qiblaData.data.direction;
-            startCompass();
-        }
-    } catch (error) {
-        console.error("Ошибка загрузки Киблы:", error);
+    const list = await getPrayersForDate(dateObj, userCoordinates);
+    if (seq !== prayerFetchSeq) return;   // пользователь уже выбрал другую дату
+
+    if (!list) {
+        if (container) container.innerHTML = '<div style="color:#ddd; text-align:center; padding:10px;">Не удалось загрузить время намаза. Проверьте интернет.</div>';
+        return;
+    }
+
+    todayPrayers = list;
+    renderPrayerList();
+
+    if (isToday) {
+        headerPrayers = list;
+        headerDateKey = dateKey(dateObj);
+        updateHeaderPrayer();
     }
 }
 
@@ -1154,10 +1626,11 @@ function openCalendar() {
     const picker = document.getElementById('prayer-date-picker');
     if (!picker) return;
     const yyyy = currentPrayerDate.getFullYear();
-    const mm = String(currentPrayerDate.getMonth() + 1).padStart(2, '0');
-    const dd = String(currentPrayerDate.getDate()).padStart(2, '0');
+    const mm = pad2(currentPrayerDate.getMonth() + 1);
+    const dd = pad2(currentPrayerDate.getDate());
     picker.value = `${yyyy}-${mm}-${dd}`;
-    picker.showPicker();
+    if (typeof picker.showPicker === 'function') picker.showPicker();
+    else picker.click();
 }
 
 function setPrayerDateFromPicker(dateString) {
@@ -1183,137 +1656,146 @@ function renderPrayerList() {
     container.innerHTML = html;
 }
 
-function startCompass() {
+// ----- компас -----
+let compassHandler = null;
+let compassEventName = null;
+
+function isQiblaModalOpen() {
+    const m = document.getElementById('qibla-modal');
+    return !!(m && m.classList.contains('active'));
+}
+
+function renderQiblaStatic() {
+    const compassDial = document.getElementById('compass-dial');
+    const angleText = document.getElementById('qibla-angle-text');
+    if (angleText) angleText.innerText = Math.round(qiblaAngle);
+    if (compassDial && !compassHandler) compassDial.style.transform = `rotate(${qiblaAngle}deg)`;
+}
+
+function stopCompass() {
+    if (compassHandler && compassEventName) {
+        window.removeEventListener(compassEventName, compassHandler, true);
+    }
+    compassHandler = null;
+    compassEventName = null;
+}
+
+function createOrientationHandler() {
     const compassDial = document.getElementById('compass-dial');
     const dirText = document.getElementById('qibla-direction-text');
-    const angleText = document.getElementById('qibla-angle-text');
+    let heading = null;
+    let ticking = false;
 
-    if (angleText) angleText.innerText = Math.round(qiblaAngle);
-    if (compassDial) compassDial.style.transform = `rotate(${qiblaAngle}deg)`;
+    function paint() {
+        ticking = false;
+        if (heading === null) return;
+
+        if (compassDial) {
+            let rotation = qiblaAngle - heading;
+            if (rotation > 360) rotation -= 360;
+            if (rotation < 0) rotation += 360;
+            compassDial.style.transform = `rotate(${rotation}deg)`;
+        }
+
+        if (dirText) {
+            const diff = ((qiblaAngle - heading + 540) % 360) - 180;
+            if (Math.abs(diff) < 10) {
+                dirText.innerText = "Вы смотрите прямо на Киблу!";
+                dirText.style.color = "#4CAF50";
+            } else {
+                dirText.innerText = "Поворачивайтесь, пока Кааба не совпадет с зеленой меткой";
+                dirText.style.color = "#ddd";
+            }
+        }
+    }
+
+    return function (event) {
+        if (event.webkitCompassHeading !== undefined && event.webkitCompassHeading !== null) {
+            heading = event.webkitCompassHeading;
+        } else if (event.alpha !== null && event.alpha !== undefined) {
+            heading = 360 - event.alpha;
+        } else {
+            return;
+        }
+        // Не чаще одного обновления на кадр — иначе датчик (60 Гц) нагружает телефон
+        if (!ticking) {
+            ticking = true;
+            requestAnimationFrame(paint);
+        }
+    };
+}
+
+function startCompass() {
+    const dirText = document.getElementById('qibla-direction-text');
+    renderQiblaStatic();
 
     if (window.DeviceOrientationEvent === undefined) {
         if (dirText) dirText.innerText = "Компас доступен только на телефоне. Ориентируйтесь на угол Киблы.";
         return;
     }
 
+    stopCompass();   // никаких дублирующихся слушателей
+
+    const attach = () => {
+        if (!isQiblaModalOpen()) return;
+        compassHandler = createOrientationHandler();
+        compassEventName = ('ondeviceorientationabsolute' in window) ? 'deviceorientationabsolute' : 'deviceorientation';
+        window.addEventListener(compassEventName, compassHandler, true);
+    };
+
     if (typeof DeviceOrientationEvent.requestPermission === 'function') {
         DeviceOrientationEvent.requestPermission()
-            .then(permissionState => {
-                if (permissionState === 'granted') {
-                    window.addEventListener('deviceorientation', handleOrientation, true);
-                }
-            })
+            .then((permissionState) => { if (permissionState === 'granted') attach(); })
             .catch(console.error);
     } else {
-        window.addEventListener('deviceorientationabsolute', handleOrientation, true);
-        window.addEventListener('deviceorientation', handleOrientation, true);
-    }
-
-    function handleOrientation(event) {
-        let heading = null;
-
-        if (event.webkitCompassHeading) {
-            heading = event.webkitCompassHeading;
-        } else if (event.alpha !== null) {
-            heading = 360 - event.alpha;
-        }
-
-        if (heading !== null) {
-            if (compassDial) {
-                let rotation = qiblaAngle - heading;
-                if (rotation > 360) rotation -= 360;
-                if (rotation < 0) rotation += 360;
-
-                compassDial.style.transform = `rotate(${rotation}deg)`;
-            }
-
-            if (dirText) {
-                let diff = ((qiblaAngle - heading + 540) % 360) - 180;
-                if (Math.abs(diff) < 10) {
-                    dirText.innerText = "Вы смотрите прямо на Киблу!";
-                    dirText.style.color = "#4CAF50";
-                } else {
-                    dirText.innerText = "Поворачивайтесь, пока Кааба не совпадет с зеленой меткой";
-                    dirText.style.color = "#ddd";
-                }
-            }
-        }
+        attach();
     }
 }
 
-// Синхронное сохранение в localStorage при закрытии вкладки + флаг для досинхронизации
-window.addEventListener('beforeunload', function () {
-    if (!currentUser || !currentLessonId) return;
-
-    let allLessons = [];
-    if (lessonType === 'book' && currentBookId) allLessons = booksData[currentBookId].lessons;
-    else if (lessonType === 'topic') {
-        const topic = findTopic(parentId);
-        if (topic) allLessons = topic.lessons;
-    }
-
-    if (allLessons.length === 0) return;
-
-    try {
-        const idForProgress = (lessonType === 'book' || lessonType === 'topic')
-            ? parentId : currentSectionId;
-
-        const idx = allLessons.findIndex(l => l.id === currentLessonId);
-        if (idx === -1) return;
-
-        let progress = getProgress();
-        if (!progress[idForProgress]) progress[idForProgress] = { done: [], last: null };
-
-        for (let i = 0; i <= idx; i++) {
-            const lid = allLessons[i].id;
-            if (!progress[idForProgress].done.includes(lid)) {
-                progress[idForProgress].done.push(lid);
-            }
-        }
-        progress[idForProgress].last = currentLessonId;
-
-        localStorage.setItem(`amanah_progress_${currentUser.uid}`, JSON.stringify(progress));
-        localStorage.setItem('amanah_progress_dirty', '1');
-    } catch (e) {
-        console.error("beforeunload save error:", e);
-    }
-});
+// ===== ИНИЦИАЛИЗАЦИЯ СТРАНИЦЫ =====
 document.addEventListener('DOMContentLoaded', () => {
+    // 1. Кнопка «Назад к урокам» — быстрый тап для телефонов и PWA
+    const lessonBackBtn = document.getElementById('lesson-back-btn');
+    if (lessonBackBtn) {
+        lessonBackBtn.setAttribute('role', 'button');
+        bindFastTap(lessonBackBtn, goBackFromLesson);
+    }
+
+    // 2. Профиль: сразу показываем то, что есть, затем обновится после синхронизации
+    if (document.getElementById('profile-content')) renderProfile();
+
+    // 3. Возврат прокрутки в каталоге
+    const knowledgePage = document.getElementById('knowledge-page');
+    if (knowledgePage && knowledgePage.classList.contains('active')) restoreScroll();
+
+    // 4. Переход по ссылке catalog.html?book=..&lesson=.. (из профиля) — ОДИН раз
     const urlParams = new URLSearchParams(window.location.search);
     const bookId = urlParams.get('book');
     const lessonId = urlParams.get('lesson');
-    const fromProfile = urlParams.get('from') === 'profile';
+    if (bookId && typeof booksData !== 'undefined' && booksData[bookId] && document.getElementById('book-page')) {
+        if (urlParams.get('from') === 'profile') window.isFromProfile = true;
+        openBook(bookId);   // сразу показываем книгу — без пустого экрана
+        if (lessonId) {
+            // Урок открываем, когда уже известно, вошёл ли пользователь и есть ли у него PRO
+            whenAccountKnown(3500).then(() => openLesson('book', bookId, lessonId));
+        }
+    }
 
-    if (bookId) {
-        if (fromProfile) window.isFromProfile = true;
+    // 5. Время намаза в шапке (кэш — мгновенно, остальное — после отрисовки)
+    initPrayerHeader();
+});
 
-        // Ждем, пока Firebase точно загрузит пользователя (до 3 секунд)
-        let attempts = 0;
-        const waitForAuth = setInterval(() => {
-            attempts++;
-            // Проверяем, что Firebase загружен и массив пользователей инициализирован
-            if (typeof auth !== 'undefined' && auth !== null) {
-                // Даем еще 300мс, чтобы local storage успел обновиться
-                setTimeout(() => {
-                    clearInterval(waitForAuth);
-                    if (lessonId) openLesson('book', bookId, lessonId);
-                    else openBook(bookId);
-                }, 300);
-            } else if (attempts > 30) {
-                // Если через 3 секунды Firebase так и не ответил, все равно открываем
-                clearInterval(waitForAuth);
-                if (lessonId) openLesson('book', bookId, lessonId);
-                else openBook(bookId);
-            }
-        }, 100);
+// Сохраняем незавершённое и досинхронизируем при сворачивании/закрытии (важно для PWA на телефоне)
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        flushPendingAutoSave();
+        flushCloudSync(true);
+    } else {
+        tickHeaderPrayer();
     }
 });
-// Автоматическая загрузка намаза в шапку (с задержкой, чтобы не тормозило)
-document.addEventListener('DOMContentLoaded', () => {
-    if (document.getElementById('next-prayer-name')) {
-        setTimeout(() => {
-            // Запускаем загрузку, только если это не страница профиля/настроек (чтобы не тратить трафик зря)
-            initPrayerAndQibla(false); 
-        }, 1500); // Ждем 1.5 секунды после загрузки страницы
-    }
+
+window.addEventListener('pagehide', () => {
+    flushPendingAutoSave();
+    flushCloudSync(true);
 });
