@@ -59,14 +59,19 @@ if (typeof firebase !== 'undefined') {
             }
 
             // Загружаем данные ИЗ ОБЛАКА перед тем, как показать
+                       // 1. МГНОВЕННО показываем профиль из памяти (localStorage)
+            if (typeof renderProfile === 'function') renderProfile();
+
+            // 2. А в фоне докачиваем свежие данные с сервера
             loadProgressFromCloud().then(() => {
-                // Досинхронизация, если были изменения, не успевшие уйти в облако
+                // Досинхронизация
                 if (localStorage.getItem('amanah_progress_dirty') === '1') {
                     const local = getProgress();
                     saveProgress(local).then(() => {
                         localStorage.removeItem('amanah_progress_dirty');
                     });
                 }
+                // 3. Обновляем экран, если данные изменились
                 if (typeof renderProfile === 'function') renderProfile();
             });
 
@@ -446,19 +451,38 @@ function getSectionByLessonId(id) {
 }
 
 async function saveProgressUpToCurrent(type, parent, currentId, allLessons) {
-    if (!currentUser) return; // гость — не сохраняем
+    if (!currentUser) return;
 
     let idForProgress = (type === 'book') ? parent : (type === 'topic' ? parent : currentSectionId);
+    let progress = getProgress();
+    if (!progress[idForProgress]) progress[idForProgress] = { done: [], last: null };
 
     if (type === 'book' || type === 'topic') {
         const idx = allLessons.findIndex(l => l.id === currentId);
         if (idx !== -1) {
             for (let i = 0; i <= idx; i++) {
-                await markLessonDone(idForProgress, allLessons[i].id);
+                const lid = allLessons[i].id;
+                if (!progress[idForProgress].done.includes(lid)) {
+                    progress[idForProgress].done.push(lid);
+                }
             }
         }
     } else {
-        await markLessonDone(idForProgress, currentId);
+        if (!progress[idForProgress].done.includes(currentId)) {
+            progress[idForProgress].done.push(currentId);
+        }
+    }
+    progress[idForProgress].last = currentId;
+
+    // Один раз синхронно пишем в память (мгновенно)
+    localStorage.setItem(`amanah_progress_${currentUser.uid}`, JSON.stringify(progress));
+    
+    // И один раз отправляем в облако (в фоне)
+    if (db) {
+        db.collection('users').doc(currentUser.uid).set(
+            { progress: progress },
+            { merge: true }
+        ).catch(err => console.error("Ошибка синхронизации:", err));
     }
 }
 
@@ -556,19 +580,7 @@ function openLesson(type, parent, id) {
 async function goBackFromLesson() {
     if (autoSaveTimer) clearTimeout(autoSaveTimer);
 
-    if (currentLessonId) {
-        let allLessons = [];
-        if (lessonType === 'book') allLessons = booksData[currentBookId].lessons;
-        else if (lessonType === 'topic') {
-            const topic = findTopic(parentId);
-            if (topic) allLessons = topic.lessons;
-        }
-
-        if (allLessons.length > 0) {
-            await saveProgressUpToCurrent(lessonType, parentId, currentLessonId, allLessons);
-        }
-    }
-
+    // 1. Сначала МГНОВЕННО переключаем экран (без await)
     if (lessonType === 'topic') {
         openTopic(parentId);
     }
@@ -592,6 +604,21 @@ async function goBackFromLesson() {
             }
         }, 50);
     }
+
+    // 2. А теперь в ФОНЕ сохраняем прогресс (не ждем завершения)
+    if (currentLessonId) {
+        let allLessons = [];
+        if (lessonType === 'book' && currentBookId) allLessons = booksData[currentBookId].lessons;
+        else if (lessonType === 'topic') {
+            const topic = findTopic(parentId);
+            if (topic) allLessons = topic.lessons;
+        }
+
+        if (allLessons.length > 0) {
+            // Вот здесь мы убрали await, чтобы не тормозить
+            saveProgressUpToCurrent(lessonType, parentId, currentLessonId, allLessons);
+        }
+    }
 }
 
 function changeLesson(direction) {
@@ -608,7 +635,7 @@ function changeLesson(direction) {
 function completeCurrentLesson() {
     if(!currentLessonId) return;
     if (autoSaveTimer) clearTimeout(autoSaveTimer);
-    goBackFromLesson();
+    goBackFromLesson(); // Она теперь работает мгновенно
 }
 
 // ===== РЕНДЕР ПРОФИЛЯ =====

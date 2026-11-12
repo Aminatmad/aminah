@@ -463,3 +463,19 @@ body::before {
 
 .toast.success { border-left-color: #4CAF50; } /* Зеленый для успеха */
 .toast.error { border-left-color: #ff4c4c; }   /* Красный для ошибки */
+@media (max-width: 768px) {
+    /* Делаем кнопку назад гарантированно кликабельной */
+    #lesson-back-btn {
+        position: relative !important;
+        z-index: 999999 !important; /* Максимально высокий слой */
+        pointer-events: auto !important;
+        touch-action: manipulation; /* Убирает задержку клика на телефоне (300мс) */
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* Убеждаемся, что сама страница урока кликабельна */
+    #lesson-page {
+        position: relative;
+        z-index: 10;
+    }
+}
