@@ -47,34 +47,27 @@ if (typeof firebase !== 'undefined') {
     });
 
     // Следим за состоянием входа
+    // Следим за состоянием входа
     auth.onAuthStateChanged((user) => {
         if (user) {
             currentUser = user;
-            localStorage.removeItem('pendingEmailChange');
-            localStorage.removeItem('pendingPassword');
-
-            const greetingEl = document.querySelector('.section-title');
-            if (greetingEl && greetingEl.innerText.includes('прогресс')) {
-                greetingEl.innerText = `Профиль: ${user.displayName || user.email}`;
-            }
-
+            localStorage.removeItem('pendingEmailChange'); 
+            localStorage.removeItem('pendingPassword');    
+            
             // Загружаем данные ИЗ ОБЛАКА перед тем, как показать
-                       // 1. МГНОВЕННО показываем профиль из памяти (localStorage)
-            if (typeof renderProfile === 'function') renderProfile();
-
-            // 2. А в фоне докачиваем свежие данные с сервера
             loadProgressFromCloud().then(() => {
-                // Досинхронизация
+                // Досинхронизация, если были изменения
                 if (localStorage.getItem('amanah_progress_dirty') === '1') {
                     const local = getProgress();
                     saveProgress(local).then(() => {
                         localStorage.removeItem('amanah_progress_dirty');
                     });
                 }
-                // 3. Обновляем экран, если данные изменились
+                
+                // РИСУЕМ ПРОФИЛЬ ТОЛЬКО ПОСЛЕ ЗАГРУЗКИ ИЗ ОБЛАКА
                 if (typeof renderProfile === 'function') renderProfile();
             });
-
+            
             const accountView = document.getElementById('settings-account-view');
             if (accountView && accountView.style.display === 'block') {
                 const emailEl = document.getElementById('set-user-email');
@@ -84,17 +77,13 @@ if (typeof firebase !== 'undefined') {
             }
         } else {
             currentUser = null;
-
-            // При выходе чистим только гостевые/старые глобальные ключи.
-            // Ключи по uid (amanah_progress_<uid>, amanah_pro_<uid>) НЕ трогаем —
-            // они не мешают другим пользователям и нужны для быстрого рендера при следующем входе.
+            
             localStorage.removeItem('amanah_pro');
             localStorage.removeItem('amanah_progress_guest');
-
-            // ХАК: Если Firebase выкинул нас после смены почты
+            
             const pendingEmail = localStorage.getItem('pendingEmailChange');
             const pendingPass = localStorage.getItem('pendingPassword');
-
+            
             if (pendingEmail && pendingPass) {
                 auth.signInWithEmailAndPassword(pendingEmail, pendingPass)
                     .then(() => {
@@ -107,7 +96,7 @@ if (typeof firebase !== 'undefined') {
                         localStorage.removeItem('pendingEmailChange');
                         localStorage.removeItem('pendingPassword');
                     });
-                return;
+                return; 
             }
 
             if (typeof renderProfile === 'function') renderProfile();
@@ -642,7 +631,14 @@ function completeCurrentLesson() {
 function renderProfile() {
     const profileEl = document.getElementById('profile-content');
     if (!profileEl) return;
-
+ const titleEl = document.getElementById('profile-page-title');
+    if (titleEl) {
+        if (currentUser) {
+            titleEl.innerText = `Профиль: ${currentUser.displayName || currentUser.email.split('@')[0]}`;
+        } else {
+            titleEl.innerText = 'Мой прогресс';
+        }
+    }
     // Гость не видит никакого прогресса (п.3)
     if (!currentUser) {
         profileEl.innerHTML = `
