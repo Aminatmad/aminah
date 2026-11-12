@@ -39,7 +39,12 @@ if (typeof firebase !== 'undefined') {
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
         .catch((error) => console.error("Ошибка persistence:", error));
 
-    db = firebase.firestore();
+       db = firebase.firestore();
+    
+    // Включаем кэширование для быстрой загрузки
+    db.enablePersistence({ synchronizeTabs: true }).catch((err) => {
+        console.warn("Кэш Firestore не включен:", err.code);
+    });
 
     // Следим за состоянием входа
     auth.onAuthStateChanged((user) => {
@@ -1191,8 +1196,4 @@ window.addEventListener('beforeunload', function () {
     } catch (e) {
         console.error("beforeunload save error:", e);
     }
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-    initPrayerAndQibla(false);
 });
