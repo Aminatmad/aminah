@@ -631,7 +631,9 @@ function completeCurrentLesson() {
 function renderProfile() {
     const profileEl = document.getElementById('profile-content');
     if (!profileEl) return;
- const titleEl = document.getElementById('profile-page-title');
+
+    // Вывод имени в заголовок
+    const titleEl = document.getElementById('profile-page-title');
     if (titleEl) {
         if (currentUser) {
             titleEl.innerText = `Профиль: ${currentUser.displayName || currentUser.email.split('@')[0]}`;
@@ -639,7 +641,8 @@ function renderProfile() {
             titleEl.innerText = 'Мой прогресс';
         }
     }
-    // Гость не видит никакого прогресса (п.3)
+
+    // Если гость
     if (!currentUser) {
         profileEl.innerHTML = `
             <div class="important-block" style="text-align: center;">
@@ -658,18 +661,22 @@ function renderProfile() {
     let totalDone = 0;
     let startedBooks = 0;
 
+    // Перебираем все книги
     for (const [bookId, book] of Object.entries(booksData)) {
         const bProgress = progress[bookId] || { done: [], last: null };
         const validDoneIds = book.lessons.map(l => l.id);
-        const doneCount = bProgress.done.filter(id => validDoneIds.includes(id)).length;
+        
+        // Считаем пройденные
+        const doneCount = bProgress.done ? bProgress.done.filter(id => validDoneIds.includes(id)).length : 0;
 
-        // Показываем только начатые книги (п.2)
+        // Показываем только начатые книги
         if (doneCount === 0) continue;
 
         startedBooks++;
         totalDone += doneCount;
         const percent = Math.round((doneCount / book.lessons.length) * 100);
 
+        // Ищем последний урок
         const lastValid = bProgress.last && validDoneIds.includes(bProgress.last);
         const lastLesson = lastValid ? book.lessons.find(l => l.id === bProgress.last) : null;
 
@@ -698,6 +705,7 @@ function renderProfile() {
         `;
     }
 
+    // Если ничего не начато
     if (startedBooks === 0) {
         html = `<div class="important-block" style="text-align: center;">Вы ещё не начали обучение. Перейдите в раздел «Знания» и выберите книгу!</div>`;
     }
@@ -1218,5 +1226,15 @@ window.addEventListener('beforeunload', function () {
         localStorage.setItem('amanah_progress_dirty', '1');
     } catch (e) {
         console.error("beforeunload save error:", e);
+    }
+});
+// Принудительная отрисовка профиля при загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.getElementById('profile-content')) {
+        setTimeout(() => {
+            if (typeof currentUser !== 'undefined' && currentUser) {
+                renderProfile();
+            }
+        }, 500); // Небольшая пауза, чтобы Firebase успел подгрузить currentUser
     }
 });
