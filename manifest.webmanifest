@@ -3,8 +3,8 @@
   "short_name": "AMANAH",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#1a3312",
-  "theme_color": "#1a3312",
+  "background_color": "#f5f3ec",
+  "theme_color": "#f5f3ec",
   "icons": [
     {
       "src": "images/ico-192.jpg",

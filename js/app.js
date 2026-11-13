@@ -29,12 +29,164 @@ function markAuthReady() {
     if (authReady) return;
     authReady = true;
     if (resolveAuthReady) resolveAuthReady();
+    // Страницы (например «Настройки») обновляют карточки сразу, без таймеров.
+    document.dispatchEvent(new CustomEvent('amanah:authchange'));
 }
 
 // ===== Безопасные обёртки над localStorage (в PWA/приватном режиме он может падать) =====
 function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
 function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* ignore */ } }
 function lsDel(k) { try { localStorage.removeItem(k); } catch (e) { /* ignore */ } }
+
+// ===== i18n / тема =====
+// T() — безопасная обёртка: если translations.js ещё не загрузился, вернёт fallback.
+function T(key, vars, fallback) {
+    if (window.I18N && typeof window.I18N.t === 'function') {
+        return window.I18N.t(key, vars, fallback);
+    }
+    return fallback != null ? fallback : key;
+}
+
+// L() — выбор текста контента из data.js по текущему языку.
+// Принимает либо обычную строку (ещё не переведённый текст), либо
+// объект { ru: "...", en: "...", ar: "..." }. Непереведённые строки
+// остаются русскими — это позволяет переводить материалы постепенно.
+function currentContentLang() {
+    if (window.I18N && typeof window.I18N.getLang === 'function') {
+        return window.I18N.getLang();
+    }
+    try { return localStorage.getItem('amanah_lang') || 'ru'; } catch (e) { return 'ru'; }
+}
+
+function L(value) {
+    if (value == null) return '';
+    const lang = currentContentLang();
+    if (typeof value === 'object') {
+        return value[lang] || value.ru || value.en || Object.values(value)[0] || '';
+    }
+    const str = String(value);
+    // Массовый словарь переводов контента из data.js (ключ — русская строка).
+    // Если перевода ещё нет, строка остаётся русской — переводим постепенно.
+    if (lang !== 'ru' && typeof CONTENT_I18N !== 'undefined') {
+        const tr = CONTENT_I18N[str];
+        if (tr) return tr[lang] || tr.ru || str;
+    }
+    return str;
+}
+window.L = L;
+
+/* ============================================================
+   Арабские фразы внутри уроков: RU / EN / AR.
+   RU  — арабский + транскрипция + перевод (как есть в data.js)
+   EN  — арабский + латинская транскрипция + английский перевод
+   AR  — только арабский текст (транскрипция и перевод убираются)
+   Работает и с обычными блоками .arabic-text, и с таблицами
+   .prayer-table (азан / икама в уроке «Рождение ребёнка»).
+   Функция идемпотентна: меняет только русский текст.
+   ============================================================ */
+const ARABIC_LABELS = {
+    'Азан':            { en: 'Adhan',            ar: 'الأذان' },
+    'Икама':           { en: 'Iqamah',           ar: 'الإقامة' },
+    'Транскрипция':    { en: 'Transliteration',  ar: null },
+    'Перевод':         { en: 'Translation',      ar: null },
+    'На арабском':     { en: 'In Arabic',        ar: null },
+    'Арабский текст':  { en: 'Arabic text',      ar: 'النص العربي' }
+};
+
+function localizeArabicHtml(html, lang) {
+    if (!html || lang === 'ru') return html || '';
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const body = doc.body;
+    const hasRu = (el) => !!el && /[А-Яа-яЁё]/.test(el.textContent || '');
+    const phrases = (typeof arabicPhrases !== 'undefined') ? arabicPhrases : {};
+    const labelKey = (el) => (el && el.tagName === 'P')
+        ? el.textContent.trim().replace(/[:\s]+$/, '') : '';
+    const isLabel = (el) => Object.prototype.hasOwnProperty.call(ARABIC_LABELS, labelKey(el));
+
+    // 1) Таблицы: № | Арабский текст | Транскрипция | Перевод
+    body.querySelectorAll('table.prayer-table tr').forEach(tr => {
+        const cells = Array.from(tr.querySelectorAll('th, td'));
+        if (cells.length !== 4) return;
+        if (lang === 'ar') {
+            if (cells[2].tagName === 'TH' || hasRu(cells[2]) || hasRu(cells[3])) {
+                cells[3].remove();
+                cells[2].remove();
+            }
+            if (hasRu(cells[1])) cells[1].textContent = ARABIC_LABELS['Арабский текст'].ar;
+        } else if (lang === 'en') {
+            if (cells[0].tagName === 'TH') {
+                cells[1].textContent = 'Arabic text';
+                cells[2].textContent = 'Transliteration';
+                cells[3].textContent = 'Translation';
+            } else {
+                const phrase = phrases[(cells[1].textContent || '').trim()];
+                if (phrase && (hasRu(cells[2]) || hasRu(cells[3]))) {
+                    cells[2].textContent = phrase.translit;
+                    cells[3].textContent = phrase.translate;
+                }
+            }
+        }
+    });
+
+    // 2) Блоки .arabic-text + соседние транскрипция / перевод
+    body.querySelectorAll('div.arabic-text').forEach(ar => {
+        const phrase = phrases[(ar.textContent || '').trim()];
+        let node = ar.nextElementSibling;
+        let steps = 0;
+        while (node && steps < 6) {
+            const next = node.nextElementSibling;
+            if (node.classList.contains('arabic-text')) break;
+            if (node.tagName === 'P' && !isLabel(node)) break;
+
+            if (node.classList.contains('transliteration')) {
+                if (lang === 'ar') node.remove();
+                else if (phrase && hasRu(node)) node.textContent = phrase.translit;
+            } else if (node.classList.contains('translation')) {
+                if (lang === 'ar') node.remove();
+                else if (phrase && hasRu(node)) node.textContent = phrase.translate;
+            }
+            node = next;
+            steps++;
+        }
+    });
+
+    // 3) Подписи: «Транскрипция:», «Перевод:», «На арабском:», «Азан», «Икама»
+    body.querySelectorAll('p').forEach(p => {
+        const key = labelKey(p);
+        if (!Object.prototype.hasOwnProperty.call(ARABIC_LABELS, key)) return;
+        const value = ARABIC_LABELS[key][lang];
+        if (!value) { p.remove(); return; }
+        const colon = p.textContent.trim().endsWith(':') ? ':' : '';
+        p.textContent = value + colon;
+    });
+
+    return body.innerHTML;
+}
+
+function getTheme() {
+    return lsGet('amanah_theme') === 'dark' ? 'dark' : 'light';
+}
+
+function applyTheme(theme) {
+    const next = theme === 'dark' ? 'dark' : 'light';
+    const root = document.documentElement;
+    if (next === 'dark') root.setAttribute('data-theme', 'dark');
+    else root.removeAttribute('data-theme');
+    lsSet('amanah_theme', next);
+
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', next === 'dark' ? '#0f1913' : '#f5f3ec');
+
+    document.dispatchEvent(new CustomEvent('amanah:themechange', { detail: { theme: next } }));
+}
+
+function toggleTheme() {
+    applyTheme(getTheme() === 'dark' ? 'light' : 'dark');
+}
+
+function isDarkTheme() {
+    return document.documentElement.getAttribute('data-theme') === 'dark';
+}
 
 function showToast(message, type = 'success') {
     let container = document.querySelector('.toast-container');
@@ -76,6 +228,7 @@ function ensureDb() {
     if (dbPromise) return dbPromise;
 
     dbPromise = (async () => {
+        await ensureFirebase();
         if (typeof firebase === 'undefined') throw new Error('Firebase не загружен');
         if (!firebase.firestore) {
             await loadScriptOnce(`https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-firestore.js`);
@@ -98,12 +251,11 @@ function ensureDb() {
 }
 
 // ===== АВТОРИЗАЦИЯ: СОСТОЯНИЕ ВХОДА =====
-if (typeof firebase !== 'undefined') {
-    firebase.initializeApp(firebaseConfig);
-    auth = firebase.auth();
-    // LOCAL — режим по умолчанию в браузере, отдельный setPersistence() не нужен
-    // (он лишь задерживал старт).
+// SDK Firebase загружается в ФОНЕ и больше не блокирует первую отрисовку.
+// Интерфейс рисуется сразу; вход восстанавливается, когда SDK будет готов.
+let firebasePromise = null;
 
+function setupAuthListener() {
     auth.onAuthStateChanged((user) => {
         if (user) {
             currentUser = user;
@@ -119,7 +271,7 @@ if (typeof firebase !== 'undefined') {
                 const emailEl = document.getElementById('set-user-email');
                 const nameEl = document.getElementById('set-user-name-display');
                 if (emailEl) emailEl.innerText = user.email;
-                if (nameEl) nameEl.innerText = user.displayName || "Не задано";
+                if (nameEl) nameEl.innerText = user.displayName || T('settings.account.notSet');
             }
         } else {
             currentUser = null;
@@ -136,7 +288,7 @@ if (typeof firebase !== 'undefined') {
                     .then(() => {
                         lsDel('pendingEmailChange');
                         lsDel('pendingPassword');
-                        showToast('Почта успешно подтверждена! Добро пожаловать.', 'success');
+                        showToast(T('auth.emailConfirmed'), 'success');
                     })
                     .catch((err) => {
                         console.error("Не удалось автоматически войти:", err);
@@ -154,17 +306,49 @@ if (typeof firebase !== 'undefined') {
         }
     });
 
-    // Страховка: если по какой-то причине Firebase не ответил, не оставляем интерфейс в «ожидании»
+    // Страховка: если SDK не ответил, не оставляем интерфейс в «ожидании»
     setTimeout(() => {
         if (!authReady) {
             markAuthReady();
             refreshUiAfterSync();
         }
-    }, 6000);
-} else {
-    // Firebase не загрузился (нет интернета при первом запуске) — работаем как гость
-    markAuthReady();
+    }, 2500);
 }
+
+function ensureFirebase() {
+    if (auth) return Promise.resolve(auth);
+    if (firebasePromise) return firebasePromise;
+
+    firebasePromise = (async () => {
+        if (typeof firebase === 'undefined' || !firebase.initializeApp) {
+            await loadScriptOnce(`https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-app.js`);
+        }
+        if (typeof firebase === 'undefined' || !firebase.auth) {
+            await loadScriptOnce(`https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-auth.js`);
+        }
+        if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        auth = firebase.auth();
+        setupAuthListener();
+        return auth;
+    })().catch((err) => {
+        console.warn('Firebase недоступен — работаем как гость:', err);
+        markAuthReady();
+        refreshUiAfterSync();
+        firebasePromise = null;
+        throw err;
+    });
+
+    return firebasePromise;
+}
+
+// Выполнить действие, когда Firebase готов. Не блокирует интерфейс.
+function withFirebase(fn) {
+    if (auth) { fn(); return; }
+    ensureFirebase().then(fn).catch(() => showToast(T('auth.firebaseError'), 'error'));
+}
+
+// Стартуем загрузку сразу, но НЕ ждём её.
+ensureFirebase().catch(() => {});
 
 const sectionOrders = {
     'islam-start-page': [1,2,3,4,5,6,7,8,9,10,11,12,13],
@@ -181,6 +365,7 @@ let parentId = null;
 let autoSaveTimer = null;
 
 let currentTopicId = null;
+let currentCatalogSectionId = null;
 let pendingAutoSave = null;
 
 // ===== ЛОГИКА ПРОГРЕССА И PRO =====
@@ -296,7 +481,7 @@ async function flushCloudSync(immediate) {
     try {
         // Не пишем «вслепую» до первой загрузки данных из облака (до 4 сек),
         // кроме момента закрытия вкладки — тогда пишем сразу.
-        if (!immediate && !cloudReady) await whenAccountKnown(4000);
+        if (!immediate && !cloudReady) await whenAccountKnown(1500);
         if (!currentUser || currentUser.uid !== user.uid) return;
 
         const _db = await ensureDb();
@@ -399,13 +584,13 @@ function applyCloudDoc(uid, doc) {
 }
 
 // Ждём, пока станет известно, вошёл ли пользователь и получен ли его PRO-статус
-function whenAccountKnown(timeoutMs = 4000) {
+function whenAccountKnown(timeoutMs = 1500) {
     return new Promise((resolve) => {
         const t0 = Date.now();
         (function check() {
             if (authReady && (!currentUser || cloudReady)) return resolve(true);
             if (Date.now() - t0 >= timeoutMs) return resolve(false);
-            setTimeout(check, 100);
+            setTimeout(check, 16);   // один кадр вместо 100 мс — без «ступенек» в UI
         })();
     });
 }
@@ -441,11 +626,11 @@ function isPro() {
 let proTarget = null; // что открыть после «Продолжить»: { type, parent, id }
 
 async function activatePro() {
-    // Если вход ещё восстанавливается — подождём, а не отправляем «Войти в аккаунт»
-    if (!authReady) await whenAccountKnown(3000);
+    // Если вход ещё восстанавливается — короткая проверка, без ожидания сети
+    if (!authReady) await whenAccountKnown(1200);
 
     if (!currentUser) {
-        showToast('Войдите в аккаунт, чтобы активировать PRO', 'error');
+        showToast(T('pro.loginToActivate'), 'error');
         closeProModal();
         if (typeof openAuthModal === 'function') openAuthModal();
         return;
@@ -454,7 +639,7 @@ async function activatePro() {
     const uid = currentUser.uid;
     lsSet(`amanah_pro_${uid}`, 'true');   // мгновенно для интерфейса
     closeProModal();
-    showToast('PRO активирован!', 'success');
+    showToast(T('pro.activated'), 'success');
     continueAfterPro();
 
     // Запись в облако — в фоне; при офлайне Firestore сам доставит позже
@@ -466,7 +651,7 @@ async function activatePro() {
     ).catch((err) => {
         console.error("Ошибка сохранения PRO:", err);
         lsDel(`amanah_pro_${uid}`);
-        showToast('Не удалось сохранить PRO в аккаунте. Попробуйте ещё раз.', 'error');
+        showToast(T('pro.saveError'), 'error');
         refreshUiAfterSync();
     });
 }
@@ -498,7 +683,7 @@ function showProModal(type, parent, id) {
 
     // Если вход/PRO ещё определяются — подождём и перерисуем кнопку
     if (!authReady || (currentUser && !cloudReady)) {
-        whenAccountKnown(4000).then((ok) => {
+        whenAccountKnown(1500).then((ok) => {
             if (modal.classList.contains('active')) renderProModal(!ok);
         });
     }
@@ -519,14 +704,14 @@ function renderProModal(force) {
 
     // 1) Уже есть PRO (в облаке или в кэше этого аккаунта) — «Продолжить»
     if (hasUser && isPro()) {
-        btn.innerText = 'У вас есть PRO (Продолжить)';
+        btn.innerText = T('pro.continue');
         btn.onclick = () => { closeProModal(); continueAfterPro(); };
         return;
     }
 
     // 2) Статус аккаунта ещё определяется — не предлагаем «Войти» преждевременно
     if (!known && !force) {
-        btn.innerText = 'Проверяем аккаунт…';
+        btn.innerText = T('pro.checking');
         btn.disabled = true;
         btn.style.opacity = '0.6';
         btn.onclick = null;
@@ -535,7 +720,7 @@ function renderProModal(force) {
 
     // 3) Точно гость
     if (!currentUser) {
-        btn.innerText = 'Войти в аккаунт';
+        btn.innerText = T('pro.login');
         btn.onclick = () => {
             closeProModal();
             if (typeof openAuthModal === 'function') openAuthModal();
@@ -544,7 +729,7 @@ function renderProModal(force) {
     }
 
     // 4) Вошёл, PRO ещё нет
-    btn.innerText = 'Активировать демо-PRO';
+    btn.innerText = T('pro.activate');
     btn.onclick = activatePro;
 }
 
@@ -564,8 +749,8 @@ function openBook(id, silent = false) {
     const book = booksData[id];
     if (!book) return;
 
-    document.getElementById('book-title').innerText = book.title;
-    document.getElementById('book-author').innerText = book.author;
+    document.getElementById('book-title').innerText = L(book.title);
+    document.getElementById('book-author').innerText = L(book.author);
 
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('from') === 'profile' || window.isFromProfile) {
@@ -577,13 +762,13 @@ function openBook(id, silent = false) {
 
     if (backBtn) {
         if (isFromProfile) {
-            backBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Назад в профиль';
+            backBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> <span>${T('common.backToProfile')}</span>`;
             backBtn.onclick = () => {
                 sessionStorage.removeItem('amanah_from_profile');
                 window.location.href = 'profile.html';
             };
         } else {
-            backBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Назад к знаниям';
+            backBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> <span>${T('common.backToKnowledge')}</span>`;
             backBtn.onclick = () => {
                 sessionStorage.removeItem('amanah_from_profile');
                 showPage('knowledge-page');
@@ -592,10 +777,10 @@ function openBook(id, silent = false) {
     }
 
     let html = `
-        <p><strong>О книге:</strong> ${book.desc}</p>
+        <p><strong>${T('catalog.about')}:</strong> ${L(book.desc)}</p>
         <div class="important-block">
-            <strong>Преимущества изучения:</strong><br>
-            ${book.benefits}
+            <strong>${T('catalog.benefits')}:</strong><br>
+            ${L(book.benefits)}
         </div>
     `;
     document.getElementById('book-content').innerHTML = html;
@@ -618,8 +803,8 @@ function openBook(id, silent = false) {
         lessonsHtml += `
             <div class="lesson-item" ${action}>
                 <div class="lesson-item-info">
-                    <h4>${index + 1}. ${lesson.title}</h4>
-                    <p>${lesson.desc}</p>
+                    <h4>${index + 1}. ${L(lesson.title)}</h4>
+                    <p>${L(lesson.desc)}</p>
                     ${lesson.isPro ? '<span class="lesson-badge badge-pro">PRO</span>' : '<span class="lesson-badge badge-free">FREE</span>'}
                 </div>
                 <div class="lesson-status ${isDone ? 'done' : ''}">
@@ -637,7 +822,7 @@ function openBook(id, silent = false) {
         <div class="progress-container" style="margin-bottom: 20px;">
             <div class="progress-bar" style="width: ${percent}%"></div>
         </div>
-        <p style="font-size: 14px; margin-bottom: 15px; color: var(--text-muted-dark);">Пройдено: ${doneCount} из ${total} (${percent}%)</p>
+        <p style="font-size: 14px; margin-bottom: 15px; color: var(--text-muted-dark);">${T('common.completed', { done: doneCount, total: total, percent: percent })}</p>
     ` + lessonsHtml;
 
     document.getElementById('book-lessons-list').innerHTML = lessonsHtml;
@@ -649,8 +834,9 @@ function openSection(id) {
     const section = sectionsData[id];
     if (!section) return;
 
-    document.getElementById('section-title').innerText = section.title;
-    document.getElementById('section-desc').innerText = section.desc;
+    currentCatalogSectionId = id;
+    document.getElementById('section-title').innerText = L(section.title);
+    document.getElementById('section-desc').innerText = L(section.desc);
 
     let topicsHtml = '';
     section.topics.forEach(topic => {
@@ -662,7 +848,7 @@ function openSection(id) {
                         <path d="M32 20V44M20 32H44" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/>
                     </svg>
                 </div>
-                <div class="square-title">${topic.title}</div>
+                <div class="square-title">${L(topic.title)}</div>
             </div>
         `;
     });
@@ -676,8 +862,8 @@ function openTopic(topicId, silent = false) {
     if (!topic) return;
     currentTopicId = topicId;
 
-    document.getElementById('content-title').innerText = topic.title;
-    document.getElementById('content-author').innerText = "Все уроки этого раздела доступны бесплатно";
+    document.getElementById('content-title').innerText = L(topic.title);
+    document.getElementById('content-author').innerText = T('catalog.sectionFree');
     document.getElementById('content-body').innerHTML = "";
 
     let lessonsHtml = '';
@@ -689,8 +875,8 @@ function openTopic(topicId, silent = false) {
         lessonsHtml += `
             <div class="lesson-item" onclick="openLesson('topic', ${topicId}, '${lesson.id}')">
                 <div class="lesson-item-info">
-                    <h4>${index + 1}. ${lesson.title}</h4>
-                    <p>${lesson.desc}</p>
+                    <h4>${index + 1}. ${L(lesson.title)}</h4>
+                    <p>${L(lesson.desc)}</p>
                     <span class="lesson-badge badge-free">FREE</span>
                 </div>
                 <div class="lesson-status ${isDone ? 'done' : ''}">
@@ -708,7 +894,7 @@ function openTopic(topicId, silent = false) {
         <div class="progress-container" style="margin-bottom: 20px;">
             <div class="progress-bar" style="width: ${percent}%"></div>
         </div>
-        <p style="font-size: 14px; margin-bottom: 15px; color: var(--text-muted-dark);">Пройдено: ${doneCount} из ${total} (${percent}%)</p>
+        <p style="font-size: 14px; margin-bottom: 15px; color: var(--text-muted-dark);">${T('common.completed', { done: doneCount, total: total, percent: percent })}</p>
     ` + lessonsHtml;
 
     document.getElementById('content-lessons-list').innerHTML = lessonsHtml;
@@ -815,9 +1001,10 @@ function openLesson(type, parent, id) {
     if (type === 'old') currentSectionId = parent + '-page';
     if (type === 'book') currentBookId = parent;
 
-    document.getElementById('lesson-title').innerText = lesson.title;
-    document.getElementById('lesson-intro').innerText = lesson.desc || lesson.intro;
-    document.getElementById('lesson-content').innerHTML = lesson.content;
+    document.getElementById('lesson-title').innerText = L(lesson.title);
+    document.getElementById('lesson-intro').innerText = L(lesson.desc || lesson.intro);
+    document.getElementById('lesson-content').innerHTML =
+        localizeArabicHtml(L(lesson.content), currentContentLang());
 
     const prevBtn = document.getElementById('prev-btn');
     const nextBtn = document.getElementById('next-btn');
@@ -845,12 +1032,38 @@ function openLesson(type, parent, id) {
         }
     }
 
-    // Автосохранение через 1.5 сек — в фоне, интерфейс не ждёт
-    if (autoSaveTimer) clearTimeout(autoSaveTimer);
-    pendingAutoSave = { type: type, parent: parent, id: id, allLessons: allLessons };
-    autoSaveTimer = setTimeout(flushPendingAutoSave, 1500);
+    // Прогресс пишем СРАЗУ (синхронно в localStorage), без таймера:
+    // галочка появится мгновенно, а облако синхронизируется в фоне.
+    if (autoSaveTimer) { clearTimeout(autoSaveTimer); autoSaveTimer = null; }
+    pendingAutoSave = null;
+    saveProgressUpToCurrent(type, parent, id, allLessons);
 
     showPage('lesson-page');
+}
+
+// Карточки уроков на главной берут подписи из oldLessonsData.
+// Так их не нужно дублировать в translations.js.
+function renderLessonCards() {
+    if (typeof oldLessonsData === 'undefined') return;
+    const pageMap = {
+        'islam-start-page': 'islam',
+        'family-page': 'family',
+        'birth-page': 'birth',
+        'loss-page': 'loss'
+    };
+    for (const [pageId, key] of Object.entries(pageMap)) {
+        const page = document.getElementById(pageId);
+        const lessons = oldLessonsData[key];
+        if (!page || !lessons) continue;
+        page.querySelectorAll('.lesson-card').forEach((card, index) => {
+            const lesson = lessons[index];
+            if (!lesson) return;
+            const titleEl = card.querySelector('h4');
+            const descEl = card.querySelector('p');
+            if (titleEl) titleEl.textContent = String(L(lesson.title)).replace(/^\s*[\d\u0660-\u0669]+\.\s*/, '');
+            if (descEl) descEl.textContent = L(lesson.desc);
+        });
+    }
 }
 
 // ===== КНОПКА «НАЗАД К УРОКАМ» =====
@@ -879,12 +1092,11 @@ function leaveLessonPage() {
             const section = getSectionByLessonId(currentLessonId);
             if (section) showPage(section);
         }
-        setTimeout(() => {
-            const savedScroll = sessionStorage.getItem(`scroll_${parentId}`);
-            if (savedScroll !== null) {
-                window.scrollTo(0, parseInt(savedScroll, 10) || 0);
-            }
-        }, 50);
+        const savedScroll = sessionStorage.getItem(`scroll_${parentId}`);
+        if (savedScroll !== null) {
+            const top = parseInt(savedScroll, 10) || 0;
+            requestAnimationFrame(() => window.scrollTo(0, top));
+        }
         return;
     }
 
@@ -912,8 +1124,7 @@ function goBackFromLesson(ev) {
         } catch (e2) { /* ignore */ }
     }
 
-    // 2. Сохранение — уже после смены экрана, в фоне
-    setTimeout(flushPendingAutoSave, 0);
+    // Прогресс уже сохранён при открытии урока — дополнительных таймеров нет.
 }
 
 // «Быстрый тап»: на iOS в режиме PWA click по div иногда теряется (после прокрутки/инерции).
@@ -968,9 +1179,9 @@ function renderProfile() {
     const titleEl = document.getElementById('profile-page-title');
     if (titleEl) {
         if (currentUser) {
-            titleEl.innerText = `Профиль: ${currentUser.displayName || currentUser.email.split('@')[0]}`;
+            titleEl.innerText = T('profile.withName', { name: currentUser.displayName || currentUser.email.split('@')[0] });
         } else {
-            titleEl.innerText = 'Мой прогресс';
+            titleEl.innerText = T('profile.title');
         }
     }
 
@@ -978,15 +1189,15 @@ function renderProfile() {
     if (!currentUser) {
         // Пока Firebase восстанавливает вход, не пугаем авторизованных надписью «Войдите»
         if (!authReady) {
-            profileEl.innerHTML = `<div class="important-block" style="text-align: center;">Загрузка…</div>`;
+            profileEl.innerHTML = `<div class="important-block" style="text-align: center;">${T('profile.loading')}</div>`;
             return;
         }
         profileEl.innerHTML = `
             <div class="important-block" style="text-align: center;">
-                Войдите в аккаунт, чтобы сохранять прогресс и видеть его здесь.
+                ${T('profile.loginPrompt')}
                 <br><br>
-                <button onclick="openAuthModal()" style="background: var(--gold); color: var(--bg-color); border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: inherit;">
-                    Войти
+                <button onclick="openAuthModal()" style="background: var(--gold); color: #ffffff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: inherit;">
+                    ${T('profile.login')}
                 </button>
             </div>
         `;
@@ -1024,7 +1235,7 @@ function renderProfile() {
         html += `
             <div class="block-card" style="margin-bottom: 15px; padding: 15px; display: flex; flex-direction: column; gap: 10px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <h4 style="color: var(--text-dark); margin: 0;">${book.title}</h4>
+                    <h4 style="color: var(--text-dark); margin: 0;">${L(book.title)}</h4>
                     <span style="font-size: 13px; color: var(--text-muted-dark); font-weight: bold;">${doneCount}/${book.lessons.length}</span>
                 </div>
                 <div class="progress-container" style="margin-top: 0;">
@@ -1032,10 +1243,10 @@ function renderProfile() {
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px; gap: 10px;">
                     <span style="font-size: 12px; color: var(--text-muted-dark); flex: 1; min-width: 0;">
-                        ${lastLesson ? 'Остановились на: ' + lastLesson.title : 'Прогресс сохранён'}
+                        ${lastLesson ? T('profile.stoppedAt', { title: L(lastLesson.title) }) : T('profile.saved')}
                     </span>
                     <button onclick="${targetAction}" style="background: var(--bg-color); color: var(--gold); border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: inherit; white-space: nowrap;">
-                        Продолжить
+                        ${T('common.continue')}
                     </button>
                 </div>
             </div>
@@ -1044,7 +1255,7 @@ function renderProfile() {
 
     // Если ничего не начато
     if (startedBooks === 0) {
-        html = `<div class="important-block" style="text-align: center;">Вы ещё не начали обучение. Перейдите в раздел «Знания» и выберите книгу!</div>`;
+        html = `<div class="important-block" style="text-align: center;">${T('profile.notStarted')}</div>`;
     }
 
     profileEl.innerHTML = html;
@@ -1073,18 +1284,18 @@ function saveScrollAndOpenBook(bookId) {
 function restoreScroll() {
     const savedPos = sessionStorage.getItem('catalog_scroll_pos');
     if (savedPos !== null) {
-        setTimeout(() => {
-            window.scrollTo({ top: parseInt(savedPos), behavior: 'instant' });
-            sessionStorage.removeItem('catalog_scroll_pos');
-        }, 50);
+        const top = parseInt(savedPos, 10) || 0;
+        sessionStorage.removeItem('catalog_scroll_pos');
+        // Один кадр — чтобы браузер успел показать новую страницу.
+        requestAnimationFrame(() => window.scrollTo(0, top));
     }
 }
 
 // ===== АВТОРИЗАЦИЯ (Firebase) =====
 function openAuthModal() {
     if (currentUser) {
-        if(confirm(`Вы вошли как ${currentUser.displayName || currentUser.email}.\nХотите выйти?`)) {
-            auth.signOut().then(() => { location.reload(); });
+        if(confirm(T('auth.loggedInAs', { name: currentUser.displayName || currentUser.email }))) {
+            withFirebase(() => auth.signOut().then(() => refreshUiAfterSync()));
         }
     } else {
         const modal = document.getElementById('auth-modal');
@@ -1110,33 +1321,32 @@ function toggleAuthForms(showReg = null) {
 function loginUser() {
     const email = document.getElementById('login-email').value.trim();
     const pass = document.getElementById('login-pass').value.trim();
-    if (!email || !pass) { showToast('Заполните поля!', 'error'); return; }
-    if (!auth) { showToast('Ошибка Firebase', 'error'); return; }
+    if (!email || !pass) { showToast(T('auth.fillFields'), 'error'); return; }
 
-    auth.signInWithEmailAndPassword(email, pass)
+    // UI обновится сам через onAuthStateChanged — перезагрузка страницы не нужна.
+    withFirebase(() => auth.signInWithEmailAndPassword(email, pass)
         .then(() => {
             document.getElementById('auth-modal').classList.remove('active');
-            showToast('Добро пожаловать!', 'success');
-            setTimeout(() => location.reload(), 1000);
+            showToast(T('auth.welcome'), 'success');
+            refreshUiAfterSync();
         })
-        .catch(() => showToast('Неверная почта или пароль!', 'error'));
+        .catch(() => showToast(T('auth.wrongCredentials'), 'error')));
 }
 
 function registerUser() {
     const email = document.getElementById('reg-email').value.trim();
     const pass = document.getElementById('reg-pass').value.trim();
-    if (!email || !pass) { showToast('Заполните поля!', 'error'); return; }
-    if (pass.length < 6) { showToast('Пароль от 6 символов!', 'error'); return; }
-    if (!auth) { showToast('Ошибка Firebase', 'error'); return; }
+    if (!email || !pass) { showToast(T('auth.fillFields'), 'error'); return; }
+    if (pass.length < 6) { showToast(T('auth.passLength'), 'error'); return; }
 
-    auth.createUserWithEmailAndPassword(email, pass)
+    withFirebase(() => auth.createUserWithEmailAndPassword(email, pass)
         .then((userCredential) => {
             userCredential.user.sendEmailVerification();
             document.getElementById('auth-modal').classList.remove('active');
-            showToast('Регистрация успешна! Проверьте почту для подтверждения.', 'success');
-            setTimeout(() => location.reload(), 2000);
+            showToast(T('auth.registerSuccess'), 'success');
+            refreshUiAfterSync();
         })
-        .catch((error) => showToast('Ошибка: ' + error.message, 'error'));
+        .catch((error) => showToast(T('auth.error', { message: error.message }), 'error')));
 }
 
 function togglePassword(inputId, iconContainer) {
@@ -1151,7 +1361,7 @@ function togglePassword(inputId, iconContainer) {
         if(eyeOn) eyeOn.style.display = "block";
     } else {
         input.type = "password";
-        iconContainer.style.color = "#888";
+        iconContainer.style.color = "var(--muted)";
         if(eyeOff) eyeOff.style.display = "block";
         if(eyeOn) eyeOn.style.display = "none";
     }
@@ -1170,20 +1380,18 @@ function openAccountSettings() {
         loginView.style.display = 'none';
         accountView.style.display = 'block';
 
-        document.getElementById('set-user-email').innerText = "Загрузка...";
-        document.getElementById('set-user-name-display').innerText = "Загрузка...";
+        // Сразу показываем то, что уже есть в памяти; сеть не задерживает открытие.
+        document.getElementById('set-user-email').innerText = currentUser.email;
+        document.getElementById('set-user-name-display').innerText = currentUser.displayName || T('settings.account.notSet');
 
+        // Свежие данные подтянутся в фоне, если соединение есть.
         currentUser.reload().then(() => {
             const freshUser = firebase.auth().currentUser;
             if (freshUser) {
                 document.getElementById('set-user-email').innerText = freshUser.email;
-                document.getElementById('set-user-name-display').innerText = freshUser.displayName || "Не задано";
+                document.getElementById('set-user-name-display').innerText = freshUser.displayName || T('settings.account.notSet');
             }
-        }).catch((error) => {
-            console.error("Ошибка обновления:", error);
-            document.getElementById('set-user-email').innerText = currentUser.email;
-            document.getElementById('set-user-name-display').innerText = currentUser.displayName || "Не задано";
-        });
+        }).catch(() => { /* уже показали кэшированные значения */ });
     } else {
         loginView.style.display = 'block';
         accountView.style.display = 'none';
@@ -1194,92 +1402,91 @@ function loginFromSettings() {
     const email = document.getElementById('set-login-email').value.trim();
     const pass = document.getElementById('set-login-pass').value.trim();
 
-    if (!email || !pass) { showToast('Заполните поля!', 'error'); return; }
-    if (!auth) { showToast('Ошибка Firebase', 'error'); return; }
+    if (!email || !pass) { showToast(T('auth.fillFields'), 'error'); return; }
 
-    auth.signInWithEmailAndPassword(email, pass)
+    withFirebase(() => auth.signInWithEmailAndPassword(email, pass)
         .then(() => {
-            showToast('Добро пожаловать!', 'success');
+            showToast(T('auth.welcome'), 'success');
             document.getElementById('account-settings-modal').classList.remove('active');
-            setTimeout(() => location.reload(), 1000);
+            refreshUiAfterSync();
         })
-        .catch(() => showToast('Неверная почта или пароль!', 'error'));
+        .catch(() => showToast(T('auth.wrongCredentials'), 'error')));
 }
 
 function logoutFromSettings() {
-    if (confirm('Вы уверены, что хотите выйти?')) {
-        auth.signOut().then(() => { location.reload(); });
+    if (confirm(T('auth.logoutConfirm'))) {
+        withFirebase(() => auth.signOut().then(() => {
+            document.getElementById('account-settings-modal').classList.remove('active');
+            refreshUiAfterSync();
+        }));
     }
 }
 
 function saveNewName() {
     const newName = document.getElementById('set-new-name').value.trim();
-    if (!newName) { showToast('Введите имя!', 'error'); return; }
+    if (!newName) { showToast(T('auth.enterName'), 'error'); return; }
     if (!currentUser) return;
 
     currentUser.updateProfile({ displayName: newName })
         .then(() => {
-            showToast('Имя успешно изменено!', 'success');
+            showToast(T('auth.nameChanged'), 'success');
             document.getElementById('set-user-name-display').innerText = newName;
             document.getElementById('set-new-name').value = '';
 
-            const greetingEl = document.querySelector('.section-title');
-            if (greetingEl && greetingEl.innerText.includes('Профиль:')) {
-                greetingEl.innerText = `Профиль: ${newName}`;
-            }
+            const greetingEl = document.getElementById('profile-page-title');
+            if (greetingEl) greetingEl.innerText = T('profile.withName', { name: newName });
         })
-        .catch((error) => showToast('Ошибка: ' + error.message, 'error'));
+        .catch((error) => showToast(T('auth.error', { message: error.message }), 'error'));
 }
 
 function saveNewEmail() {
     const newEmail = document.getElementById('set-new-email').value.trim();
     const pass = document.getElementById('set-email-pass').value.trim();
 
-    if (!newEmail || !pass) { showToast('Заполните новую почту и текущий пароль!', 'error'); return; }
+    if (!newEmail || !pass) { showToast(T('auth.fillEmailPass'), 'error'); return; }
     if (!currentUser) return;
 
-    const credential = firebase.auth.EmailAuthProvider.credential(currentUser.email, pass);
+    withFirebase(() => {
+        const credential = firebase.auth.EmailAuthProvider.credential(currentUser.email, pass);
 
-    currentUser.reauthenticateWithCredential(credential)
-        .then(() => {
-            return currentUser.verifyBeforeUpdateEmail(newEmail);
-        })
-        .then(() => {
-            showToast('Письмо с подтверждением отправлено на новую почту!', 'success');
-            document.getElementById('set-new-email').value = '';
-            document.getElementById('set-email-pass').value = '';
+        currentUser.reauthenticateWithCredential(credential)
+            .then(() => currentUser.verifyBeforeUpdateEmail(newEmail))
+            .then(() => {
+                showToast(T('auth.emailSent'), 'success');
+                document.getElementById('set-new-email').value = '';
+                document.getElementById('set-email-pass').value = '';
 
-            localStorage.setItem('pendingEmailChange', newEmail);
-            localStorage.setItem('pendingPassword', pass);
-
-            setTimeout(() => {
+                localStorage.setItem('pendingEmailChange', newEmail);
+                localStorage.setItem('pendingPassword', pass);
                 document.getElementById('account-settings-modal').classList.remove('active');
-            }, 2000);
-        })
-        .catch((error) => {
-            if (error.code === 'auth/wrong-password') showToast('Неверный текущий пароль!', 'error');
-            else showToast('Ошибка: ' + error.message, 'error');
-        });
+            })
+            .catch((error) => {
+                if (error.code === 'auth/wrong-password') showToast(T('auth.wrongCurrentPass'), 'error');
+                else showToast(T('auth.error', { message: error.message }), 'error');
+            });
+    });
 }
 
 function saveNewPass() {
     const oldPass = document.getElementById('set-old-pass').value.trim();
     const newPass = document.getElementById('set-new-pass').value.trim();
 
-    if (!oldPass || !newPass) { showToast('Заполните поля!', 'error'); return; }
-    if (newPass.length < 6) { showToast('Новый пароль от 6 символов!', 'error'); return; }
+    if (!oldPass || !newPass) { showToast(T('auth.fillFields'), 'error'); return; }
+    if (newPass.length < 6) { showToast(T('auth.newPassLength'), 'error'); return; }
     if (!currentUser) return;
 
-    const credential = firebase.auth.EmailAuthProvider.credential(currentUser.email, oldPass);
+    withFirebase(() => {
+        const credential = firebase.auth.EmailAuthProvider.credential(currentUser.email, oldPass);
 
-    currentUser.reauthenticateWithCredential(credential)
-        .then(() => currentUser.updatePassword(newPass))
-        .then(() => {
-            showToast('Пароль успешно изменен!', 'success');
-            document.getElementById('set-old-pass').value = '';
-            document.getElementById('set-new-pass').value = '';
-        })
-        .catch(() => showToast('Ошибка: неверный текущий пароль!', 'error'));
+        currentUser.reauthenticateWithCredential(credential)
+            .then(() => currentUser.updatePassword(newPass))
+            .then(() => {
+                showToast(T('auth.passChanged'), 'success');
+                document.getElementById('set-old-pass').value = '';
+                document.getElementById('set-new-pass').value = '';
+            })
+            .catch(() => showToast(T('auth.passError'), 'error'));
+    });
 }
 
 // ===== НАМАЗ И КИБЛА =====
@@ -1290,12 +1497,13 @@ const DEFAULT_COORDS = { lat: 55.7558, lng: 37.6173 }; // Москва
 
 const PRAYER_CACHE_KEY = 'amanah_prayer_cache_v2';
 const COORDS_KEY = 'amanah_coords_v1';
+const PRAYER_KEYS = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
 const PRAYER_NAMES = [
-    ['Fajr', 'Фаджр (Рассвет)'],
-    ['Dhuhr', 'Зухр (Полдень)'],
-    ['Asr', 'Аср (После полудня)'],
-    ['Maghrib', 'Магриб (Закат)'],
-    ['Isha', 'Иша (Ночь)']
+    ['Fajr', 'fajr'],
+    ['Dhuhr', 'dhuhr'],
+    ['Asr', 'asr'],
+    ['Maghrib', 'maghrib'],
+    ['Isha', 'isha']
 ];
 
 let qiblaAngle = 0;
@@ -1334,9 +1542,20 @@ function readPrayerCache() {
     try { return JSON.parse(lsGet(PRAYER_CACHE_KEY)) || {}; } catch (e) { return {}; }
 }
 
+function normalizePrayerList(list) {
+    return (list || []).map((p, i) => {
+        const key = (p && p.key) || PRAYER_KEYS[i] || 'fajr';
+        return {
+            key: key,
+            name: (p && p.name) || T('prayer.' + key + '.short'),
+            time: p && p.time
+        };
+    });
+}
+
 function getCachedPrayers(dateObj, coords) {
     const entry = readPrayerCache()[`${dateKey(dateObj)}|${coordsKey(coords)}`];
-    return entry && Array.isArray(entry.list) && entry.list.length ? entry.list : null;
+    return entry && Array.isArray(entry.list) && entry.list.length ? normalizePrayerList(entry.list) : null;
 }
 
 function setCachedPrayers(dateObj, coords, list) {
@@ -1375,7 +1594,11 @@ async function getPrayersForDate(dateObj, coords) {
         const data = await res.json();
         if (data && data.code === 200 && data.data && data.data.timings) {
             const t = data.data.timings;
-            const list = PRAYER_NAMES.map(([key, ru]) => ({ name: ru, time: normTime(t[key]) }));
+            const list = PRAYER_NAMES.map(([apiKey, nameKey]) => ({
+                key: nameKey,
+                name: T('prayer.' + nameKey + '.short'),
+                time: normTime(t[apiKey])
+            }));
             setCachedPrayers(dateObj, coords, list);
             return list;
         }
@@ -1399,9 +1622,9 @@ function updateHeaderPrayer() {
         const [h, m] = p.time.split(':').map(Number);
         return (h * 60 + m) > currentMinutes;
     });
-    if (!next) next = { name: 'Фаджр', time: headerPrayers[0].time };
+    if (!next) next = { key: 'fajr', time: headerPrayers[0].time };
 
-    nameEl.innerText = next.name.split(' ')[0];
+    nameEl.innerText = T('prayer.' + next.key + '.short', null, next.name || '');
     timeEl.innerText = next.time;
 }
 
@@ -1445,8 +1668,8 @@ function applyCoords(c, real) {
     const debugText = document.getElementById('gps-debug-text');
     if (debugText) {
         debugText.innerText = real
-            ? `Координаты: ${c.lat.toFixed(4)}, ${c.lng.toFixed(4)}`
-            : "GPS недоступен. Используем Москву.";
+            ? T('qibla.coords', { lat: c.lat.toFixed(4), lng: c.lng.toFixed(4) })
+            : T('qibla.gpsUnavailable');
     }
 
     qiblaAngle = computeQiblaAngle(c.lat, c.lng);
@@ -1468,7 +1691,7 @@ function requestPosition() {
     }
     geoPending = true;
     const debugText = document.getElementById('gps-debug-text');
-    if (debugText && !userCoordinates) debugText.innerText = "Запрос GPS...";
+    if (debugText && !userCoordinates) debugText.innerText = T('qibla.requesting');
 
     navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -1543,17 +1766,17 @@ function initPrayerHeader() {
             } else if (state === 'denied') {
                 if (!userCoordinates) applyCoords(DEFAULT_COORDS, false);
             } else {
-                // 'prompt' / неизвестно: не ждём ответа пользователя
+                // 'prompt' / неизвестно: не ждём ответа пользователя — сразу город по умолчанию
                 if (!userCoordinates && SHOW_DEFAULT_CITY_UNTIL_GPS) {
-                    setTimeout(() => { if (!userCoordinates) applyCoords(DEFAULT_COORDS, false); }, 2500);
+                    applyCoords(DEFAULT_COORDS, false);
                 }
                 armGeoOnFirstGesture();
             }
         });
     };
 
-    if ('requestIdleCallback' in window) requestIdleCallback(boot, { timeout: 2000 });
-    else setTimeout(boot, 600);
+    // Запускаем сразу: кэш шапки уже показан, сеть идёт в фоне и UI не блокирует.
+    boot();
 }
 
 // ----- окна -----
@@ -1585,35 +1808,52 @@ async function fetchPrayerTimesForDate(dateObj) {
 
     currentPrayerDate = dateObj;
     const seq = ++prayerFetchSeq;
-    const titleEl = document.getElementById('prayer-date-title');
     const container = document.getElementById('prayer-list-container');
 
-    const months = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
-    const today = new Date();
-    const isToday = dateObj.getDate() === today.getDate() && dateObj.getMonth() === today.getMonth() && dateObj.getFullYear() === today.getFullYear();
-
-    if (titleEl) titleEl.innerText = isToday ? "Намазы сегодня" : `Намазы на ${dateObj.getDate()} ${months[dateObj.getMonth()]}`;
+    updatePrayerModalTitle();
 
     if (container && !getCachedPrayers(dateObj, userCoordinates)) {
-        container.innerHTML = '<div style="color:#ddd; text-align:center; padding:10px;">Загрузка…</div>';
+        container.innerHTML = `<div class="prayer-loading">${T('prayer.loading')}</div>`;
     }
 
     const list = await getPrayersForDate(dateObj, userCoordinates);
     if (seq !== prayerFetchSeq) return;   // пользователь уже выбрал другую дату
 
     if (!list) {
-        if (container) container.innerHTML = '<div style="color:#ddd; text-align:center; padding:10px;">Не удалось загрузить время намаза. Проверьте интернет.</div>';
+        if (container) container.innerHTML = `<div class="prayer-loading">${T('prayer.loadError')}</div>`;
         return;
     }
 
     todayPrayers = list;
     renderPrayerList();
 
+    const today = new Date();
+    const isToday = dateObj.getDate() === today.getDate() && dateObj.getMonth() === today.getMonth() && dateObj.getFullYear() === today.getFullYear();
+
     if (isToday) {
         headerPrayers = list;
         headerDateKey = dateKey(dateObj);
         updateHeaderPrayer();
     }
+}
+
+function formatPrayerDate(dateObj) {
+    try {
+        const loc = (window.I18N && typeof window.I18N.getLocale === 'function') ? window.I18N.getLocale() : 'ru-RU';
+        return new Intl.DateTimeFormat(loc, { day: 'numeric', month: 'long' }).format(dateObj);
+    } catch (e) {
+        return `${dateObj.getDate()}.${pad2(dateObj.getMonth() + 1)}`;
+    }
+}
+
+function updatePrayerModalTitle() {
+    const titleEl = document.getElementById('prayer-date-title');
+    if (!titleEl) return;
+    const today = new Date();
+    const isToday = currentPrayerDate.getDate() === today.getDate() &&
+        currentPrayerDate.getMonth() === today.getMonth() &&
+        currentPrayerDate.getFullYear() === today.getFullYear();
+    titleEl.innerText = isToday ? T('prayer.today') : T('prayer.onDate', { date: formatPrayerDate(currentPrayerDate) });
 }
 
 function changePrayerDate(days) {
@@ -1645,11 +1885,13 @@ function renderPrayerList() {
     if (!container) return;
 
     let html = '';
-    todayPrayers.forEach(p => {
+    todayPrayers.forEach((p, i) => {
+        const key = p.key || PRAYER_KEYS[i] || 'fajr';
+        const name = T('prayer.' + key, null, p.name || '');
         html += `
-            <div style="display: flex; justify-content: space-between; background: rgba(255,255,255,0.1); padding: 10px 15px; border-radius: 8px; border: 1px solid rgba(212, 175, 55, 0.3);">
-                <span style="color: #ddd; font-weight: 500;">${p.name}</span>
-                <span style="color: var(--gold); font-weight: bold;">${p.time}</span>
+            <div class="prayer-row">
+                <span class="prayer-row-name">${name}</span>
+                <span class="prayer-time">${p.time}</span>
             </div>
         `;
     });
@@ -1700,11 +1942,11 @@ function createOrientationHandler() {
         if (dirText) {
             const diff = ((qiblaAngle - heading + 540) % 360) - 180;
             if (Math.abs(diff) < 10) {
-                dirText.innerText = "Вы смотрите прямо на Киблу!";
-                dirText.style.color = "#4CAF50";
+                dirText.innerText = T('qibla.aligned');
+                dirText.style.color = 'var(--success)';
             } else {
-                dirText.innerText = "Поворачивайтесь, пока Кааба не совпадет с зеленой меткой";
-                dirText.style.color = "#ddd";
+                dirText.innerText = T('qibla.turn');
+                dirText.style.color = 'var(--muted)';
             }
         }
     }
@@ -1730,7 +1972,7 @@ function startCompass() {
     renderQiblaStatic();
 
     if (window.DeviceOrientationEvent === undefined) {
-        if (dirText) dirText.innerText = "Компас доступен только на телефоне. Ориентируйтесь на угол Киблы.";
+        if (dirText) dirText.innerText = T('qibla.phoneOnly');
         return;
     }
 
@@ -1753,7 +1995,12 @@ function startCompass() {
 }
 
 // ===== ИНИЦИАЛИЗАЦИЯ СТРАНИЦЫ =====
-document.addEventListener('DOMContentLoaded', () => {
+// Скрипты подключены с defer, поэтому DOM уже готов: не ждём DOMContentLoaded.
+function initPage() {
+    // 0. Тема: синхронизируем атрибут и цвет системной панели
+    applyTheme(getTheme());
+    renderLessonCards();
+
     // 1. Кнопка «Назад к урокам» — быстрый тап для телефонов и PWA
     const lessonBackBtn = document.getElementById('lesson-back-btn');
     if (lessonBackBtn) {
@@ -1776,13 +2023,67 @@ document.addEventListener('DOMContentLoaded', () => {
         if (urlParams.get('from') === 'profile') window.isFromProfile = true;
         openBook(bookId);   // сразу показываем книгу — без пустого экрана
         if (lessonId) {
-            // Урок открываем, когда уже известно, вошёл ли пользователь и есть ли у него PRO
-            whenAccountKnown(3500).then(() => openLesson('book', bookId, lessonId));
+            // Открываем урок сразу; PRO-статус из локального кэша уже доступен.
+            openLesson('book', bookId, lessonId);
         }
     }
 
-    // 5. Время намаза в шапке (кэш — мгновенно, остальное — после отрисовки)
+    // 5. Время намаза в шапке (кэш — мгновенно, остальное — в фоне)
     initPrayerHeader();
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPage);
+} else {
+    initPage();
+}
+
+// Перерисовать локализуемые части после смены языка
+document.addEventListener('amanah:languagechange', () => {
+    try {
+        if (document.getElementById('profile-content')) renderProfile();
+        renderLessonCards();
+
+        const lessonPage = document.getElementById('lesson-page');
+        if (lessonPage && lessonPage.classList.contains('active') && lessonType && currentLessonId != null) {
+            openLesson(lessonType, parentId, currentLessonId);
+        }
+
+        const bookPage = document.getElementById('book-page');
+        if (bookPage && bookPage.classList.contains('active') && currentBookId != null) {
+            openBook(currentBookId, true);
+        }
+
+        const contentPage = document.getElementById('content-page');
+        if (contentPage && contentPage.classList.contains('active') && currentTopicId != null) {
+            openTopic(currentTopicId, true);
+        }
+
+        const sectionPage = document.getElementById('section-page');
+        if (sectionPage && sectionPage.classList.contains('active') && currentCatalogSectionId != null) {
+            openSection(currentCatalogSectionId);
+        }
+
+        if (headerPrayers.length) updateHeaderPrayer();
+
+        const prayerModal = document.getElementById('prayer-modal');
+        if (prayerModal && prayerModal.classList.contains('active')) {
+            updatePrayerModalTitle();
+            if (todayPrayers.length) renderPrayerList();
+        }
+
+        const qiblaModal = document.getElementById('qibla-modal');
+        if (qiblaModal && qiblaModal.classList.contains('active')) {
+            const dirText = document.getElementById('qibla-direction-text');
+            if (dirText) {
+                dirText.innerText = T('qibla.hint');
+                dirText.style.color = '';
+            }
+            renderQiblaStatic();
+        }
+    } catch (err) {
+        console.error('languagechange:', err);
+    }
 });
 
 // Сохраняем незавершённое и досинхронизируем при сворачивании/закрытии (важно для PWA на телефоне)

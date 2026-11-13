@@ -2,26 +2,43 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#1a3312">
-    <title>AMANAH - Знания</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+    <script>
+        (function () {
+            try {
+                var theme = localStorage.getItem('amanah_theme');
+                if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+                var lang = localStorage.getItem('amanah_lang');
+                if (lang) {
+                    document.documentElement.lang = lang;
+                    document.documentElement.setAttribute('data-lang', lang);
+                    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+                }
+            } catch (e) { /* ignore */ }
+        })();
+    </script>
+
+    <title data-i18n="page.catalogTitle">AMANAH — Знания</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Ускоряем соединение с Firebase (вход и облако) -->
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://identitytoolkit.googleapis.com">
     <link rel="dns-prefetch" href="https://securetoken.googleapis.com">
     <link rel="dns-prefetch" href="https://firestore.googleapis.com">
-    <link rel="preconnect" href="https://api.aladhan.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet"></noscript>
     <link rel="stylesheet" href="css/style.css">
 
+    <!-- PWA / установка на домашний экран -->
     <link rel="manifest" href="manifest.webmanifest">
-    <meta name="theme-color" content="#1a3312">
+    <meta name="theme-color" content="#f5f3ec">
 
+    <!-- Иконки для разных устройств -->
     <link rel="icon" type="image/jpg" href="images/ico-192.jpg">
     <link rel="apple-touch-icon" href="images/ico-192.jpg">
 
+    <!-- Для iOS (чтобы открывалось как приложение) -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -34,22 +51,22 @@
             <div class="header-qibla" onclick="openQiblaModal()" style="flex: 1; display: flex; flex-direction: column; align-items: center; cursor: pointer;">
                 <div class="compass-icon-mini">
                     <svg viewBox="0 0 40 40" fill="none">
-                        <circle cx="20" cy="20" r="18" stroke="#d4af37" stroke-width="2"/>
-                        <path d="M20 6 L25 20 L20 17 L15 20 Z" fill="#d4af37"/>
-                        <circle cx="20" cy="20" r="3" fill="#1a3312"/>
+                        <circle cx="20" cy="20" r="18" stroke="var(--gold)" stroke-width="2"/>
+                        <path d="M20 6 L25 20 L20 17 L15 20 Z" fill="var(--gold)"/>
+                        <circle cx="20" cy="20" r="3" fill="var(--primary)"/>
                     </svg>
                 </div>
-                <span style="font-size: 10px; color: var(--gold); font-weight: bold; margin-top: 4px;">КИБЛА</span>
+                <span style="font-size: 10px; color: var(--gold); font-weight: bold; margin-top: 4px;" data-i18n="header.qibla">КИБЛА</span>
             </div>
 
             <div class="header-center" onclick="window.location.href='index.html'" style="flex: 2; display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer;">
                 <div class="logo-img" style="margin-bottom: 5px; width: 50px; height: 50px; background-image: url('images/ico-180.png');"></div>
                 <span class="logo-text" style="font-size: 20px; line-height: 1;">AMANAH</span>
-                <span class="logo-subtext" style="font-size: 8px; margin-top: 2px;">ТВОЯ РЕЛИГИЯ — ТВОЙ АМАНАТ</span>
+                <span class="logo-subtext" style="font-size: 8px; margin-top: 2px;" data-i18n="app.tagline">ТВОЯ РЕЛИГИЯ — ТВОЙ АМАНАТ</span>
             </div>
 
             <div class="header-prayer" onclick="openPrayerModal()" style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer;">
-                <span id="next-prayer-name" style="font-size: 11px; color: var(--gold); font-weight: bold; text-transform: uppercase;">Намаз</span>
+                <span id="next-prayer-name" style="font-size: 11px; color: var(--gold); font-weight: bold; text-transform: uppercase;" data-i18n="header.prayer">Намаз</span>
                 <span id="next-prayer-time" style="font-size: 20px; color: var(--text-light); font-weight: bold;">--:--</span>
             </div>
         </header>
@@ -57,88 +74,88 @@
         <!-- ЗНАНИЯ -->
         <section id="knowledge-page" class="page-section active">
             <div class="back-btn" onclick="window.location.href='index.html'">
-                <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> На главную
+                <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> <span data-i18n="common.home">На главную</span>
             </div>
-            <h2 class="section-title">Знания</h2>
-            <p class="section-subtitle">Изучай основы религии и классические труды.</p>
+            <h2 class="section-title" data-i18n="catalog.title">Знания</h2>
+            <p class="section-subtitle" data-i18n="catalog.subtitle">Изучай основы религии и классические труды.</p>
 
             <div class="square-grid">
                 <div class="square-card" onclick="openSection(1)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 56C32 56 8 42 8 24C8 15.163 15.163 8 24 8C28.418 8 32 10.5 32 10.5C32 10.5 35.582 8 40 8C48.837 8 56 15.163 56 24C56 42 32 56 32 56Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M38 22C34.686 22 32 24.686 32 28C32 31.314 34.686 34 38 34C38.8 34 39.5 33.8 40.2 33.5C38.9 35.6 36.6 37 34 37C29.6 37 26 33.4 26 29C26 24.6 29.6 21 34 21C35.6 21 37.1 21.4 38.4 22.2C38.2 22.1 38.1 22 38 22Z" fill="#d4af37"/></svg></div>
-                    <div class="square-title">Акыда</div>
+                    <div class="square-title" data-i18n="catalog.section.1">Акыда</div>
                 </div>
                 <div class="square-card" onclick="openSection(2)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 8V52" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/><path d="M12 18H52" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/><path d="M12 18L6 32C6 35.314 8.686 38 12 38C15.314 38 18 35.314 18 32L12 18Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M52 18L46 32C46 35.314 48.686 38 52 38C55.314 38 58 35.314 58 32L52 18Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M22 52H42" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/></svg></div>
-                    <div class="square-title">Фикх</div>
+                    <div class="square-title" data-i18n="catalog.section.2">Фикх</div>
                 </div>
                 <div class="square-card" onclick="openSection(3)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 20C32 20 24 14 12 14V46C24 46 32 52 32 52C32 52 40 46 52 46V14C40 14 32 20 32 20Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 20V52" stroke="#d4af37" stroke-width="2.5"/><path d="M44 10L45.2 13.8L49 15L45.2 16.2L44 20L42.8 16.2L39 15L42.8 13.8L44 10Z" fill="#d4af37"/></svg></div>
-                    <div class="square-title">Сира</div>
+                    <div class="square-title" data-i18n="catalog.section.3">Сира</div>
                 </div>
             </div>
 
             <div class="section-divider"></div>
 
-            <h2 class="section-title">Разбор исламских книг</h2>
-            <p class="section-subtitle">Изучай классические труды с подробными уроками.</p>
+            <h2 class="section-title" data-i18n="catalog.booksTitle">Разбор исламских книг</h2>
+            <p class="section-subtitle" data-i18n="catalog.booksSubtitle">Изучай классические труды с подробными уроками.</p>
 
-            <h3 class="block-title" style="margin: 20px 0 15px; font-size: 18px;">Акыда и единобожие</h3>
+            <h3 class="block-title" style="margin: 20px 0 15px; font-size: 18px;" data-i18n="catalog.groupAqida">Акыда и единобожие</h3>
             <div class="square-grid">
                 <div class="square-card" onclick="saveScrollAndOpenBook(1)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="20" stroke="#d4af37" stroke-width="2.5"/><circle cx="32" cy="32" r="6" fill="#d4af37"/></svg></div>
-                    <div class="square-title">Китаб ат-Таухид</div>
+                    <div class="square-title" data-i18n="catalog.book.1">Китаб ат-Таухид</div>
                 </div>
                 <div class="square-card" onclick="saveScrollAndOpenBook(2)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 8L40 24H56L44 36L50 52L32 42L14 52L20 36L8 24H24L32 8Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/></svg></div>
-                    <div class="square-title">Аль-Акыда аль-Васитыйя</div>
+                    <div class="square-title" data-i18n="catalog.book.2">Аль-Акыда аль-Васитыйя</div>
                 </div>
                 <div class="square-card" onclick="saveScrollAndOpenBook(3)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="8" fill="#d4af37"/><path d="M32 8V18M32 46V56M8 32H18M46 32H56M15 15L22 22M42 42L49 49M49 15L42 22M22 42L15 49" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/></svg></div>
-                    <div class="square-title">Аль-Акыда ат-Тахавийя</div>
+                    <div class="square-title" data-i18n="catalog.book.3">Аль-Акыда ат-Тахавийя</div>
                 </div>
             </div>
 
-            <h3 class="block-title" style="margin: 20px 0 15px; font-size: 18px;">Фикх и поклонение</h3>
+            <h3 class="block-title" style="margin: 20px 0 15px; font-size: 18px;" data-i18n="catalog.groupFiqh">Фикх и поклонение</h3>
             <div class="square-grid">
                 <div class="square-card" onclick="saveScrollAndOpenBook(4)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M12 16C12 12 16 10 20 12C26 14 32 16 32 16C32 16 38 14 44 12C48 10 52 12 52 16V50C52 52 48 52 44 50C38 48 32 50 32 50C32 50 26 48 20 50C16 52 12 52 12 50V16Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 16V50" stroke="#d4af37" stroke-width="2.5"/></svg></div>
-                    <div class="square-title">Важные уроки для всей уммы</div>
+                    <div class="square-title" data-i18n="catalog.book.4">Важные уроки для всей уммы</div>
                 </div>
                 <div class="square-card" onclick="saveScrollAndOpenBook(5)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M16 8H40L48 16V56H16V8Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M40 8V16H48M22 28H42M22 36H42M22 44H34" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/></svg></div>
-                    <div class="square-title">Умдат аль-Ахкам</div>
+                    <div class="square-title" data-i18n="catalog.book.5">Умдат аль-Ахкам</div>
                 </div>
                 <div class="square-card" onclick="saveScrollAndOpenBook(6)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 52C32 52 12 40 12 26C12 19 17 14 24 14C27.5 14 32 17 32 17C32 17 36.5 14 40 14C47 14 52 19 52 26C52 40 32 52 32 52Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 24L33.5 28L38 29L34.5 32L35.5 36L32 34L28.5 36L29.5 32L26 29L30.5 28L32 24Z" fill="#d4af37"/></svg></div>
-                    <div class="square-title">Рияд ас-Салихин</div>
+                    <div class="square-title" data-i18n="catalog.book.6">Рияд ас-Салихин</div>
                 </div>
                 <div class="square-card" onclick="saveScrollAndOpenBook(7)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="22" stroke="#d4af37" stroke-width="2.5"/><path d="M32 14V32L42 42" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round"/></svg></div>
-                    <div class="square-title">Сорок хадисов</div>
+                    <div class="square-title" data-i18n="catalog.book.7">Сорок хадисов</div>
                 </div>
                 <div class="square-card" onclick="saveScrollAndOpenBook(8)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 10C32 10 16 30 16 40C16 48.837 23.163 56 32 56C40.837 56 48 48.837 48 40C48 30 32 10 32 10Z" stroke="#d4af37" stroke-width="2.5"/></svg></div>
-                    <div class="square-title">Булюг аль-Марам</div>
+                    <div class="square-title" data-i18n="catalog.book.8">Булюг аль-Марам</div>
                 </div>
                 <div class="square-card" onclick="saveScrollAndOpenBook(9)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 52C32 52 12 40 12 26C12 19 17 14 24 14C27.5 14 32 17 32 17C32 17 36.5 14 40 14C47 14 52 19 52 26C52 40 32 52 32 52Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 24L33.5 28L38 29L34.5 32L35.5 36L32 34L28.5 36L29.5 32L26 29L30.5 28L32 24Z" fill="#d4af37"/></svg></div>
-                    <div class="square-title">Аль-Адаб аль-Муфрад</div>
+                    <div class="square-title" data-i18n="catalog.book.9">Аль-Адаб аль-Муфрад</div>
                 </div>
             </div>
 
-            <h3 class="block-title" style="margin: 20px 0 15px; font-size: 18px;">Сира — жизнеописание Пророка Мухаммада ﷺ</h3>
+            <h3 class="block-title" style="margin: 20px 0 15px; font-size: 18px;" data-i18n="catalog.groupSira">Сира — жизнеописание Пророка Мухаммада ﷺ</h3>
             <div class="square-grid">
                 <div class="square-card" onclick="saveScrollAndOpenBook(10)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 20C32 20 24 14 12 14V46C24 46 32 52 32 52C32 52 40 46 52 46V14C40 14 32 20 32 20Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 20V52" stroke="#d4af37" stroke-width="2.5"/><path d="M44 10L45.2 13.8L49 15L45.2 16.2L44 20L42.8 16.2L39 15L42.8 13.8L44 10Z" fill="#d4af37"/></svg></div>
-                    <div class="square-title">Запечатанный нектар</div>
+                    <div class="square-title" data-i18n="catalog.book.10">Запечатанный нектар</div>
                 </div>
                 <div class="square-card" onclick="saveScrollAndOpenBook(11)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 20C32 20 24 14 12 14V46C24 46 32 52 32 52C32 52 40 46 52 46V14C40 14 32 20 32 20Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 20V52" stroke="#d4af37" stroke-width="2.5"/><path d="M44 10L45.2 13.8L49 15L45.2 16.2L44 20L42.8 16.2L39 15L42.8 13.8L44 10Z" fill="#d4af37"/></svg></div>
-                    <div class="square-title">Жизнеописание Пророка</div>
+                    <div class="square-title" data-i18n="catalog.book.11">Жизнеописание Пророка</div>
                 </div>
                 <div class="square-card" onclick="saveScrollAndOpenBook(12)">
                     <div class="square-icon"><svg viewBox="0 0 64 64" fill="none"><path d="M32 20C32 20 24 14 12 14V46C24 46 32 52 32 52C32 52 40 46 52 46V14C40 14 32 20 32 20Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 20V52" stroke="#d4af37" stroke-width="2.5"/><path d="M44 10L45.2 13.8L49 15L45.2 16.2L44 20L42.8 16.2L39 15L42.8 13.8L44 10Z" fill="#d4af37"/></svg></div>
-                    <div class="square-title">Пророческая сира</div>
+                    <div class="square-title" data-i18n="catalog.book.12">Пророческая сира</div>
                 </div>
             </div>
         </section>
@@ -146,47 +163,47 @@
         <!-- СТРАНИЦА КНИГИ -->
         <section id="book-page" class="page-section">
             <div class="back-btn" onclick="showPage('knowledge-page')">
-                <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Назад к знаниям
+                <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> <span data-i18n="common.backToKnowledge">Назад к знаниям</span>
             </div>
             <div class="lesson-screen">
                 <div class="lesson-header">
-                    <h2 id="book-title">Название книги</h2>
-                    <p class="intro" id="book-author">Автор</p>
+                    <h2 id="book-title" data-i18n="catalog.bookTitle">Название книги</h2>
+                    <p class="intro" id="book-author" data-i18n="catalog.bookAuthor">Автор</p>
                 </div>
                 <div class="lesson-content" id="book-content"></div>
-                <h3 class="block-title" style="margin-top: 30px;">Программа обучения</h3>
+                <h3 class="block-title" style="margin-top: 30px;" data-i18n="catalog.program">Программа обучения</h3>
                 <div id="book-lessons-list"></div>
             </div>
         </section>
 
         <section id="section-page" class="page-section">
             <div class="back-btn" onclick="showPage('knowledge-page')">
-                <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Назад
+                <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> <span data-i18n="common.backToKnowledge">Назад к знаниям</span>
             </div>
-            <h2 class="section-title" id="section-title">Раздел</h2>
-            <p class="section-subtitle" id="section-desc">Описание</p>
+            <h2 class="section-title" id="section-title" data-i18n="catalog.sectionTitle">Раздел</h2>
+            <p class="section-subtitle" id="section-desc" data-i18n="catalog.sectionDesc">Описание</p>
             <div class="square-grid" id="section-topics"></div>
         </section>
 
         <section id="content-page" class="page-section">
             <div class="back-btn" onclick="goBackFromContent()">
-                <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Назад
+                <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> <span data-i18n="common.back">Назад</span>
             </div>
             <div class="lesson-screen">
                 <div class="lesson-header">
-                    <h2 id="content-title">Название</h2>
-                    <p class="intro" id="content-author">Автор / Описание</p>
+                    <h2 id="content-title" data-i18n="catalog.sectionTitle">Название</h2>
+                    <p class="intro" id="content-author" data-i18n="catalog.sectionFree">Все уроки этого раздела доступны бесплатно</p>
                 </div>
                 <div class="lesson-content" id="content-body"></div>
-                <h3 class="block-title" style="margin-top: 30px;">Программа обучения</h3>
+                <h3 class="block-title" style="margin-top: 30px;" data-i18n="catalog.program">Программа обучения</h3>
                 <div id="content-lessons-list"></div>
             </div>
         </section>
 
         <section id="lesson-page" class="page-section">
-            <div class="back-btn" id="lesson-back-btn" role="button" tabindex="0" aria-label="Назад к урокам" onclick="goBackFromLesson(event)">
+            <div class="back-btn" id="lesson-back-btn" role="button" tabindex="0" aria-label="Назад к урокам" data-i18n-aria-label="common.backToLessons" onclick="goBackFromLesson(event)">
                 <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-                <span id="back-btn-text">Назад к урокам</span>
+                <span id="back-btn-text" data-i18n="common.backToLessons">Назад к урокам</span>
             </div>
             <div class="lesson-screen">
                 <div class="lesson-header">
@@ -195,9 +212,9 @@
                 </div>
                 <div class="lesson-content" id="lesson-content"></div>
                 <div class="lesson-nav">
-                    <button class="nav-btn" id="prev-btn" onclick="changeLesson(-1)">← Назад</button>
-                    <button class="nav-btn" id="next-btn" onclick="changeLesson(1)">Далее →</button>
-                    <button class="nav-btn btn-complete" id="complete-btn" onclick="completeCurrentLesson()" style="display: none;">Завершить урок</button>
+                    <button class="nav-btn" id="prev-btn" onclick="changeLesson(-1)"><span class="nav-arrow">←</span> <span data-i18n="common.prev">Назад</span></button>
+                    <button class="nav-btn" id="next-btn" onclick="changeLesson(1)"><span data-i18n="common.next">Далее</span> <span class="nav-arrow">→</span></button>
+                    <button class="nav-btn btn-complete" id="complete-btn" onclick="completeCurrentLesson()" style="display: none;" data-i18n="lesson.complete">Завершить урок</button>
                 </div>
             </div>
         </section>
@@ -206,97 +223,119 @@
     <!-- Модалка PRO -->
     <div class="modal-overlay" id="pro-modal">
         <div class="modal-content">
-            <h3>PRO Подписка</h3>
-            <p>Этот урок доступен только с PRO-подпиской. Откройте все уроки всех книг.</p>
-            <button class="modal-btn" onclick="activatePro()">Активировать демо-PRO</button>
-            <button class="modal-btn" style="background: transparent; color: #666; box-shadow: none;" onclick="closeProModal()">Закрыть</button>
+            <h3 data-i18n="pro.title">PRO Подписка</h3>
+            <p data-i18n="pro.desc">Этот урок доступен только с PRO-подпиской. Откройте все уроки всех книг.</p>
+            <button class="modal-btn" onclick="activatePro()" data-i18n="pro.activate">Активировать демо-PRO</button>
+            <button class="modal-btn modal-btn--muted" onclick="closeProModal()" data-i18n="common.close">Закрыть</button>
         </div>
     </div>
 
     <!-- МОДАЛКА КОМПАСА -->
     <div class="modal-overlay" id="qibla-modal">
-        <div class="modal-content" style="background: var(--bg-color); border: 2px solid var(--gold); color: white; max-width: 360px; padding: 20px;">
-            <h3 style="color: var(--gold); margin-bottom: 5px;">Направление Киблы</h3>
-            <p id="qibla-direction-text" style="color: #ddd; font-size: 14px; margin-bottom: 20px;">Поверните телефон...</p>
+        <div class="modal-content modal-content--compass">
+            <h3 data-i18n="qibla.title">Направление Киблы</h3>
+            <p id="qibla-direction-text" data-i18n="qibla.hint">Поверните телефон...</p>
 
             <div class="compass-container">
                 <div class="compass-target"></div>
                 <div class="compass-dial" id="compass-dial">
-                    <svg viewBox="0 0 200 200" style="width: 100%; height: 100%; filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.3));">
-                        <circle cx="100" cy="100" r="95" fill="#ffffff" stroke="#d4af37" stroke-width="2"/>
-                        <circle cx="100" cy="100" r="75" fill="#f4f1e6" stroke="#d4af37" stroke-width="2"/>
-                        <text x="100" y="40" fill="#1a3312" font-size="18" font-weight="bold" text-anchor="middle">С</text>
-                        <text x="155" y="106" fill="#1a3312" font-size="18" font-weight="bold" text-anchor="middle">В</text>
-                        <text x="100" y="172" fill="#1a3312" font-size="18" font-weight="bold" text-anchor="middle">Ю</text>
-                        <text x="45" y="106" fill="#1a3312" font-size="18" font-weight="bold" text-anchor="middle">З</text>
-                        <text x="100" y="18" fill="#666" font-size="8" text-anchor="middle">0°</text>
-                        <text x="185" y="105" fill="#666" font-size="8" text-anchor="middle">90°</text>
-                        <text x="100" y="188" fill="#666" font-size="8" text-anchor="middle">180°</text>
-                        <text x="15" y="105" fill="#666" font-size="8" text-anchor="middle">270°</text>
-                        <circle cx="100" cy="100" r="18" fill="#ffffff" stroke="#d4af37" stroke-width="2"/>
-                        <rect x="90" y="90" width="20" height="20" rx="2" fill="#1a1a1a"/>
-                        <rect x="90" y="97" width="20" height="4" fill="#d4af37"/>
-                        <path d="M95 80 L100 65 L105 80 Z" fill="#d4af37"/>
+                    <svg viewBox="0 0 200 200" style="width: 100%; height: 100%; filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.12));">
+                        <circle cx="100" cy="100" r="95" fill="var(--surface)" stroke="var(--gold)" stroke-width="2"/>
+                        <circle cx="100" cy="100" r="75" fill="var(--surface-2)" stroke="var(--gold)" stroke-width="2"/>
+                        <text x="100" y="40" fill="var(--primary)" font-size="18" font-weight="bold" text-anchor="middle" data-i18n="compass.n">С</text>
+                        <text x="155" y="106" fill="var(--primary)" font-size="18" font-weight="bold" text-anchor="middle" data-i18n="compass.e">В</text>
+                        <text x="100" y="172" fill="var(--primary)" font-size="18" font-weight="bold" text-anchor="middle" data-i18n="compass.s">Ю</text>
+                        <text x="45" y="106" fill="var(--primary)" font-size="18" font-weight="bold" text-anchor="middle" data-i18n="compass.w">З</text>
+                        <text x="100" y="18" fill="var(--muted)" font-size="8" text-anchor="middle">0°</text>
+                        <text x="185" y="105" fill="var(--muted)" font-size="8" text-anchor="middle">90°</text>
+                        <text x="100" y="188" fill="var(--muted)" font-size="8" text-anchor="middle">180°</text>
+                        <text x="15" y="105" fill="var(--muted)" font-size="8" text-anchor="middle">270°</text>
+                        <circle cx="100" cy="100" r="18" fill="var(--surface)" stroke="var(--gold)" stroke-width="2"/>
+                        <rect x="90" y="90" width="20" height="20" rx="2" fill="var(--primary-strong)"/>
+                        <rect x="90" y="97" width="20" height="4" fill="var(--gold)"/>
+                        <path d="M95 80 L100 65 L105 80 Z" fill="var(--gold)"/>
                     </svg>
                 </div>
             </div>
 
-            <div style="margin-top: 15px; font-size: 14px;">
-                Угол Киблы: <strong id="qibla-angle-text" style="color: var(--gold);">--</strong>°
+            <div class="qibla-angle-line">
+                <span data-i18n="qibla.angle">Угол Киблы</span>: <strong id="qibla-angle-text">--</strong>°
             </div>
-            <div id="gps-debug-text" style="font-size: 11px; color: #888; margin-top: 5px;"></div>
-            <button class="modal-btn" style="margin-top: 20px;" onclick="closeQiblaModal()">Закрыть</button>
+            <div id="gps-debug-text" class="qibla-gps"></div>
+            <button class="modal-btn" style="margin-top: 15px;" onclick="closeQiblaModal()" data-i18n="common.close">Закрыть</button>
         </div>
     </div>
 
     <!-- МОДАЛКА ВСЕХ НАМАЗОВ -->
     <div class="modal-overlay" id="prayer-modal">
-        <div class="modal-content" style="background: var(--bg-color); border: 2px solid var(--gold); color: white; max-width: 360px; padding: 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <button onclick="changePrayerDate(-1)" style="background: transparent; border: none; color: var(--gold); font-size: 20px; cursor: pointer;">←</button>
-                <h3 style="color: var(--gold); margin: 0; font-size: 18px; display: flex; align-items: center; gap: 5px; cursor: pointer;" onclick="openCalendar()">
-                    <span id="prayer-date-title">Намазы сегодня</span>
-                    <span style="font-size: 14px;">📅</span>
+        <div class="modal-content modal-content--prayer">
+            <div class="prayer-modal-head">
+                <button class="modal-arrow" onclick="changePrayerDate(-1)" aria-label="Предыдущий день" data-i18n-aria-label="common.prevDay">←</button>
+                <h3 class="prayer-date-title" onclick="openCalendar()">
+                    <span id="prayer-date-title" data-i18n="prayer.today">Намазы сегодня</span>
+                    <span class="prayer-calendar-icon">📅</span>
                 </h3>
-                <button onclick="changePrayerDate(1)" style="background: transparent; border: none; color: var(--gold); font-size: 20px; cursor: pointer;">→</button>
+                <button class="modal-arrow" onclick="changePrayerDate(1)" aria-label="Следующий день" data-i18n-aria-label="common.nextDay">→</button>
             </div>
             <input type="date" id="prayer-date-picker" style="display: none;" onchange="setPrayerDateFromPicker(this.value)">
-            <div id="prayer-list-container" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;"></div>
-            <button class="modal-btn" onclick="document.getElementById('prayer-modal').classList.remove('active')">Закрыть</button>
+            <div id="prayer-list-container" class="prayer-list"></div>
+            <button class="modal-btn" onclick="document.getElementById('prayer-modal').classList.remove('active')" data-i18n="common.close">Закрыть</button>
         </div>
     </div>
 
     <!-- МОДАЛКА АВТОРИЗАЦИИ -->
     <div class="modal-overlay" id="auth-modal">
-        <div class="modal-content" style="background: var(--bg-color); border: 2px solid var(--gold); color: white; max-width: 360px; padding: 25px;">
+        <div class="modal-content modal-content--auth">
+
+            <!-- ФОРМА ВХОДА -->
             <div id="login-form">
-                <h3 style="color: var(--gold); margin-bottom: 5px;">Вход в профиль</h3>
-                <p style="font-size: 13px; color: #ccc; margin-bottom: 20px;">Войдите, чтобы синхронизировать прогресс</p>
-                <input type="email" id="login-email" placeholder="Почта (Email)" style="width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--gold); background: rgba(255,255,255,0.1); color: white; font-family: inherit;">
-                <div style="position: relative; margin-bottom: 20px;">
-                    <input type="password" id="login-pass" placeholder="Пароль" style="width: 100%; padding: 12px; padding-right: 40px; border-radius: 8px; border: 1px solid var(--gold); background: rgba(255,255,255,0.1); color: white; font-family: inherit;">
-                    <span onclick="togglePassword('login-pass', this)" style="position: absolute; right: 12px; top: 12px; cursor: pointer; color: #888;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-off"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-on" style="display: none;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                <h3 data-i18n="auth.loginTitle">Вход в профиль</h3>
+                <p data-i18n="auth.loginDesc">Войдите, чтобы синхронизировать прогресс</p>
+
+                <input class="form-input" type="email" id="login-email" placeholder="Почта (Email)" data-i18n-placeholder="auth.email">
+
+                <div class="password-wrap">
+                    <input class="form-input" type="password" id="login-pass" placeholder="Пароль" data-i18n-placeholder="auth.password">
+                    <span class="password-toggle" onclick="togglePassword('login-pass', this)" role="button" tabindex="0" aria-label="Показать пароль" data-i18n-aria-label="auth.showPassword">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-off">
+                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                            <line x1="1" y1="1" x2="23" y2="23"></line>
+                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-on" style="display: none;">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
                     </span>
                 </div>
-                <button class="modal-btn" onclick="loginUser()" style="margin-bottom: 10px;">Войти</button>
-                <button class="modal-btn" style="background: transparent; color: var(--gold); box-shadow: none; font-size: 14px;" onclick="toggleAuthForms(true)">Нет аккаунта? Зарегистрироваться</button>
-                <button class="modal-btn" style="background: transparent; color: #888; box-shadow: none; font-size: 12px;" onclick="document.getElementById('auth-modal').classList.remove('active')">Отмена</button>
+
+                <button class="modal-btn" onclick="loginUser()" data-i18n="auth.loginBtn">Войти</button>
+                <button class="modal-btn modal-btn--ghost" onclick="toggleAuthForms(true)" data-i18n="auth.noAccount">Нет аккаунта? Зарегистрироваться</button>
+                <button class="modal-btn modal-btn--muted" onclick="document.getElementById('auth-modal').classList.remove('active')" data-i18n="common.cancel">Отмена</button>
             </div>
+
+            <!-- ФОРМА РЕГИСТРАЦИИ -->
             <div id="register-form" style="display: none;">
-                <h3 style="color: var(--gold); margin-bottom: 5px;">Регистрация</h3>
-                <p style="font-size: 13px; color: #ccc; margin-bottom: 20px;">Создайте аккаунт для сохранения данных</p>
-                <input type="email" id="reg-email" placeholder="Почта (Email)" style="width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--gold); background: rgba(255,255,255,0.1); color: white; font-family: inherit;">
-                <div style="position: relative; margin-bottom: 20px;">
-                    <input type="password" id="reg-pass" placeholder="Пароль (мин. 6 символов)" style="width: 100%; padding: 12px; padding-right: 40px; border-radius: 8px; border: 1px solid var(--gold); background: rgba(255,255,255,0.1); color: white; font-family: inherit;">
-                    <span onclick="togglePassword('reg-pass', this)" style="position: absolute; right: 12px; top: 12px; cursor: pointer; color: #888;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-off"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-on" style="display: none;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                <h3 data-i18n="auth.registerTitle">Регистрация</h3>
+                <p data-i18n="auth.registerDesc">Создайте аккаунт для сохранения данных</p>
+
+                <input class="form-input" type="email" id="reg-email" placeholder="Почта (Email)" data-i18n-placeholder="auth.email">
+
+                <div class="password-wrap">
+                    <input class="form-input" type="password" id="reg-pass" placeholder="Пароль (мин. 6 символов)" data-i18n-placeholder="auth.passwordMin">
+                    <span class="password-toggle" onclick="togglePassword('reg-pass', this)" role="button" tabindex="0" aria-label="Показать пароль" data-i18n-aria-label="auth.showPassword">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-off">
+                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                            <line x1="1" y1="1" x2="23" y2="23"></line>
+                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-on" style="display: none;">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
                     </span>
                 </div>
-                <button class="modal-btn" onclick="registerUser()" style="margin-bottom: 10px;">Зарегистрироваться</button>
-                <button class="modal-btn" style="background: transparent; color: var(--gold); box-shadow: none; font-size: 14px;" onclick="toggleAuthForms(false)">Есть аккаунт? Войти</button>
+
+                <button class="modal-btn" onclick="registerUser()" data-i18n="auth.registerBtn">Зарегистрироваться</button>
+                <button class="modal-btn modal-btn--ghost" onclick="toggleAuthForms(false)" data-i18n="auth.haveAccount">Есть аккаунт? Войти</button>
             </div>
         </div>
     </div>
@@ -305,18 +344,17 @@
 
     <nav class="bottom-nav">
         <a href="index.html" class="nav-item">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Главная</span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span data-i18n="nav.home">Главная</span>
         </a>
         <a href="catalog.html" class="nav-item active">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Знания</span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span data-i18n="nav.knowledge">Знания</span>
         </a>
-        <a href="dua.html" class="nav-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg><span>Дуа</span></a>
-        <a href="profile.html" class="nav-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Профиль</span></a>
+        <a href="dua.html" class="nav-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg><span data-i18n="nav.dua">Дуа</span></a>
+        <a href="profile.html" class="nav-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span data-i18n="nav.profile">Профиль</span></a>
     </nav>
 
-      <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <!-- firebase-firestore.js подгружается из app.js лениво (только если пользователь вошёл) -->
+    <script defer src="js/translations.js"></script>
+    <!-- Firebase SDK загружается в фоне из app.js и не блокирует отрисовку страницы -->
     <script defer src="js/data.js"></script>
     <script defer src="js/app.js"></script>
 </body>
