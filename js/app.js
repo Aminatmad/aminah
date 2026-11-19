@@ -1385,13 +1385,15 @@ function openAccountSettings() {
         document.getElementById('set-user-name-display').innerText = currentUser.displayName || T('settings.account.notSet');
 
         // Свежие данные подтянутся в фоне, если соединение есть.
-        currentUser.reload().then(() => {
-            const freshUser = firebase.auth().currentUser;
-            if (freshUser) {
-                document.getElementById('set-user-email').innerText = freshUser.email;
-                document.getElementById('set-user-name-display').innerText = freshUser.displayName || T('settings.account.notSet');
-            }
-        }).catch(() => { /* уже показали кэшированные значения */ });
+        if (typeof currentUser.reload === 'function') {
+            currentUser.reload().then(() => {
+                const freshUser = firebase.auth().currentUser;
+                if (freshUser) {
+                    document.getElementById('set-user-email').innerText = freshUser.email;
+                    document.getElementById('set-user-name-display').innerText = freshUser.displayName || T('settings.account.notSet');
+                }
+            }).catch(() => { /* уже показали кэшированные значения */ });
+        }
     } else {
         loginView.style.display = 'block';
         accountView.style.display = 'none';
@@ -1413,13 +1415,23 @@ function loginFromSettings() {
         .catch(() => showToast(T('auth.wrongCredentials'), 'error')));
 }
 
+// Единая функция выхода. Используется модалкой AccountModal
+// (кнопка «Выйти из аккаунта») на страницах профиля и настроек.
+function logout() {
+    if (!confirm(T('auth.logoutConfirm'))) return;
+    withFirebase(() => auth.signOut().then(() => {
+        if (window.AccountModal) window.AccountModal.close();
+        else {
+            const modal = document.getElementById('account-settings-modal');
+            if (modal) modal.classList.remove('active');
+        }
+        refreshUiAfterSync();
+    }));
+}
+
+// Старое имя сохраняем как алиас — на него могли ссылаться другие места.
 function logoutFromSettings() {
-    if (confirm(T('auth.logoutConfirm'))) {
-        withFirebase(() => auth.signOut().then(() => {
-            document.getElementById('account-settings-modal').classList.remove('active');
-            refreshUiAfterSync();
-        }));
-    }
+    return logout();
 }
 
 function saveNewName() {

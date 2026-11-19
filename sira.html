@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+    <script>
+        (function () {
+            try {
+                var theme = localStorage.getItem('amanah_theme');
+                if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+                var lang = localStorage.getItem('amanah_lang');
+                if (lang) {
+                    document.documentElement.lang = lang;
+                    document.documentElement.setAttribute('data-lang', lang);
+                    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+                }
+            } catch (e) { /* ignore */ }
+        })();
+    </script>
+
+    <title data-i18n="page.siraTitle">AMANAH — Сира</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://identitytoolkit.googleapis.com">
+    <link rel="dns-prefetch" href="https://securetoken.googleapis.com">
+    <link rel="dns-prefetch" href="https://firestore.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet"></noscript>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/sira.css">
+
+    <!-- PWA / установка на домашний экран -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#f5f3ec">
+
+    <!-- Иконки для разных устройств -->
+    <link rel="icon" type="image/jpg" href="images/ico-192.jpg">
+    <link rel="apple-touch-icon" href="images/ico-192.jpg">
+
+    <!-- Для iOS (чтобы открывалось как приложение) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="AMANAH">
+</head>
+<body>
+    <div class="container">
+        <!-- ШАПКА -->
+        <header class="header" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; margin-bottom: 20px;">
+            <div class="header-qibla" onclick="openQiblaModal()" style="flex: 1; display: flex; flex-direction: column; align-items: center; cursor: pointer;">
+                <div class="compass-icon-mini">
+                    <svg viewBox="0 0 40 40" fill="none">
+                        <circle cx="20" cy="20" r="18" stroke="var(--gold)" stroke-width="2"/>
+                        <path d="M20 6 L25 20 L20 17 L15 20 Z" fill="var(--gold)"/>
+                        <circle cx="20" cy="20" r="3" fill="var(--primary)"/>
+                    </svg>
+                </div>
+                <span style="font-size: 10px; color: var(--gold); font-weight: bold; margin-top: 4px;" data-i18n="header.qibla">КИБЛА</span>
+            </div>
+
+            <div class="header-center" onclick="window.location.href='index.html'" style="flex: 2; display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer;">
+                <div class="logo-img" style="margin-bottom: 5px; width: 50px; height: 50px; background-image: url('images/ico-180.png');"></div>
+                <span class="logo-text" style="font-size: 20px; line-height: 1;">AMANAH</span>
+                <span class="logo-subtext" style="font-size: 8px; margin-top: 2px;" data-i18n="app.tagline">ТВОЯ РЕЛИГИЯ — ТВОЙ АМАНАТ</span>
+            </div>
+
+            <div class="header-prayer" onclick="openPrayerModal()" style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer;">
+                <span id="next-prayer-name" style="font-size: 11px; color: var(--gold); font-weight: bold; text-transform: uppercase;" data-i18n="header.prayer">Намаз</span>
+                <span id="next-prayer-time" style="font-size: 20px; color: var(--text-light); font-weight: bold;">--:--</span>
+            </div>
+        </header>
+
+
+        <!-- ===================== СИРА · ИНТЕРАКТИВНАЯ КАРТА ===================== -->
+        <section id="sira-page" class="page-section active">
+            <div class="back-btn" onclick="window.location.href='index.html'">
+                <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> <span data-i18n="common.home">На главную</span>
+            </div>
+
+            <div class="sira-head">
+                <div>
+                    <h2 class="section-title" data-i18n="sira.title">Карта Сиры</h2>
+                    <p class="section-subtitle" data-i18n="sira.subtitle">Интерактивный маршрут жизни Пророка ﷺ: 25 остановок от Мекки до Медины.</p>
+                </div>
+                <div class="sira-progress-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                    <span id="sira-progress-value">Изучено: 0 из 25</span>
+                </div>
+            </div>
+
+            <div class="sira-map-card" id="sira-map-card">
+                <div class="sira-map-scroll" id="sira-map-scroll">
+                    <div class="sira-map-stage" id="sira-map-stage">
+                        <svg class="sira-map-svg" id="sira-map-svg" viewBox="0 0 1000 640"
+                             preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="sira-map-title">
+                            <title id="sira-map-title" data-i18n="sira.map.aria">Интерактивная карта маршрута Сиры</title>
+                            <defs>
+                                <radialGradient id="sira-vignette" cx="50%" cy="45%" r="76%">
+                                    <stop offset="55%" stop-color="#3a2410" stop-opacity="0"/>
+                                    <stop offset="100%" stop-color="#3a2410" stop-opacity="0.30"/>
+                                </radialGradient>
+                            </defs>
+
+                            <!-- Пергамент -->
+                            <rect x="0" y="0" width="1000" height="640" style="fill: var(--parch-1)"/>
+                            <path d="M0 118 C 140 78, 225 168, 352 138 S 560 58, 702 118 S 900 188, 1000 138 L1000 0 L0 0 Z" style="fill: var(--parch-3); opacity:.42"/>
+                            <path d="M0 556 C 160 516, 262 600, 422 558 S 700 498, 862 558 S 982 600, 1000 578 L1000 640 L0 640 Z" style="fill: var(--parch-3); opacity:.48"/>
+                            <ellipse cx="300" cy="330" rx="205" ry="128" style="fill: var(--parch-2); opacity:.55"/>
+                            <ellipse cx="762" cy="382" rx="180" ry="136" style="fill: var(--parch-2); opacity:.42"/>
+
+                            <!-- Картографическая сетка -->
+                            <g class="sira-grid">
+                                <path d="M0 130 H1000 M0 260 H1000 M0 390 H1000 M0 520 H1000"/>
+                                <path d="M160 0 V640 M320 0 V640 M480 0 V640 M640 0 V640 M800 0 V640"/>
+                            </g>
+
+                            <!-- Береговые линии и караванные тропы -->
+                            <path class="sira-coast" d="M0 96 C 120 130, 175 78, 268 104 S 430 176, 520 132 S 690 62, 790 104 S 940 158, 1000 126"/>
+                            <path class="sira-coast" d="M0 596 C 150 566, 240 622, 380 588 S 620 530, 760 584 S 930 620, 1000 592"/>
+                            <path class="sira-trail" d="M 60 300 C 220 250, 300 330, 470 280 S 720 210, 900 300"/>
+                            <path class="sira-trail" d="M 200 600 C 300 470, 420 480, 520 600"/>
+                            <path class="sira-trail" d="M 620 60 C 680 180, 760 180, 820 60"/>
+
+                            <!-- Роза ветров -->
+                            <g transform="translate(905 92)" opacity="0.72">
+                                <circle r="34" fill="none" style="stroke: var(--ink-soft)" stroke-width="1.2"/>
+                                <circle r="24" fill="none" style="stroke: var(--ink-soft)" stroke-width="0.8"/>
+                                <path d="M0 -30 L7 -7 L30 0 L7 7 L0 30 L-7 7 L-30 0 L-7 -7 Z" style="fill: var(--ink-soft); opacity:.65"/>
+                                <path d="M0 -30 L0 30 M-30 0 L30 0" style="stroke: var(--parch-1)" stroke-width="1.2"/>
+                                <text x="0" y="-39" text-anchor="middle" style="fill: var(--ink)" font-size="11" font-weight="700">N</text>
+                            </g>
+
+                            <!-- Картуш -->
+                            <g transform="translate(28 26)" opacity="0.85">
+                                <rect class="sira-label-bg" width="196" height="38" rx="8"/>
+                                <text x="14" y="25" class="sira-city-sub" style="fill: var(--ink)">AMANAH · SEERAH · 25 STOPS</text>
+                            </g>
+
+                            <!-- Маршрут -->
+                            <path class="sira-route-shadow" d="M 90 545 C 150 505, 185 420, 255 445 C 325 470, 330 565, 410 540 C 490 515, 470 395, 550 378 C 625 362, 655 470, 725 448 C 795 426, 765 295, 838 275 C 895 259, 905 195, 952 178"/>
+                            <path id="sira-route-progress" class="sira-route" d="M 90 545 C 150 505, 185 420, 255 445 C 325 470, 330 565, 410 540 C 490 515, 470 395, 550 378 C 625 362, 655 470, 725 448 C 795 426, 765 295, 838 275 C 895 259, 905 195, 952 178" style="stroke: var(--marker-done); stroke-width:5; opacity:.85"/>
+                            <path id="sira-route-path" class="sira-route" d="M 90 545 C 150 505, 185 420, 255 445 C 325 470, 330 565, 410 540 C 490 515, 470 395, 550 378 C 625 362, 655 470, 725 448 C 795 426, 765 295, 838 275 C 895 259, 905 195, 952 178"/>
+                            <path class="sira-route-flow" d="M 90 545 C 150 505, 185 420, 255 445 C 325 470, 330 565, 410 540 C 490 515, 470 395, 550 378 C 625 362, 655 470, 725 448 C 795 426, 765 295, 838 275 C 895 259, 905 195, 952 178"/>
+
+                            <!-- Города -->
+                            <g transform="translate(34 574)">
+                                <rect class="sira-label-bg" width="118" height="34" rx="8"/>
+                                <text x="59" y="23" text-anchor="middle" class="sira-city-label" data-i18n="sira.city.mecca">Мекка</text>
+                            </g>
+                            <g transform="translate(826 112)">
+                                <rect class="sira-label-bg" width="132" height="34" rx="8"/>
+                                <text x="66" y="23" text-anchor="middle" class="sira-city-label" data-i18n="sira.city.medina">Медина</text>
+                            </g>
+
+                            <!-- 25 точек (строятся в js/sira.js по длине пути) -->
+                            <g id="sira-markers"></g>
+
+                            <rect x="0" y="0" width="1000" height="640" fill="url(#sira-vignette)" pointer-events="none"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <p class="sira-map-hint" data-i18n="sira.scrollHint">Прокрутите карту, чтобы увидеть весь маршрут →</p>
+
+            <div class="sira-legend">
+                <div class="sira-legend-item"><span class="sira-legend-dot sira-legend-dot--free"></span><span data-i18n="sira.legend.free">Бесплатно</span></div>
+                <div class="sira-legend-item"><span class="sira-legend-dot sira-legend-dot--locked"></span><span data-i18n="sira.legend.locked">Премиум</span></div>
+                <div class="sira-legend-item"><span class="sira-legend-dot sira-legend-dot--done"></span><span data-i18n="sira.legend.done">Изучено</span></div>
+            </div>
+        </section>
+
+        <!-- ===================== МОДАЛКА УРОКА ===================== -->
+        <div class="modal-overlay sira-overlay" id="sira-lesson-modal">
+            <div class="sira-card" role="dialog" aria-modal="true">
+                <div class="sira-card__top">
+                    <button class="sira-card__close" type="button" aria-label="Закрыть">×</button>
+                    <span class="sira-card__kicker"><span data-i18n="sira.event">Событие</span> №<span id="sira-lesson-num">1</span></span>
+                    <h3 class="sira-card__title" id="sira-lesson-title">Событие №1</h3>
+                </div>
+                <div class="sira-card__body">
+                    <div class="sira-tabs">
+                        <button class="sira-tab" data-mode="watch" type="button" data-i18n="sira.watch">Смотреть</button>
+                        <button class="sira-tab is-active" data-mode="read" type="button" data-i18n="sira.read">Читать</button>
+                    </div>
+
+                    <div class="sira-panel" id="sira-panel-watch" hidden>
+                        <div class="sira-video">
+                            <button class="sira-play" id="sira-play-btn" type="button" aria-label="Play">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            </button>
+                            <span class="sira-video__note" data-i18n="sira.videoStub">Видео появится позже</span>
+                        </div>
+                    </div>
+
+                    <div class="sira-panel" id="sira-panel-read">
+                        <p class="sira-read-text" id="sira-read-text">Здесь будет история события №1.</p>
+                    </div>
+
+                    <button class="sira-studied" id="sira-studied-btn" type="button" data-i18n="sira.studied">Я изучил это</button>
+                    <p class="sira-studied-note" id="sira-studied-note"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================== МОДАЛКА ДОСТУПА ===================== -->
+        <div class="modal-overlay sira-overlay" id="sira-access-modal">
+            <div class="sira-card sira-access-card" role="dialog" aria-modal="true">
+                <div class="sira-card__top">
+                    <button class="sira-card__close" type="button" aria-label="Закрыть">×</button>
+                    <div class="sira-premium-emblem" id="sira-access-emblem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/></svg></div>
+                    <span class="sira-premium-badge" id="sira-access-badge" data-i18n="sira.premium.badge">PREMIUM</span>
+                    <h3 class="sira-card__title" id="sira-access-title">Откройте всю Сиру</h3>
+                </div>
+                <div class="sira-card__body">
+                    <div id="sira-access-premium">
+                        <p class="sira-premium-desc" data-i18n="sira.premium.desc">Первая остановка доступна бесплатно. Остальные 24 события ждут вас в Премиум-подписке.</p>
+                        <ul class="sira-benefits">
+                            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span data-i18n="sira.premium.b1">Все 25 точек маршрута</span></li>
+                            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span data-i18n="sira.premium.b2">Видео и тексты каждого события</span></li>
+                            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span data-i18n="sira.premium.b3">Сохранение прогресса и синхронизация</span></li>
+                        </ul>
+                        <button class="sira-access-cta" id="sira-premium-cta" type="button" data-i18n="sira.premium.cta">Активировать демо-Премиум</button>
+                    </div>
+                    <div id="sira-access-guest" hidden>
+                        <p class="sira-premium-desc" data-i18n="sira.login.desc">Чтобы открыть закрытые точки и сохранять прогресс, войдите в аккаунт.</p>
+                        <button class="sira-access-cta" id="sira-login-cta" type="button" data-i18n="sira.login.cta">Войти в профиль</button>
+                    </div>
+                    <button class="sira-access-later" type="button" data-i18n="sira.premium.later">Позже</button>
+                </div>
+            </div>
+        </div>
+
+    <!-- Модалка PRO -->
+    <div class="modal-overlay" id="pro-modal">
+        <div class="modal-content">
+            <h3 data-i18n="pro.title">PRO Подписка</h3>
+            <p data-i18n="pro.desc">Этот урок доступен только с PRO-подпиской. Откройте все уроки всех книг.</p>
+            <button class="modal-btn" onclick="activatePro()" data-i18n="pro.activate">Активировать демо-PRO</button>
+            <button class="modal-btn modal-btn--muted" onclick="closeProModal()" data-i18n="common.close">Закрыть</button>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА КОМПАСА -->
+    <div class="modal-overlay" id="qibla-modal">
+        <div class="modal-content modal-content--compass">
+            <h3 data-i18n="qibla.title">Направление Киблы</h3>
+            <p id="qibla-direction-text" data-i18n="qibla.hint">Поверните телефон...</p>
+
+            <div class="compass-container">
+                <div class="compass-target"></div>
+                <div class="compass-dial" id="compass-dial">
+                    <svg viewBox="0 0 200 200" style="width: 100%; height: 100%; filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.12));">
+                        <circle cx="100" cy="100" r="95" fill="var(--surface)" stroke="var(--gold)" stroke-width="2"/>
+                        <circle cx="100" cy="100" r="75" fill="var(--surface-2)" stroke="var(--gold)" stroke-width="2"/>
+                        <text x="100" y="40" fill="var(--primary)" font-size="18" font-weight="bold" text-anchor="middle" data-i18n="compass.n">С</text>
+                        <text x="155" y="106" fill="var(--primary)" font-size="18" font-weight="bold" text-anchor="middle" data-i18n="compass.e">В</text>
+                        <text x="100" y="172" fill="var(--primary)" font-size="18" font-weight="bold" text-anchor="middle" data-i18n="compass.s">Ю</text>
+                        <text x="45" y="106" fill="var(--primary)" font-size="18" font-weight="bold" text-anchor="middle" data-i18n="compass.w">З</text>
+                        <text x="100" y="18" fill="var(--muted)" font-size="8" text-anchor="middle">0°</text>
+                        <text x="185" y="105" fill="var(--muted)" font-size="8" text-anchor="middle">90°</text>
+                        <text x="100" y="188" fill="var(--muted)" font-size="8" text-anchor="middle">180°</text>
+                        <text x="15" y="105" fill="var(--muted)" font-size="8" text-anchor="middle">270°</text>
+                        <circle cx="100" cy="100" r="18" fill="var(--surface)" stroke="var(--gold)" stroke-width="2"/>
+                        <rect x="90" y="90" width="20" height="20" rx="2" fill="var(--primary-strong)"/>
+                        <rect x="90" y="97" width="20" height="4" fill="var(--gold)"/>
+                        <path d="M95 80 L100 65 L105 80 Z" fill="var(--gold)"/>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="qibla-angle-line">
+                <span data-i18n="qibla.angle">Угол Киблы</span>: <strong id="qibla-angle-text">--</strong>°
+            </div>
+            <div id="gps-debug-text" class="qibla-gps"></div>
+            <button class="modal-btn" style="margin-top: 15px;" onclick="closeQiblaModal()" data-i18n="common.close">Закрыть</button>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА ВСЕХ НАМАЗОВ -->
+    <div class="modal-overlay" id="prayer-modal">
+        <div class="modal-content modal-content--prayer">
+            <div class="prayer-modal-head">
+                <button class="modal-arrow" onclick="changePrayerDate(-1)" aria-label="Предыдущий день" data-i18n-aria-label="common.prevDay">←</button>
+                <h3 class="prayer-date-title" onclick="openCalendar()">
+                    <span id="prayer-date-title" data-i18n="prayer.today">Намазы сегодня</span>
+                    <span class="prayer-calendar-icon">📅</span>
+                </h3>
+                <button class="modal-arrow" onclick="changePrayerDate(1)" aria-label="Следующий день" data-i18n-aria-label="common.nextDay">→</button>
+            </div>
+            <input type="date" id="prayer-date-picker" style="display: none;" onchange="setPrayerDateFromPicker(this.value)">
+            <div id="prayer-list-container" class="prayer-list"></div>
+            <button class="modal-btn" onclick="document.getElementById('prayer-modal').classList.remove('active')" data-i18n="common.close">Закрыть</button>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА АВТОРИЗАЦИИ -->
+    <div class="modal-overlay" id="auth-modal">
+        <div class="modal-content modal-content--auth">
+
+            <!-- ФОРМА ВХОДА -->
+            <div id="login-form">
+                <h3 data-i18n="auth.loginTitle">Вход в профиль</h3>
+                <p data-i18n="auth.loginDesc">Войдите, чтобы синхронизировать прогресс</p>
+
+                <input class="form-input" type="email" id="login-email" placeholder="Почта (Email)" data-i18n-placeholder="auth.email">
+
+                <div class="password-wrap">
+                    <input class="form-input" type="password" id="login-pass" placeholder="Пароль" data-i18n-placeholder="auth.password">
+                    <span class="password-toggle" onclick="togglePassword('login-pass', this)" role="button" tabindex="0" aria-label="Показать пароль" data-i18n-aria-label="auth.showPassword">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-off">
+                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                            <line x1="1" y1="1" x2="23" y2="23"></line>
+                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-on" style="display: none;">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </span>
+                </div>
+
+                <button class="modal-btn" onclick="loginUser()" data-i18n="auth.loginBtn">Войти</button>
+                <button class="modal-btn modal-btn--ghost" onclick="toggleAuthForms(true)" data-i18n="auth.noAccount">Нет аккаунта? Зарегистрироваться</button>
+                <button class="modal-btn modal-btn--muted" onclick="document.getElementById('auth-modal').classList.remove('active')" data-i18n="common.cancel">Отмена</button>
+            </div>
+
+            <!-- ФОРМА РЕГИСТРАЦИИ -->
+            <div id="register-form" style="display: none;">
+                <h3 data-i18n="auth.registerTitle">Регистрация</h3>
+                <p data-i18n="auth.registerDesc">Создайте аккаунт для сохранения данных</p>
+
+                <input class="form-input" type="email" id="reg-email" placeholder="Почта (Email)" data-i18n-placeholder="auth.email">
+
+                <div class="password-wrap">
+                    <input class="form-input" type="password" id="reg-pass" placeholder="Пароль (мин. 6 символов)" data-i18n-placeholder="auth.passwordMin">
+                    <span class="password-toggle" onclick="togglePassword('reg-pass', this)" role="button" tabindex="0" aria-label="Показать пароль" data-i18n-aria-label="auth.showPassword">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-off">
+                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                            <line x1="1" y1="1" x2="23" y2="23"></line>
+                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-on" style="display: none;">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </span>
+                </div>
+
+                <button class="modal-btn" onclick="registerUser()" data-i18n="auth.registerBtn">Зарегистрироваться</button>
+                <button class="modal-btn modal-btn--ghost" onclick="toggleAuthForms(false)" data-i18n="auth.haveAccount">Есть аккаунт? Войти</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="mosque-footer"></div>
+
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span data-i18n="nav.home">Главная</span>
+        </a>
+        <a href="catalog.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span data-i18n="nav.knowledge">Знания</span>
+        </a>
+        <a href="sira.html" class="nav-item active"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg><span data-i18n="nav.sira">Сира</span></a>
+        <a href="dua.html" class="nav-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg><span data-i18n="nav.dua">Дуа</span></a>
+        <a href="profile.html" class="nav-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span data-i18n="nav.profile">Профиль</span></a>
+    </nav>
+
+    <script defer src="js/translations.js"></script>
+    <!-- Firebase SDK загружается в фоне из app.js и не блокирует отрисовку страницы -->
+    <script defer src="js/data.js"></script>
+    <script defer src="js/app.js"></script>
+    <script defer src="js/sira.js"></script>
+</body>
+</html>

@@ -1,0 +1,632 @@
+/* ============================================================
+   СИРА · интерактивная карта
+   Старинная карта: песочные / коричнево-золотые тона.
+   Полная поддержка светлой и тёмной темы приложения.
+   ============================================================ */
+
+/* Палитра объявлена на всём разделе: карта, легенда и подписи
+   наследуют одни и те же цвета (в том числе в тёмной теме). */
+#sira-page {
+    --parch-1: #f2e3c0;
+    --parch-2: #e6d09f;
+    --parch-3: #d8bb84;
+    --parch-edge: #b9975c;
+    --ink: #6b4a24;
+    --ink-soft: #8a6a3c;
+    --route: #a3352b;
+    --route-soft: rgba(163, 53, 43, 0.28);
+    --marker-free: #d9a72c;
+    --marker-done: #2f7d4f;
+    --marker-locked: #e8d6ac;
+    --marker-unlocked: #f7ecd0;
+    --marker-stroke: #8a6431;
+    --label-bg: rgba(247, 236, 208, 0.9);
+}
+
+html[data-theme="dark"] #sira-page {
+    --parch-1: #3b3325;
+    --parch-2: #302a20;
+    --parch-3: #241f18;
+    --parch-edge: #6b5734;
+    --ink: #e7d3a8;
+    --ink-soft: #c2aa7f;
+    --route: #d9b45a;
+    --route-soft: rgba(217, 180, 90, 0.24);
+    --marker-free: #d9b45a;
+    --marker-done: #6fd394;
+    --marker-locked: #3f382a;
+    --marker-unlocked: #4a4130;
+    --marker-stroke: #b9975c;
+    --label-bg: rgba(40, 34, 25, 0.88);
+}
+
+.sira-map-card {
+    position: relative;
+    border-radius: 22px;
+    padding: 10px;
+    background: linear-gradient(145deg, var(--parch-3), var(--parch-2) 55%, var(--parch-3));
+    border: 1px solid var(--parch-edge);
+    box-shadow: var(--shadow-md), inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+    overflow: hidden;
+}
+
+/* Внутренняя рамка «гравюры» */
+.sira-map-card::before {
+    content: '';
+    position: absolute;
+    inset: 5px;
+    border: 1px solid rgba(122, 92, 45, 0.45);
+    border-radius: 16px;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.sira-map-scroll {
+    position: relative;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 14px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--parch-edge) transparent;
+}
+
+.sira-map-scroll::-webkit-scrollbar { height: 7px; }
+.sira-map-scroll::-webkit-scrollbar-thumb {
+    background: var(--parch-edge);
+    border-radius: 999px;
+}
+
+.sira-map-stage {
+    position: relative;
+    min-width: 760px; /* на телефоне точки остаются разнесёнными, карта прокручивается */
+    transition: filter 0.35s ease, transform 0.35s ease;
+    transform-origin: center center;
+}
+
+/* Эффект зума и размытия карты под модалкой */
+.sira-map-stage.is-blurred {
+    filter: blur(6px) saturate(0.85) brightness(0.9);
+    transform: scale(1.035);
+}
+
+.sira-map-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    direction: ltr; /* карта — графика, не зеркалим в RTL */
+}
+
+/* ===== ЛИНИЯ МАРШРУТА ===== */
+.sira-route-shadow {
+    fill: none;
+    stroke: var(--route-soft);
+    stroke-width: 14;
+    stroke-linecap: round;
+    filter: blur(5px);
+}
+
+.sira-route {
+    fill: none;
+    stroke: var(--route);
+    stroke-width: 3.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.sira-route-flow {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.55);
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    stroke-dasharray: 2 16;
+    animation: sira-flow 14s linear infinite;
+}
+
+html[data-theme="dark"] .sira-route-flow { stroke: rgba(255, 240, 200, 0.55); }
+
+@keyframes sira-flow { to { stroke-dashoffset: -180; } }
+
+/* Второстепенные караванные тропы */
+.sira-trail {
+    fill: none;
+    stroke: var(--ink-soft);
+    stroke-width: 1.2;
+    stroke-dasharray: 5 7;
+    opacity: 0.35;
+}
+
+.sira-coast { fill: none; stroke: var(--ink-soft); stroke-width: 1.3; opacity: 0.28; }
+.sira-grid { stroke: var(--ink-soft); stroke-width: 0.6; opacity: 0.14; }
+
+.sira-city-label {
+    fill: var(--ink);
+    font-family: 'Cairo', 'Montserrat', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.sira-city-sub {
+    fill: var(--ink-soft);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 9px;
+    letter-spacing: 3px;
+    opacity: 0.8;
+}
+
+.sira-label-bg { fill: var(--label-bg); stroke: var(--parch-edge); stroke-width: 0.8; }
+
+/* ===== МАРКЕРЫ ===== */
+.sira-marker {
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    transform-box: fill-box;
+    transform-origin: center;
+    outline: none;
+}
+
+.sira-marker:hover { transform: scale(1.22); }
+.sira-marker:focus-visible { transform: scale(1.22); }
+.sira-marker:focus-visible .sira-marker__halo { stroke: var(--route); stroke-width: 3; }
+
+.sira-marker__halo {
+    fill: none;
+    stroke: var(--route-soft);
+    stroke-width: 2;
+    opacity: 0.7;
+}
+
+.sira-marker__circle {
+    stroke: var(--marker-stroke);
+    stroke-width: 2;
+    transition: fill 0.25s ease, stroke 0.25s ease;
+}
+
+.sira-marker__num {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    text-anchor: middle;
+    dominant-baseline: central;
+    fill: #3a2b12;
+    pointer-events: none;
+}
+
+.sira-marker__check {
+    fill: none;
+    stroke: #fff;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+}
+
+.sira-marker__lock {
+    fill: none;
+    stroke: var(--ink-soft);
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+}
+
+.sira-marker.is-free .sira-marker__circle { fill: var(--marker-free); stroke: #8a5a1f; }
+.sira-marker.is-free .sira-marker__num { fill: #3a2b12; }
+.sira-marker.is-free .sira-marker__halo {
+    animation: sira-pulse 2.6s ease-out infinite;
+    stroke: var(--marker-free);
+}
+
+@keyframes sira-pulse {
+    0%   { opacity: 0.75; transform: scale(0.9); }
+    70%  { opacity: 0;    transform: scale(1.5); }
+    100% { opacity: 0;    transform: scale(1.5); }
+}
+
+.sira-marker.is-locked .sira-marker__circle { fill: var(--marker-locked); }
+.sira-marker.is-locked .sira-marker__num { display: none; }
+.sira-marker.is-locked { opacity: 0.9; }
+
+.sira-marker.is-unlocked .sira-marker__circle { fill: var(--marker-unlocked); stroke: var(--marker-free); }
+.sira-marker.is-unlocked .sira-marker__num { fill: #3a2b12; }
+
+.sira-marker.is-done .sira-marker__circle { fill: var(--marker-done); stroke: var(--marker-done); }
+.sira-marker.is-done .sira-marker__num { display: none; }
+.sira-marker.is-done .sira-marker__halo { stroke: var(--marker-done); opacity: 0.45; }
+
+html[data-theme="dark"] .sira-marker.is-free .sira-marker__num,
+html[data-theme="dark"] .sira-marker.is-unlocked .sira-marker__num { fill: #2a2114; }
+html[data-theme="dark"] .sira-marker.is-done .sira-marker__check { stroke: #10261a; }
+
+/* ===== ШАПКА РАЗДЕЛА / ЛЕГЕНДА ===== */
+.sira-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+
+.sira-head .section-subtitle { margin-bottom: 0; }
+
+.sira-progress-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 15px;
+    border-radius: 999px;
+    background: var(--primary-soft);
+    border: 1px solid var(--border);
+    color: var(--primary);
+    font-size: 12.5px;
+    font-weight: 700;
+    white-space: normal;
+    line-height: 1.3;
+}
+
+.sira-progress-badge svg { width: 15px; height: 15px; flex: 0 0 auto; }
+
+.sira-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 20px;
+    margin-top: 16px;
+}
+
+.sira-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: var(--muted);
+    font-weight: 600;
+}
+
+.sira-legend-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid var(--marker-stroke);
+    flex: 0 0 auto;
+}
+
+.sira-legend-dot--free { background: var(--marker-free); }
+.sira-legend-dot--locked { background: var(--marker-locked); }
+.sira-legend-dot--done { background: var(--marker-done); border-color: var(--marker-done); }
+
+.sira-map-hint {
+    display: none;
+    margin-top: 10px;
+    /* Текст не заходит под плавающую кнопку языка */
+    padding-inline: 58px;
+    font-size: 11.5px;
+    color: var(--muted);
+    text-align: center;
+    font-weight: 600;
+    overflow-wrap: break-word;
+}
+
+/* ===== МОДАЛКИ СИРЫ ===== */
+.sira-overlay { z-index: 1100; }
+
+.sira-card {
+    position: relative;
+    width: 100%;
+    max-width: 460px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 0;
+    border-radius: 22px;
+    background: var(--surface);
+    border: 1px solid var(--border) !important;
+    box-shadow: var(--shadow-lg);
+    text-align: start;
+    animation: sira-pop 0.28s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+@keyframes sira-pop {
+    from { opacity: 0; transform: translateY(18px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.sira-card__top {
+    position: relative;
+    padding: 22px 24px 18px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-strong) 100%);
+    color: #fff;
+    border-radius: 21px 21px 0 0;
+}
+
+html[data-theme="dark"] .sira-card__top { color: #eaf5e8; }
+
+.sira-card__kicker {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold-light, #e8c877);
+    margin-bottom: 6px;
+}
+
+.sira-card__title { margin: 0; font-size: 21px; font-weight: 700; line-height: 1.3; }
+
+.sira-card__close {
+    position: absolute;
+    top: 14px;
+    inset-inline-end: 14px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    font-size: 19px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.sira-card__close:hover { background: rgba(255, 255, 255, 0.25); transform: rotate(90deg); }
+
+.sira-card__body { padding: 20px 24px 24px; }
+
+/* Переключатель Смотреть | Читать */
+.sira-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 18px;
+}
+
+.sira-tab {
+    flex: 1;
+    padding: 10px 8px;
+    border: none;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sira-tab.is-active {
+    background: var(--surface);
+    color: var(--primary);
+    box-shadow: var(--shadow-sm);
+}
+
+.sira-panel[hidden] { display: none; }
+
+.sira-read-text {
+    min-height: 132px;
+    padding: 18px;
+    border-radius: 14px;
+    background: var(--surface-2);
+    border: 1px dashed var(--border-strong);
+    color: var(--text-soft);
+    font-size: 14.5px;
+    line-height: 1.75;
+    overflow-wrap: break-word;
+}
+
+.sira-video {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    border-radius: 14px;
+    overflow: hidden;
+    background:
+        radial-gradient(120% 120% at 20% 10%, rgba(217, 180, 90, 0.32), transparent 60%),
+        linear-gradient(145deg, var(--parch-2, #e6d09f), var(--primary-strong));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    border: 1px solid var(--border);
+}
+
+.sira-video::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(45deg, rgba(255,255,255,0.035) 0 2px, transparent 2px 9px);
+    pointer-events: none;
+}
+
+.sira-play {
+    position: relative;
+    z-index: 1;
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.75);
+    background: linear-gradient(145deg, #e8c877, #b58a2b);
+    color: #1b2a1f;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sira-play:hover { transform: scale(1.09); box-shadow: 0 14px 36px rgba(0, 0, 0, 0.34); }
+.sira-play svg { width: 26px; height: 26px; margin-inline-start: 3px; }
+
+.sira-video__note {
+    position: relative;
+    z-index: 1;
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 600;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+    overflow-wrap: break-word;
+    max-width: 90%;
+    text-align: center;
+}
+
+.sira-studied {
+    width: 100%;
+    margin-top: 20px;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--success), var(--primary));
+    color: #fff;
+    font-family: inherit;
+    font-size: 14.5px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: var(--shadow-md);
+    transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.sira-studied:hover { transform: translateY(-2px); filter: brightness(1.06); }
+.sira-studied.is-done { background: var(--surface-3); color: var(--muted); box-shadow: none; }
+
+.sira-studied-note {
+    margin: 10px 0 0;
+    font-size: 11.5px;
+    color: var(--muted);
+    text-align: center;
+    overflow-wrap: break-word;
+}
+
+/* ===== ПРЕМИУМ / ВХОД ===== */
+.sira-access-card { max-width: 420px; }
+
+.sira-access-card .sira-card__top {
+    background: linear-gradient(135deg, #b58a2b 0%, #8a5a1f 55%, #1f5138 100%);
+    text-align: center;
+    padding-top: 26px;
+}
+
+.sira-premium-emblem {
+    width: 62px;
+    height: 62px;
+    margin: 0 auto 12px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.16);
+    border: 2px solid rgba(255, 255, 255, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.sira-premium-emblem svg { width: 32px; height: 32px; }
+
+.sira-premium-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 2.5px;
+    margin-bottom: 10px;
+}
+
+.sira-access-card .sira-card__title { text-align: center; }
+
+.sira-premium-desc {
+    margin: 0 0 18px;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text-soft);
+    text-align: center;
+    overflow-wrap: break-word;
+}
+
+.sira-benefits { list-style: none; margin: 0 0 20px; padding: 0; display: grid; gap: 10px; }
+
+.sira-benefits li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 11px 13px;
+    border-radius: 11px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text);
+    font-weight: 600;
+    line-height: 1.45;
+    overflow-wrap: break-word;
+}
+
+.sira-benefits svg { width: 17px; height: 17px; color: var(--success); flex: 0 0 auto; margin-top: 1px; }
+
+.sira-access-cta {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #e8c877, #b58a2b);
+    color: #1b2a1f;
+    font-family: inherit;
+    font-size: 14.5px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: var(--shadow-md);
+    transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.sira-access-cta:hover { transform: translateY(-2px); filter: brightness(1.05); }
+
+.sira-access-later {
+    width: 100%;
+    margin-top: 10px;
+    padding: 11px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* ===== АДАПТИВ ===== */
+@media (min-width: 900px) {
+    .sira-map-stage { min-width: 0; }
+}
+
+@media (max-width: 768px) {
+    .sira-map-hint { display: block; }
+    .sira-card { max-width: 100%; }
+    .sira-card__body { padding: 16px 18px 20px; }
+    .sira-card__top { padding: 18px 20px 15px; }
+    .sira-head { gap: 10px; }
+    .sira-progress-badge { font-size: 11.5px; padding: 8px 12px; }
+    .sira-legend { gap: 8px 14px; }
+}
+
+/* RTL: подписи и тексты идут от края, карта остаётся немой графикой */
+html[dir="rtl"] .sira-map-svg { direction: ltr; }
+html[dir="rtl"] .sira-card__title,
+html[dir="rtl"] .sira-premium-desc,
+html[dir="rtl"] .sira-benefits li { text-align: right; }
+html[dir="rtl"] .sira-play svg { margin-inline-start: 0; margin-inline-end: 3px; transform: scaleX(-1); }
+
+@media (prefers-reduced-motion: reduce) {
+    .sira-route-flow,
+    .sira-marker.is-free .sira-marker__halo,
+    .sira-card { animation: none; }
+    .sira-map-stage, .sira-marker, .sira-play, .sira-studied, .sira-access-cta { transition: none; }
+}
