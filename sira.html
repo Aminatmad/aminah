@@ -132,10 +132,10 @@
                                 <text x="0" y="-39" text-anchor="middle" style="fill: var(--ink)" font-size="11" font-weight="700">N</text>
                             </g>
 
-                            <!-- Картуш -->
-                            <g transform="translate(28 26)" opacity="0.85">
-                                <rect class="sira-label-bg" width="196" height="38" rx="8"/>
-                                <text x="14" y="25" class="sira-city-sub" style="fill: var(--ink)">AMANAH · SEERAH · 25 STOPS</text>
+                            <!-- Картуш: плашка и подпись вписаны в рамку (textLength гарантирует посадку) -->
+                            <g transform="translate(22 20)" opacity="0.9">
+                                <rect class="sira-label-bg" width="238" height="34" rx="8"/>
+                                <text x="14" y="22" class="sira-city-sub" style="fill: var(--ink)" textLength="210" lengthAdjust="spacingAndGlyphs">AMANAH · SEERAH · 25 STOPS</text>
                             </g>
 
                             <!-- Маршрут -->
@@ -171,31 +171,174 @@
             </div>
         </section>
 
-        <!-- ===================== МОДАЛКА УРОКА ===================== -->
-        <div class="modal-overlay sira-overlay" id="sira-lesson-modal">
-            <div class="sira-card" role="dialog" aria-modal="true">
-                <div class="sira-card__top">
-                    <button class="sira-card__close" type="button" aria-label="Закрыть">×</button>
+        <!-- Урок больше не всплывает поверх экрана: это адаптивный вид (#sira-lesson-view),
+             который JS монтирует в рамку карты или разворачивает на весь экран телефона. -->
+        <!-- ===================== ВИД УРОКА (адаптивный) ===================== -->
+        <!-- JS монтирует этот блок внутрь #sira-map-card на широком экране (в тех же
+             границах, что и карта) и переносит в <body> как полноэкранный вид на телефоне. -->
+        <div class="sira-lesson-view" id="sira-lesson-view" role="region" aria-label="Урок">
+            <div class="sira-lesson__top">
+                <button class="sira-lesson__back" id="sira-lesson-back" type="button" aria-label="Назад" data-i18n-aria-label="sira.back">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                    <span data-i18n="sira.back">Назад</span>
+                </button>
+                <div class="sira-lesson__heading">
                     <span class="sira-card__kicker"><span data-i18n="sira.event">Событие</span> №<span id="sira-lesson-num">1</span></span>
                     <h3 class="sira-card__title" id="sira-lesson-title">Событие №1</h3>
                 </div>
-                <div class="sira-card__body">
+            </div>
+            <div class="sira-lesson__scroll" id="sira-lesson-scroll">
+                <div class="sira-lesson__content">
                     <div class="sira-tabs">
                         <button class="sira-tab" data-mode="watch" type="button" data-i18n="sira.watch">Смотреть</button>
                         <button class="sira-tab is-active" data-mode="read" type="button" data-i18n="sira.read">Читать</button>
                     </div>
 
+                    <!-- РЕЖИМ «СМОТРЕТЬ» -->
                     <div class="sira-panel" id="sira-panel-watch" hidden>
-                        <div class="sira-video">
+                        <!-- Глава 1: сюжетная анимация на чистом CSS/JS (силуэты без лиц и черт) -->
+                        <div class="sira-cinema" id="sira-cinema" data-scene="night" data-mood="night" hidden>
+                            <!-- Библиотека силуэтов: только обобщённые формы, без прорисовки лиц -->
+                            <svg class="sira-sprites" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+                                <defs>
+                                    <g id="sp-person">
+                                        <circle cx="0" cy="-38" r="9"/>
+                                        <path d="M -12 -28 Q -15 -22 -14 -12 L -17 34 Q -17 40 -11 40 L 11 40 Q 17 40 17 34 L 14 -12 Q 15 -22 12 -28 Z"/>
+                                    </g>
+                                    <g id="sp-walk">
+                                        <circle cx="2" cy="-38" r="9"/>
+                                        <path d="M -10 -28 Q -13 -22 -12 -12 L -15 30 Q -15 36 -9 36 L 9 36 Q 15 36 15 30 L 12 -12 Q 13 -22 10 -28 Z"/>
+                                        <path d="M 8 30 L 20 46 L 27 46 L 24 40 L 14 26 Z"/>
+                                        <path d="M -10 30 L -18 46 L -11 46 L -6 30 Z"/>
+                                    </g>
+                                    <g id="sp-pray">
+                                        <path d="M -38 12 L 12 -8 Q 20 -11 24 -4 L 28 4 Q 30 9 25 12 L 10 20 L 12 44 L 2 44 L 0 22 L -24 30 L -30 44 L -40 40 Z"/>
+                                        <circle cx="26" cy="-14" r="9"/>
+                                    </g>
+                                    <g id="sp-camel">
+                                        <path d="M -44 6 C -44 -8 -34 -20 -22 -20 C -18 -32 -6 -36 0 -28 C 8 -36 18 -30 20 -18 C 28 -16 34 -8 34 4 L 40 8 L 46 0 C 50 -12 56 -22 62 -20 C 68 -18 66 -8 62 0 L 56 10 L 56 38 L 48 38 L 46 14 L 22 14 L 20 38 L 12 38 L 11 14 L -18 14 L -20 38 L -28 38 L -28 6 C -36 6 -44 6 -44 6 Z"/>
+                                        <path d="M 62 -20 L 69 -23 L 71 -18 L 64 -13 Z"/>
+                                    </g>
+                                    <g id="sp-elephant">
+                                        <path d="M -46 0 C -48 -18 -34 -30 -12 -30 C 10 -30 24 -18 28 -2 L 40 -2 C 48 -2 52 6 52 16 L 52 28 L 44 28 L 44 52 L 34 52 L 34 26 L 18 26 L 18 52 L 8 52 L 8 26 L -20 26 L -20 52 L -30 52 L -30 0 Z"/>
+                                        <path d="M 28 -14 C 42 -16 52 -6 52 8 L 52 18 C 52 30 46 40 48 52 L 40 52 C 38 40 42 30 42 18 L 34 12 Z"/>
+                                        <path d="M 30 -12 C 40 -18 50 -10 48 2 L 38 6 Z"/>
+                                        <path d="M 44 20 L 55 30 L 51 33 L 42 25 Z"/>
+                                    </g>
+                                    <g id="sp-kaaba">
+                                        <path d="M -40 -32 L 40 -32 L 40 40 L -40 40 Z"/>
+                                        <path d="M 40 -32 L 52 -38 L 52 34 L 40 40 Z" opacity=".5"/>
+                                        <rect x="-44" y="-4" width="88" height="9" style="fill:var(--accent,#e8c877)"/>
+                                        <rect x="-6" y="8" width="12" height="32" style="fill:var(--accent,#e8c877);opacity:.85"/>
+                                    </g>
+                                    <g id="sp-bird"><path d="M -18 2 Q -9 -10 0 2 Q 9 -10 18 2"/></g>
+                                    <g id="sp-church">
+                                        <path d="M -48 40 L -48 -6 L -32 -6 L -32 -24 L -24 -34 L -16 -24 L -16 -6 L 16 -6 L 16 -24 L 24 -34 L 32 -24 L 32 -6 L 48 -6 L 48 40 Z"/>
+                                        <path d="M -16 -6 C -16 -28 16 -28 16 -6 Z"/>
+                                    </g>
+                                    <g id="sp-house">
+                                        <path d="M -44 40 L -44 -18 L 44 -18 L 44 40 Z"/>
+                                        <rect x="-47" y="-23" width="94" height="7"/>
+                                        <rect x="-9" y="8" width="18" height="32" style="fill:var(--accent,#f6dca0);opacity:.55"/>
+                                    </g>
+                                    <g id="sp-spear">
+                                        <rect x="-2" y="-50" width="4" height="98"/>
+                                        <path d="M 2 -50 L 24 -44 L 2 -34 Z"/>
+                                    </g>
+                                    <g id="sp-tent"><path d="M -46 34 L 0 -40 L 46 34 Z"/></g>
+                                    <g id="sp-palm">
+                                        <path d="M -3 40 Q -6 4 0 -28 L 4 -28 Q 8 6 5 40 Z"/>
+                                        <path d="M 0 -28 Q -22 -40 -38 -30 Q -20 -32 0 -24 Q 20 -34 38 -28 Q 22 -40 0 -28 Z"/>
+                                    </g>
+                                    <g id="sp-scroll">
+                                        <rect x="-34" y="-30" width="68" height="60" rx="3"/>
+                                        <rect x="-40" y="-36" width="80" height="8" rx="4"/>
+                                        <rect x="-40" y="28" width="80" height="8" rx="4"/>
+                                        <path d="M -22 -14 L 22 -14 M -22 -4 L 22 -4 M -22 6 L 14 6" style="fill:none;stroke:var(--accent,#e8c877);stroke-width:3"/>
+                                    </g>
+                                </defs>
+                            </svg>
+                            <div class="sira-cinema__stage">
+                                <div class="sira-world" id="sira-world">
+                                    <!-- Небо: 6 слоёв с кроссфейдом по настроению -->
+                                    <div class="sira-sky sira-sky--night"></div>
+                                    <div class="sira-sky sira-sky--dawn"></div>
+                                    <div class="sira-sky sira-sky--day"></div>
+                                    <div class="sira-sky sira-sky--dusk"></div>
+                                    <div class="sira-sky sira-sky--golden"></div>
+                                    <div class="sira-sky sira-sky--storm"></div>
+                                    <!-- Светила и атмосфера -->
+                                    <div class="sira-fx sira-fx--stars"></div>
+                                    <div class="sira-fx sira-fx--moon"></div>
+                                    <div class="sira-fx sira-fx--sun"></div>
+                                    <div class="sira-fx sira-fx--rays"></div>
+                                    <div class="sira-fx sira-fx--haze"></div>
+                                    <div class="sira-fx sira-fx--dust"></div>
+                                    <!-- Дюны (два слоя параллакса) -->
+                                    <div class="sira-ground sira-ground--far"></div>
+                                    <div class="sira-ground sira-ground--near"></div>
+                                    <!-- 13 сюжетных сцен строятся в js/sira.js -->
+                                    <div class="sira-scenes" id="sira-scenes"></div>
+                                    <!-- Песок, ветер, камни, вспышка, виньетка поверх сцен -->
+                                    <div class="sira-fx sira-fx--sand"></div>
+                                    <div class="sira-fx sira-fx--wind"></div>
+                                    <div class="sira-fx sira-fx--stones"></div>
+                                    <div class="sira-fx sira-fx--flash"></div>
+                                    <div class="sira-fx sira-fx--grain"></div>
+                                </div>
+
+                                <div class="sira-cinema__hud">
+                                    <span class="sira-cinema__film" id="sira-cinema-film">Кинопрезентация · Год Слона</span>
+                                    <div class="sira-cinema__hud-right">
+                                        <span class="sira-cinema__counter" id="sira-cinema-counter">01 / 09</span>
+                                        <button class="sira-fs-btn" id="sira-fullscreen-btn" type="button" aria-label="На весь экран" data-i18n-aria-label="sira.fullscreen" data-i18n-title="sira.fullscreen" title="На весь экран">
+                                            <svg class="sira-fs-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+                                            <svg class="sira-fs-compress" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h3a2 2 0 0 0 2-2V3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M21 16h-3a2 2 0 0 0-2 2v3"/></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="sira-cinema__caption" id="sira-cinema-caption"></div>
+                                <div class="sira-cinema__progress"><span id="sira-cinema-bar"></span></div>
+                                <div class="sira-cinema__overlay" id="sira-cinema-overlay">
+                                    <button class="sira-cinema__play" id="sira-cinema-play" type="button" aria-label="Play">
+                                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                    </button>
+                                    <span class="sira-cinema__play-label" id="sira-cinema-play-label">Смотреть фильм</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Главы 2–25: аккуратная заглушка видео -->
+                        <div class="sira-video" id="sira-video-stub" hidden>
                             <button class="sira-play" id="sira-play-btn" type="button" aria-label="Play">
                                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
                             </button>
                             <span class="sira-video__note" data-i18n="sira.videoStub">Видео появится позже</span>
+                            <button class="sira-fs-btn sira-fs-btn--stub" id="sira-fullscreen-btn-stub" type="button" aria-label="На весь экран" data-i18n-aria-label="sira.fullscreen" data-i18n-title="sira.fullscreen" title="На весь экран">
+                                <svg class="sira-fs-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+                                <svg class="sira-fs-compress" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h3a2 2 0 0 0 2-2V3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M21 16h-3a2 2 0 0 0-2 2v3"/></svg>
+                            </button>
+                        </div>
+
+                        <!-- Слот под аудио-озвучку -->
+                        <div class="sira-audio" id="sira-audio">
+                            <!-- Вставьте src сюда или вызовите window.SiraSetAudio(1, 'audio/sira-01.mp3') -->
+                            <audio id="sira-audio-player" preload="none" data-audio-placeholder=""></audio>
+                            <button class="sira-audio__btn" id="sira-audio-btn" type="button" disabled aria-label="Play">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            </button>
+                            <div class="sira-audio__info">
+                                <span class="sira-audio__title" data-i18n="sira.audio.title">Аудио-озвучка</span>
+                                <span class="sira-audio__note" id="sira-audio-note" data-i18n="sira.audio.soon">Аудиофайл будет добавлен позже</span>
+                                <div class="sira-audio__bar"><span id="sira-audio-progress"></span></div>
+                            </div>
+                            <span class="sira-audio__time" id="sira-audio-time">00:00</span>
                         </div>
                     </div>
 
+                    <!-- РЕЖИМ «ЧИТАТЬ» (лонгрид) -->
                     <div class="sira-panel" id="sira-panel-read">
-                        <p class="sira-read-text" id="sira-read-text">Здесь будет история события №1.</p>
+                        <article class="sira-read-text" id="sira-read-text"></article>
                     </div>
 
                     <button class="sira-studied" id="sira-studied-btn" type="button" data-i18n="sira.studied">Я изучил это</button>
@@ -214,6 +357,7 @@
                     <h3 class="sira-card__title" id="sira-access-title">Откройте всю Сиру</h3>
                 </div>
                 <div class="sira-card__body">
+                    <p class="sira-access-point" id="sira-access-point"></p>
                     <div id="sira-access-premium">
                         <p class="sira-premium-desc" data-i18n="sira.premium.desc">Первая остановка доступна бесплатно. Остальные 24 события ждут вас в Премиум-подписке.</p>
                         <ul class="sira-benefits">
@@ -366,10 +510,11 @@
         <a href="profile.html" class="nav-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span data-i18n="nav.profile">Профиль</span></a>
     </nav>
 
-    <script defer src="js/translations.js"></script>
+    <script defer src="js/translations.js?v=6"></script>
     <!-- Firebase SDK загружается в фоне из app.js и не блокирует отрисовку страницы -->
     <script defer src="js/data.js"></script>
-    <script defer src="js/app.js"></script>
-    <script defer src="js/sira.js"></script>
+    <script defer src="js/app.js?v=6"></script>
+    <script defer src="js/sira-content.js"></script>
+    <script defer src="js/sira.js?v=6"></script>
 </body>
 </html>

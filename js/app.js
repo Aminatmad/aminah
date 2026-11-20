@@ -617,7 +617,9 @@ function refreshUiAfterSync() {
 
 // ===== PRO =====
 // Статус хранится в Firestore (users/{uid}.isPro); локальная копия — для скорости/офлайна.
+// amanah_premium_demo — ручной переключатель в Настройках → «Премиум» (для проверки UI).
 function isPro() {
+    if (lsGet('amanah_premium_demo') === 'true') return true;
     const uid = getActiveUid();
     if (!uid) return false;
     return lsGet(`amanah_pro_${uid}`) === 'true';
@@ -672,21 +674,29 @@ function continueAfterPro() {
     else if (currentBookId) openBook(currentBookId);
 }
 
-// showProModal() можно вызывать без аргументов или с целью: showProModal('book', bookId, lessonId)
-function showProModal(type, parent, id) {
-    const modal = document.getElementById('pro-modal');
-    if (!modal) return;
+// Переход на экран «Премиум» в Настройках. Сохраняем цель, чтобы
+// после оформления можно было вернуться к закрытому материалу.
+function goPremiumScreen(type, parent, id) {
+    try {
+        if (type && parent != null) {
+            window.sessionStorage.setItem('amanah_premium_target',
+                JSON.stringify({ type: type, parent: parent, id: (id != null ? id : null) }));
+        }
+    } catch (e) { /* приватный режим — просто уходим на экран */ }
 
-    proTarget = (type && parent != null && id != null) ? { type: type, parent: parent, id: id } : null;
-    modal.classList.add('active');
-    renderProModal();
-
-    // Если вход/PRO ещё определяются — подождём и перерисуем кнопку
-    if (!authReady || (currentUser && !cloudReady)) {
-        whenAccountKnown(1500).then((ok) => {
-            if (modal.classList.contains('active')) renderProModal(!ok);
-        });
+    // Если экран Премиума уже открыт на этой странице — не перезагружаем
+    const page = document.getElementById('premium-page');
+    if (page) {
+        if (typeof window.Premium !== 'undefined' && window.Premium.open) window.Premium.open();
+        return;
     }
+    window.location.href = 'settings.html?premium=1';
+}
+
+// Раньше здесь была модалка «PRO Подписка». Теперь все закрытые материалы
+// ведут на полноценный экран Премиум в Настройках.
+function showProModal(type, parent, id) {
+    goPremiumScreen(type, parent, id);
 }
 
 // force = true: ждать больше нельзя (таймаут), показываем лучший из возможных вариантов
@@ -2038,6 +2048,11 @@ function initPage() {
             // Открываем урок сразу; PRO-статус из локального кэша уже доступен.
             openLesson('book', bookId, lessonId);
         }
+    }
+
+    // 4.1 Гость пришёл с экрана Премиум — сразу предлагаем войти
+    if (urlParams.get('auth') === '1' && typeof openAuthModal === 'function' && document.getElementById('auth-modal')) {
+        openAuthModal();
     }
 
     // 5. Время намаза в шапке (кэш — мгновенно, остальное — в фоне)

@@ -80,14 +80,22 @@ html[data-theme="dark"] #sira-page {
 .sira-map-stage {
     position: relative;
     min-width: 760px; /* на телефоне точки остаются разнесёнными, карта прокручивается */
-    transition: filter 0.35s ease, transform 0.35s ease;
-    transform-origin: center center;
 }
 
-/* Эффект зума и размытия карты под модалкой */
-.sira-map-stage.is-blurred {
-    filter: blur(6px) saturate(0.85) brightness(0.9);
-    transform: scale(1.035);
+/* Плавное исчезновение карты ВНУТРИ СВОЕЙ РАМКИ перед появлением урока.
+   Карта остаётся в потоке и задаёт высоту рамки, а урок занимает те же границы. */
+.sira-map-scroll {
+    transition: opacity 0.45s ease,
+                transform 0.55s cubic-bezier(0.22, 0.68, 0.24, 1),
+                filter 0.45s ease;
+    transform-origin: center center;
+    will-change: opacity, transform, filter;
+}
+.sira-map-card.is-lesson .sira-map-scroll {
+    opacity: 0;
+    transform: scale(1.07);
+    filter: blur(7px) saturate(0.85);
+    pointer-events: none;
 }
 
 .sira-map-svg {
@@ -150,9 +158,9 @@ html[data-theme="dark"] .sira-route-flow { stroke: rgba(255, 240, 200, 0.55); }
 .sira-city-sub {
     fill: var(--ink-soft);
     font-family: 'Montserrat', sans-serif;
-    font-size: 9px;
-    letter-spacing: 3px;
-    opacity: 0.8;
+    font-size: 9.5px;
+    letter-spacing: 1.6px;
+    opacity: 0.85;
 }
 
 .sira-label-bg { fill: var(--label-bg); stroke: var(--parch-edge); stroke-width: 0.8; }
@@ -307,6 +315,106 @@ html[data-theme="dark"] .sira-marker.is-done .sira-marker__check { stroke: #1026
     font-weight: 600;
     overflow-wrap: break-word;
 }
+
+/* ============================================================
+   ВИД УРОКА · адаптивный
+   • широкий экран: абсолютно внутри #sira-map-card (те же границы,
+     что у карты) — карта растворяется, урок появляется на её месте;
+   • узкий экран (≤768px): узел перенесён в <body> и становится
+     отдельным полноэкранным fixed-видом на весь экран телефона.
+   ВНИМАНИЕ: анимация появления использует ТОЛЬКО opacity (без transform),
+   чтобы не создавать containing block для position:fixed полноэкранного видео.
+   ============================================================ */
+.sira-lesson-view { display: none; transition: opacity 0.28s ease; }
+
+.sira-lesson-view.is-open {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    border-radius: 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    opacity: 1; /* без анимации: вид гарантированно виден даже в фоновой вкладке */
+}
+.sira-lesson-view.is-closing { opacity: 0; }
+
+/* Полноэкранный вид на телефоне (узел перенесён в <body>) */
+.sira-lesson-view.is-open.is-fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+.sira-lesson-view.is-fullscreen .sira-lesson__top {
+    padding-top: calc(16px + env(safe-area-inset-top, 0px));
+}
+.sira-lesson-view.is-fullscreen .sira-lesson__scroll {
+    padding-bottom: calc(26px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Блокируем прокрутку фона, пока открыт полноэкранный вид / видео */
+html.sira-scroll-lock,
+html.sira-scroll-lock body,
+html.sira-fs-lock,
+html.sira-fs-lock body { overflow: hidden !important; }
+
+/* Шапка урока: «Назад» + заголовок */
+.sira-lesson__top {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-strong) 100%);
+    color: #fff;
+    flex: 0 0 auto;
+}
+html[data-theme="dark"] .sira-lesson__top { color: #eaf5e8; }
+
+.sira-lesson__back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+.sira-lesson__back:hover { background: rgba(255, 255, 255, 0.28); transform: translateX(-2px); }
+.sira-lesson__back svg { width: 16px; height: 16px; }
+html[dir="rtl"] .sira-lesson__back svg { transform: scaleX(-1); }
+html[dir="rtl"] .sira-lesson__back:hover { transform: translateX(2px); }
+
+.sira-lesson__heading { min-width: 0; }
+.sira-lesson__heading .sira-card__kicker { margin-bottom: 2px; }
+.sira-lesson__heading .sira-card__title { font-size: 18px; }
+
+/* Прокручиваемое тело урока */
+.sira-lesson__scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding: 18px 22px 26px;
+}
+.sira-lesson__content { max-width: 760px; margin: 0 auto; }
 
 /* ===== МОДАЛКИ СИРЫ ===== */
 .sira-overlay { z-index: 1100; }
@@ -602,6 +710,525 @@ html[data-theme="dark"] .sira-card__top { color: #eaf5e8; }
     cursor: pointer;
 }
 
+/* ============================================================
+   КИНЕМАТОГРАФ: появление модалки после «полёта» и уход обратно
+   ============================================================ */
+.sira-overlay.is-closing .sira-card { animation: sira-card-out 0.24s ease both; }
+@keyframes sira-card-out {
+    from { opacity: 1; transform: translateY(0) scale(1); }
+    to   { opacity: 0; transform: translateY(14px) scale(0.96); }
+}
+
+.sira-access-point {
+    margin: 0 0 14px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--primary);
+    text-align: center;
+    overflow-wrap: break-word;
+}
+
+/* ============================================================
+   ЛОНГРИД (режим «Читать»)
+   ============================================================ */
+.sira-read-text {
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--text);
+    overflow-wrap: break-word;
+}
+.sira-read-text .sira-lead {
+    margin: 0 0 18px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--primary);
+    line-height: 1.7;
+}
+.sira-read-text h4 {
+    margin: 22px 0 10px;
+    font-size: 15.5px;
+    font-weight: 800;
+    color: var(--primary);
+    letter-spacing: -0.2px;
+}
+.sira-read-text p { margin: 0 0 13px; }
+.sira-read-text ul { margin: 0 0 16px; padding-inline-start: 20px; }
+.sira-read-text li { margin-bottom: 9px; }
+.sira-read-text strong { color: var(--text); }
+.sira-read-text em { color: var(--text-soft); font-style: italic; }
+.sira-read-text .sira-quote {
+    margin: 20px 0;
+    padding: 14px 16px;
+    border-inline-start: 3px solid var(--gold);
+    border-radius: 0 12px 12px 0;
+    background: var(--surface-2);
+    font-size: 13.5px;
+    color: var(--text-soft);
+    font-style: italic;
+}
+.sira-read-text .sira-sources {
+    margin: 24px 0 0;
+    padding-top: 14px;
+    border-top: 1px dashed var(--border-strong);
+    font-size: 11.5px;
+    line-height: 1.7;
+    color: var(--muted);
+}
+
+/* ============================================================
+   КИНОЗАЛ · сюжетные сцены главы 1
+   Чистый CSS/JS, без видеорендера. Каждая сцена — самостоятельная
+   композиция из силуэтов; сцены растворяются друг в друге (кроссфейд),
+   небо меняется слоями по «настроению», поверх — песок, ветер, свет.
+   ============================================================ */
+.sira-cinema {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+    --g1: #c39257; --g2: #9a6a38; --sil: #3a2a18; --haze: rgba(240, 205, 140, .22);
+}
+.sira-cinema[hidden], .sira-video[hidden] { display: none; }
+
+/* Библиотека силуэтов живёт в невидимом SVG */
+.sira-sprites { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+.sira-cinema__stage {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: #101b2a;
+    isolation: isolate;
+}
+
+/* ---- Медленное «дыхание камеры» на протяжении всего фильма ---- */
+.sira-world { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.sira-cinema.is-playing .sira-world { animation: sira-camera var(--film-duration, 28s) linear both; }
+@keyframes sira-camera {
+    0%   { transform: scale(1) translateX(0); }
+    50%  { transform: scale(1.035) translateX(-0.6%); }
+    100% { transform: scale(1.06) translateX(0.6%); }
+}
+
+/* ---- Палитра настроения (небо, дюны, цвет силуэтов) ---- */
+.sira-cinema[data-mood="night"]  { --g1:#3a4759; --g2:#1d2534; --sil:#080d16; --haze:rgba(120,150,200,.16); }
+.sira-cinema[data-mood="dawn"]   { --g1:#b9824f; --g2:#8a5a34; --sil:#3a2414; --haze:rgba(255,190,120,.28); }
+.sira-cinema[data-mood="day"]    { --g1:#d3a865; --g2:#a97740; --sil:#4a321c; --haze:rgba(255,225,165,.24); }
+.sira-cinema[data-mood="dusk"]   { --g1:#a9713e; --g2:#754627; --sil:#2f1d10; --haze:rgba(255,160,90,.26); }
+.sira-cinema[data-mood="golden"] { --g1:#e0b878; --g2:#b78a48; --sil:#3c2a16; --haze:rgba(255,232,170,.32); }
+.sira-cinema[data-mood="storm"]  { --g1:#8a6a42; --g2:#574027; --sil:#251a0e; --haze:rgba(190,150,100,.36); }
+
+/* ---- Небо: 6 слоёв с настоящим кроссфейдом ---- */
+.sira-sky { position: absolute; inset: 0; opacity: 0; transition: opacity 1.3s ease; }
+.sira-sky--night  { background: linear-gradient(180deg,#060c1c 0%,#142b47 55%,#4a4a55 100%); }
+.sira-sky--dawn   { background: linear-gradient(180deg,#30325c 0%,#a45b63 48%,#f0b877 100%); }
+.sira-sky--day    { background: linear-gradient(180deg,#4d7fa6 0%,#9fc0cf 55%,#efd9a8 100%); }
+.sira-sky--dusk   { background: linear-gradient(180deg,#453a5a 0%,#b25f42 52%,#e8a86a 100%); }
+.sira-sky--golden { background: linear-gradient(180deg,#7a5a2e 0%,#d8a24c 52%,#f7e3ad 100%); }
+.sira-sky--storm  { background: linear-gradient(180deg,#4a3a26 0%,#8a6a42 48%,#b79a68 100%); }
+.sira-cinema[data-mood="night"]  .sira-sky--night,
+.sira-cinema[data-mood="dawn"]   .sira-sky--dawn,
+.sira-cinema[data-mood="day"]    .sira-sky--day,
+.sira-cinema[data-mood="dusk"]   .sira-sky--dusk,
+.sira-cinema[data-mood="golden"] .sira-sky--golden,
+.sira-cinema[data-mood="storm"]  .sira-sky--storm { opacity: 1; }
+
+/* ---- Светила, атмосфера, эффекты ---- */
+.sira-fx { position: absolute; pointer-events: none; }
+
+.sira-fx--stars {
+    inset: 0 0 36% 0; opacity: 0; transition: opacity 1.2s ease;
+    background-image:
+        radial-gradient(2px 2px at 8% 18%, #fff 50%, transparent 51%),
+        radial-gradient(1.5px 1.5px at 19% 44%, #fff 50%, transparent 51%),
+        radial-gradient(2px 2px at 31% 12%, #fff 50%, transparent 51%),
+        radial-gradient(1px 1px at 43% 36%, #fff 50%, transparent 51%),
+        radial-gradient(2px 2px at 55% 20%, #fff 50%, transparent 51%),
+        radial-gradient(1.5px 1.5px at 67% 48%, #fff 50%, transparent 51%),
+        radial-gradient(2px 2px at 78% 14%, #fff 50%, transparent 51%),
+        radial-gradient(1px 1px at 89% 40%, #fff 50%, transparent 51%),
+        radial-gradient(1.5px 1.5px at 96% 26%, #fff 50%, transparent 51%),
+        radial-gradient(1px 1px at 13% 62%, #fff 50%, transparent 51%),
+        radial-gradient(1.5px 1.5px at 61% 66%, #fff 50%, transparent 51%);
+}
+.sira-cinema[data-mood="night"] .sira-fx--stars { opacity: .9; animation: sira-twinkle 3.4s ease-in-out infinite alternate; }
+@keyframes sira-twinkle { from { opacity: .45; } to { opacity: 1; } }
+
+.sira-fx--moon {
+    left: 72%; top: 16%; width: 66px; height: 66px; border-radius: 50%;
+    background: radial-gradient(circle at 38% 36%, #fff8dc, #d9d2ae 68%, rgba(217,210,174,0) 73%);
+    box-shadow: 0 0 70px 22px rgba(230,225,190,.22);
+    opacity: 0; transition: opacity 1.3s ease;
+}
+.sira-cinema[data-mood="night"] .sira-fx--moon { opacity: .92; animation: sira-moon 6s ease-in-out infinite alternate; }
+@keyframes sira-moon { from { transform: translateY(-4px) scale(.97); } to { transform: translateY(4px) scale(1.03); } }
+
+.sira-fx--sun {
+    left: 50%; top: 46%; width: 88px; height: 88px; margin: -44px 0 0 -44px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 40%, #fff6cf, #f0c46a 58%, rgba(240,196,106,0) 72%);
+    box-shadow: 0 0 70px 26px rgba(240,196,106,.5);
+    opacity: 0; transform: translateY(28px) scale(.8);
+    transition: opacity 1.2s ease, transform 1.8s ease;
+}
+.sira-cinema[data-mood="dawn"] .sira-fx--sun,
+.sira-cinema[data-mood="day"] .sira-fx--sun,
+.sira-cinema[data-mood="dusk"] .sira-fx--sun,
+.sira-cinema[data-mood="golden"] .sira-fx--sun { opacity: 1; transform: translateY(0) scale(1); }
+
+.sira-fx--rays {
+    inset: -40%; opacity: 0; transition: opacity 1.2s ease;
+    background: repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,238,190,.15) 0deg 4deg, transparent 4deg 17deg);
+}
+.sira-cinema[data-mood="golden"] .sira-fx--rays { opacity: .5; animation: sira-rays 16s linear infinite; }
+.sira-cinema[data-scene="light"] .sira-fx--rays { opacity: .85; animation: sira-rays 9s linear infinite; }
+@keyframes sira-rays { to { transform: rotate(360deg); } }
+
+.sira-fx--haze { inset: auto 0 0 0; height: 48%; background: linear-gradient(180deg, transparent, var(--haze)); opacity: .9; }
+
+.sira-fx--dust {
+    inset: 0; opacity: 0; transition: opacity 1s ease;
+    background:
+        radial-gradient(60% 42% at 26% 80%, rgba(214,178,118,.5), transparent 70%),
+        radial-gradient(55% 38% at 76% 84%, rgba(214,178,118,.42), transparent 70%);
+}
+.sira-cinema[data-mood="storm"] .sira-fx--dust,
+.sira-cinema[data-mood="dusk"] .sira-fx--dust { opacity: .8; animation: sira-dust 9s ease-in-out infinite alternate; }
+@keyframes sira-dust { from { transform: translateX(-4%) scale(1); } to { transform: translateX(5%) scale(1.08); } }
+
+.sira-fx--sand {
+    inset: 0; opacity: .22; transition: opacity 1s ease;
+    background-image:
+        radial-gradient(2px 2px at 10% 66%, rgba(255,236,190,.7) 50%, transparent 51%),
+        radial-gradient(2px 2px at 24% 82%, rgba(255,236,190,.6) 50%, transparent 51%),
+        radial-gradient(1px 1px at 38% 58%, rgba(255,236,190,.7) 50%, transparent 51%),
+        radial-gradient(2px 2px at 52% 76%, rgba(255,236,190,.55) 50%, transparent 51%),
+        radial-gradient(1px 1px at 66% 62%, rgba(255,236,190,.65) 50%, transparent 51%),
+        radial-gradient(2px 2px at 80% 84%, rgba(255,236,190,.6) 50%, transparent 51%),
+        radial-gradient(1px 1px at 92% 68%, rgba(255,236,190,.6) 50%, transparent 51%),
+        radial-gradient(2px 2px at 34% 92%, rgba(255,236,190,.5) 50%, transparent 51%);
+}
+.sira-cinema[data-mood="storm"] .sira-fx--sand { opacity: .95; }
+.sira-cinema[data-mood="dawn"] .sira-fx--sand,
+.sira-cinema[data-mood="dusk"] .sira-fx--sand { opacity: .5; }
+.sira-fx--sand { animation: sira-sand 11s linear infinite; }
+@keyframes sira-sand { from { transform: translateX(-4%); } to { transform: translateX(4%); } }
+
+.sira-fx--wind {
+    inset: -20%; opacity: 0; transition: opacity 1s ease;
+    background: repeating-linear-gradient(104deg, transparent 0 26px, rgba(255,240,205,.18) 26px 28px, transparent 28px 56px);
+}
+.sira-cinema[data-mood="storm"] .sira-fx--wind { opacity: .8; animation: sira-wind 3.2s linear infinite; }
+.sira-cinema[data-mood="dusk"] .sira-fx--wind { opacity: .3; animation: sira-wind 6s linear infinite; }
+@keyframes sira-wind { to { transform: translateX(-56px); } }
+
+.sira-fx--stones {
+    inset: 0; opacity: 0; transition: opacity .6s ease;
+    background-image:
+        radial-gradient(3px 3px at 16% 8%, #5a4530 50%, transparent 51%),
+        radial-gradient(3px 3px at 32% 26%, #5a4530 50%, transparent 51%),
+        radial-gradient(2px 2px at 48% 6%, #5a4530 50%, transparent 51%),
+        radial-gradient(3px 3px at 64% 22%, #5a4530 50%, transparent 51%),
+        radial-gradient(2px 2px at 82% 10%, #5a4530 50%, transparent 51%),
+        radial-gradient(3px 3px at 92% 30%, #5a4530 50%, transparent 51%);
+}
+.sira-cinema[data-scene="storm"] .sira-fx--stones { opacity: .85; animation: sira-stones 1.6s linear infinite; }
+@keyframes sira-stones { from { transform: translateY(-16%); } to { transform: translateY(40%); } }
+
+.sira-fx--flash {
+    inset: 0; opacity: 0;
+    background: radial-gradient(circle at 50% 44%, rgba(255,247,220,.92), rgba(255,247,220,0) 66%);
+}
+.sira-cinema[data-scene="light"] .sira-fx--flash { animation: sira-flash 1.6s ease-out; }
+@keyframes sira-flash { 0% { opacity: 0; } 18% { opacity: .85; } 100% { opacity: 0; } }
+
+.sira-fx--grain {
+    inset: 0; opacity: .55;
+    background: radial-gradient(78% 72% at 50% 46%, transparent 38%, rgba(8,12,20,.6) 100%);
+}
+
+/* ---- Дюны: два слоя параллакса ---- */
+.sira-ground { position: absolute; left: -10%; right: -10%; bottom: -8%; height: 40%; }
+.sira-ground--far {
+    bottom: 3%; height: 34%; opacity: .6;
+    background:
+        radial-gradient(120% 100% at 22% 100%, var(--g1) 0 58%, transparent 60%),
+        radial-gradient(120% 100% at 82% 100%, var(--g1) 0 55%, transparent 58%);
+    animation: sira-parallax-far 20s ease-in-out infinite alternate;
+}
+.sira-ground--near {
+    background: linear-gradient(180deg, transparent, var(--g2) 58%, var(--g2));
+    border-radius: 50% 50% 0 0 / 70% 70% 0 0;
+    opacity: .95;
+    animation: sira-parallax-near 14s ease-in-out infinite alternate;
+}
+@keyframes sira-parallax-far  { from { transform: translateX(-1.5%); } to { transform: translateX(1.5%); } }
+@keyframes sira-parallax-near { from { transform: translateX(-1%); }   to { transform: translateX(1%); } }
+
+/* ---- Сюжетные сцены и кроссфейд ---- */
+.sira-scenes { position: absolute; inset: 0; }
+.sira-scene {
+    position: absolute; inset: 0;
+    opacity: 0;
+    transform: scale(1.035);
+    transition: opacity 1.1s ease, transform 1.6s ease;
+    will-change: opacity, transform;
+}
+.sira-scene.is-active { opacity: 1; transform: scale(1); }
+.sira-scene__art { position: absolute; inset: 0; }
+/* Неактивные сцены не тратят ресурсы на анимацию */
+.sira-scene:not(.is-active) .sira-figure { animation-play-state: paused; }
+
+/* ---- Силуэты (фигуры без лиц и черт) ---- */
+.sira-figure {
+    position: absolute;
+    left: var(--x); top: var(--y);
+    width: var(--w); height: var(--w);
+    margin-left: calc(var(--w) / -2);
+    margin-top: calc(var(--w) / -2);
+    color: var(--sil);
+    opacity: var(--o, 1);
+    transform-origin: center bottom;
+    filter: drop-shadow(0 3px 7px rgba(0,0,0,.32));
+}
+.sira-figure svg { width: 100%; height: 100%; display: block; fill: currentColor; }
+.sira-figure--stroke svg {
+    fill: none; stroke: currentColor;
+    stroke-width: 3; stroke-linecap: round; stroke-linejoin: round;
+}
+.sira-figure--accent { --accent: #e8c877; }
+
+/* Разные типы движения — не просто зум */
+.sira-figure--bob   { animation: sira-fig-bob   2.6s ease-in-out infinite alternate; }
+.sira-figure--walk  { animation: sira-fig-walk  3.2s ease-in-out infinite alternate; }
+.sira-figure--drift { animation: sira-fig-drift 16s  linear       infinite alternate; }
+.sira-figure--sway  { animation: sira-fig-sway  4.2s ease-in-out infinite alternate; }
+.sira-figure--pray  { animation: sira-fig-pray  5s   ease-in-out infinite alternate; }
+.sira-figure--flap  { animation: sira-fig-flap  1.3s ease-in-out infinite alternate; }
+.sira-figure--rise  { animation: sira-fig-rise  7s   ease-in-out infinite alternate; }
+.sira-figure--fade  { animation: sira-fig-fade  6s   ease-in-out infinite alternate; }
+
+@keyframes sira-fig-bob   { from { transform: translateY(0); }      to { transform: translateY(-5px); } }
+@keyframes sira-fig-walk  { from { transform: translateX(-7px) rotate(-2deg); } to { transform: translateX(7px) rotate(2deg); } }
+@keyframes sira-fig-drift { from { transform: translateX(-16%); }   to { transform: translateX(16%); } }
+@keyframes sira-fig-sway  { from { transform: rotate(-2.5deg); }    to { transform: rotate(2.5deg); } }
+@keyframes sira-fig-pray  { from { transform: translateY(0) rotate(0deg); } to { transform: translateY(7px) rotate(5deg); } }
+@keyframes sira-fig-flap  { from { transform: translateY(-4px) scaleY(.72); } to { transform: translateY(4px) scaleY(1.12); } }
+@keyframes sira-fig-rise  { from { transform: translateY(9px); }     to { transform: translateY(-3px); } }
+@keyframes sira-fig-fade  { from { opacity: .35; }                   to { opacity: .95; } }
+
+/* HUD, титры, прогресс */
+.sira-cinema__hud {
+    position: absolute; top: 10px; inset-inline: 12px;
+    display: flex; justify-content: space-between; gap: 10px;
+    z-index: 3; /* выше оверлея Play, чтобы кнопка Fullscreen была доступна сразу */
+    font-size: 9px; font-weight: 700; letter-spacing: 1.4px;
+    color: rgba(255,255,255,.82);
+    text-shadow: 0 1px 4px rgba(0,0,0,.6);
+    text-transform: uppercase;
+}
+.sira-cinema__counter { flex: 0 0 auto; }
+
+.sira-cinema__caption {
+    position: absolute;
+    inset-inline: 7%;
+    bottom: 9%;
+    max-height: 46%;
+    overflow: hidden;
+    padding: 11px 15px;
+    border-radius: 12px;
+    background: rgba(8, 14, 24, 0.46);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+    text-align: center;
+    font-size: clamp(11.5px, 2.15vw, 15px);
+    font-weight: 600;
+    line-height: 1.5;
+    color: #fff;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
+    overflow-wrap: break-word;
+}
+/* Типы кадров: заголовок раздела, цитата, источники */
+.sira-cinema__caption.is-head {
+    font-size: clamp(14px, 2.8vw, 20px);
+    font-weight: 800;
+    color: #f3df9c;
+    background: rgba(8, 14, 24, 0.62);
+}
+.sira-cinema__caption.is-quote { font-style: italic; }
+.sira-cinema__caption.is-sources {
+    font-size: clamp(10px, 1.8vw, 12.5px);
+    opacity: 0.94;
+    line-height: 1.6;
+}
+.sira-cinema__caption.is-in { animation: sira-caption-in .6s ease both; }
+@keyframes sira-caption-in {
+    from { opacity: 0; transform: translateY(14px); filter: blur(4px); }
+    to   { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+.sira-cinema__progress {
+    position: absolute; inset-inline: 0; bottom: 0; height: 4px;
+    background: rgba(255,255,255,.18);
+}
+.sira-cinema__progress span {
+    display: block; height: 100%; width: 0;
+    background: linear-gradient(90deg, var(--gold, #d9a72c), #f3df9c);
+    transition: width .5s linear;
+}
+
+.sira-cinema__overlay {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+    background: linear-gradient(180deg, rgba(10,18,28,.35), rgba(10,18,28,.72));
+    transition: opacity .4s ease;
+}
+.sira-cinema__overlay.is-hidden { opacity: 0; pointer-events: none; }
+
+.sira-cinema__play {
+    width: 74px; height: 74px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.8);
+    background: linear-gradient(145deg, #f0cf86, #b58a2b);
+    color: #1b2a1f;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 12px 36px rgba(0,0,0,.45), 0 0 0 0 rgba(232,200,119,.5);
+    animation: sira-play-pulse 2.4s ease-out infinite;
+    transition: transform .2s ease;
+}
+.sira-cinema__play:hover { transform: scale(1.08); }
+.sira-cinema__play svg { width: 30px; height: 30px; margin-inline-start: 4px; }
+@keyframes sira-play-pulse {
+    0%   { box-shadow: 0 12px 36px rgba(0,0,0,.45), 0 0 0 0 rgba(232,200,119,.55); }
+    70%  { box-shadow: 0 12px 36px rgba(0,0,0,.45), 0 0 0 22px rgba(232,200,119,0); }
+    100% { box-shadow: 0 12px 36px rgba(0,0,0,.45), 0 0 0 0 rgba(232,200,119,0); }
+}
+.sira-cinema__play-label {
+    font-size: 12.5px; font-weight: 800; letter-spacing: .6px; color: #fff;
+    text-shadow: 0 1px 6px rgba(0,0,0,.7);
+}
+
+/* ============================================================
+   FULLSCREEN · кнопка в интерфейсе видео-плеера
+   ============================================================ */
+.sira-fs-btn {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    background: rgba(10, 18, 28, 0.42);
+    color: #fff;
+    cursor: pointer;
+    flex: 0 0 auto;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+.sira-fs-btn:hover { background: rgba(10, 18, 28, 0.78); transform: scale(1.08); }
+.sira-fs-btn svg { width: 16px; height: 16px; }
+.sira-fs-btn .sira-fs-compress { display: none; }
+.sira-fs-btn.is-active .sira-fs-expand { display: none; }
+.sira-fs-btn.is-active .sira-fs-compress { display: block; }
+
+.sira-cinema__hud-right { display: inline-flex; align-items: center; gap: 10px; }
+
+/* Кнопка на заглушке (главы без фильма) — в углу кадра */
+.sira-fs-btn--stub {
+    position: absolute;
+    top: 10px;
+    inset-inline-end: 12px;
+    z-index: 2;
+}
+html[dir="rtl"] .sira-fs-btn--stub { inset-inline-end: auto; inset-inline-start: 12px; }
+
+/* Нативный Fullscreen API: элемент становится верхним слоем браузера */
+.sira-cinema:fullscreen,
+.sira-cinema:-webkit-full-screen,
+.sira-video:fullscreen,
+.sira-video:-webkit-full-screen {
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    aspect-ratio: auto;
+    border: 0;
+    border-radius: 0;
+    background: #0b1424;
+    display: flex;
+    flex-direction: column;
+}
+.sira-cinema:fullscreen .sira-cinema__stage,
+.sira-cinema:-webkit-full-screen .sira-cinema__stage {
+    aspect-ratio: auto;
+    flex: 1 1 auto;
+    height: auto;
+}
+
+/* CSS-fallback для iPhone / браузеров без element.requestFullscreen:
+   узел на время переносится в <body> и разворачивается fixed-слоем */
+.sira-cinema.is-fs-fallback,
+.sira-video.is-fs-fallback {
+    position: fixed;
+    inset: 0;
+    z-index: 3600;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    margin: 0;
+    aspect-ratio: auto;
+    border: 0;
+    border-radius: 0;
+    background: #0b1424;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.sira-cinema.is-fs-fallback .sira-cinema__stage {
+    aspect-ratio: auto;
+    flex: 1 1 auto;
+    height: auto;
+}
+
+/* ============================================================
+   АУДИОПЛЕЕР (слот под будущий файл)
+   ============================================================ */
+.sira-audio {
+    display: flex; align-items: center; gap: 12px;
+    margin-top: 14px; padding: 11px 13px;
+    border-radius: 12px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+}
+.sira-audio__btn {
+    width: 38px; height: 38px; flex: 0 0 auto;
+    border-radius: 50%;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: transform .2s ease, background .2s ease;
+}
+.sira-audio__btn:not(:disabled):hover { transform: scale(1.07); background: var(--gold-soft); }
+.sira-audio__btn:disabled { opacity: .45; cursor: not-allowed; }
+.sira-audio__btn svg { width: 16px; height: 16px; margin-inline-start: 2px; }
+.sira-audio__info { flex: 1; min-width: 0; }
+.sira-audio__title { display: block; font-size: 12.5px; font-weight: 700; color: var(--text); }
+.sira-audio__note { display: block; font-size: 11px; color: var(--muted); overflow-wrap: break-word; }
+.sira-audio__bar {
+    height: 4px; margin-top: 7px; border-radius: 999px;
+    background: var(--surface-3); overflow: hidden;
+}
+.sira-audio__bar span { display: block; height: 100%; width: 0; background: var(--gold); transition: width .2s linear; }
+.sira-audio__time { font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; flex: 0 0 auto; }
+
 /* ===== АДАПТИВ ===== */
 @media (min-width: 900px) {
     .sira-map-stage { min-width: 0; }
@@ -615,6 +1242,18 @@ html[data-theme="dark"] .sira-card__top { color: #eaf5e8; }
     .sira-head { gap: 10px; }
     .sira-progress-badge { font-size: 11.5px; padding: 8px 12px; }
     .sira-legend { gap: 8px 14px; }
+
+    /* Полноэкранный вид урока на телефоне */
+    .sira-lesson__top { padding: 14px 16px; gap: 10px; }
+    .sira-lesson__heading .sira-card__title { font-size: 16px; }
+    .sira-lesson__back { padding: 7px 10px; font-size: 12px; }
+    .sira-lesson__scroll { padding: 16px 16px 24px; }
+    .sira-lesson-view.is-fullscreen .sira-lesson__top {
+        padding-top: calc(14px + env(safe-area-inset-top, 0px));
+    }
+    .sira-lesson-view.is-fullscreen .sira-lesson__scroll {
+        padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    }
 }
 
 /* RTL: подписи и тексты идут от края, карта остаётся немой графикой */
@@ -627,6 +1266,18 @@ html[dir="rtl"] .sira-play svg { margin-inline-start: 0; margin-inline-end: 3px;
 @media (prefers-reduced-motion: reduce) {
     .sira-route-flow,
     .sira-marker.is-free .sira-marker__halo,
-    .sira-card { animation: none; }
-    .sira-map-stage, .sira-marker, .sira-play, .sira-studied, .sira-access-cta { transition: none; }
+    .sira-card,
+    .sira-lesson-view,
+    .sira-cinema.is-playing .sira-world,
+    .sira-fx,
+    .sira-ground,
+    .sira-figure,
+    .sira-cinema__play,
+    .sira-cinema__caption.is-in { animation: none; }
+    .sira-map-scroll, .sira-marker, .sira-play, .sira-studied, .sira-access-cta,
+    .sira-sky, .sira-scene { transition: none; }
+    .sira-lesson-view.is-open { opacity: 1; }
+    .sira-lesson-view.is-closing { display: none; }
+    .sira-cinema.is-playing .sira-world { transform: none; }
+    .sira-map-card.is-lesson .sira-map-scroll { transform: none; filter: none; opacity: 0.25; }
 }

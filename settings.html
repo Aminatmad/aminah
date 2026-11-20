@@ -26,6 +26,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
     <noscript><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet"></noscript>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/premium.css?v=6">
     <link rel="manifest" href="manifest.webmanifest">
     <meta name="theme-color" content="#f5f3ec">
 </head>
@@ -63,6 +64,17 @@
             <p class="section-subtitle" data-i18n="settings.subtitle">Настрой приложение под себя</p>
 
             <main class="list-layout">
+                <div class="card premium-entry" onclick="Premium.open()">
+                    <div class="icon-box">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l4.5 4L12 4l4.5 7L21 7l-1.6 11H4.6L3 7z"/><path d="M4.6 21h14.8"/></svg>
+                    </div>
+                    <div class="card-content">
+                        <h3 data-i18n="settings.premium.title">AMANAH Premium</h3>
+                        <p data-i18n="settings.premium.desc">Полный доступ к знаниям и пути Пророка ﷺ</p>
+                        <span class="premium-entry__tag" data-i18n="settings.premium.badge">PREMIUM</span>
+                    </div>
+                </div>
+
                 <div class="card" onclick="openAccountSettings()">
                     <div class="icon-box">
                         <svg viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -104,6 +116,95 @@
                 </div>
             </main>
         </section>
+
+        <!-- ===================== ЭКРАН «AMANAH PREMIUM» ===================== -->
+        <section id="premium-page" class="page-section premium-page">
+            <div class="back-btn premium-back" onclick="Premium.close()">
+                <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> <span data-i18n="premium.back">Назад в настройки</span>
+            </div>
+
+            <div class="premium-hero">
+                <div class="premium-crown" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 7.5l4.6 4L12 4.2l4.4 7.3 4.6-4-1.5 11.3H4.5L3 7.5z"/><rect x="4.5" y="20.2" width="15" height="2.1" rx="1"/></svg>
+                </div>
+                <span class="premium-eyebrow" data-i18n="premium.eyebrow">Полный доступ · AMANAH</span>
+                <h1 class="premium-brand" data-i18n="premium.brand">AMANAH Premium</h1>
+                <p class="premium-subtitle" data-i18n="premium.subtitle">Откройте полный доступ к знаниям и пути Пророка ﷺ</p>
+            </div>
+
+            <div class="premium-block">
+                <h3 class="premium-block__title" data-i18n="premium.benefitsTitle">Что даёт Премиум</h3>
+                <ul class="premium-benefits">
+                    <li><span class="premium-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><span data-i18n="premium.b1">Доступ ко всем 25 точкам на Карте Сиры — полные истории, видео и аудио.</span></li>
+                    <li><span class="premium-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><span data-i18n="premium.b2">Безлимитный доступ ко всем книгам в разделе «Знания».</span></li>
+                    <li><span class="premium-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><span data-i18n="premium.b3">Эксклюзивные аудио-версии и уведомления о каждом намазе.</span></li>
+                    <li><span class="premium-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><span data-i18n="premium.b4">Личные вопросы учёным — ответы с доводами индивидуально.</span></li>
+                </ul>
+            </div>
+
+            <div class="premium-block">
+                <h3 class="premium-block__title" data-i18n="premium.plansTitle">Выберите тариф</h3>
+                <div class="premium-plans">
+                    <button class="premium-plan premium-plan--month" id="premium-plan-month" type="button" aria-pressed="false">
+                        <span class="premium-plan__radio" aria-hidden="true"></span>
+                        <span class="premium-plan__name" data-i18n="premium.plan1.name">1 месяц</span>
+                        <span class="premium-plan__price" data-i18n="premium.plan1.price">199 ₽</span>
+                        <span class="premium-plan__per" data-i18n="premium.plan1.per">в месяц</span>
+                    </button>
+                    <button class="premium-plan premium-plan--year is-selected" id="premium-plan-year" type="button" aria-pressed="true">
+                        <span class="premium-plan__badge" data-i18n="premium.plan2.badge">Лучшая цена</span>
+                        <span class="premium-plan__radio" aria-hidden="true"></span>
+                        <span class="premium-plan__name" data-i18n="premium.plan2.name">12 месяцев</span>
+                        <span class="premium-plan__price" data-i18n="premium.plan2.price">1799 ₽</span>
+                        <span class="premium-plan__per"><span data-i18n="premium.plan2.per">в год</span> <span class="premium-plan__save" data-i18n="premium.plan2.save">−25%</span></span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="premium-actions" id="premium-actions">
+                <button class="premium-cta" id="premium-cta" type="button" data-i18n="premium.cta">Оформить Премиум</button>
+                <p class="premium-secure" data-i18n="premium.secure">Безопасная оплата · Отмена в любой момент</p>
+            </div>
+
+            <div class="premium-status" id="premium-status" hidden>
+                <div class="premium-status__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                </div>
+                <div>
+                    <h3 data-i18n="premium.activeTitle">Премиум активен</h3>
+                    <p id="premium-active-until"></p>
+                    <p data-i18n="premium.activeDesc">Все разделы открыты. Джазакумуллаху хайран!</p>
+                </div>
+            </div>
+
+            <div class="premium-guest" id="premium-guest" hidden>
+                <span data-i18n="premium.guestHint">Войдите в аккаунт, чтобы оформить и привязать подписку.</span>
+                <button id="premium-guest-login" type="button" data-i18n="premium.guestLogin">Войти в профиль</button>
+            </div>
+
+            <div style="text-align:center;">
+                <button class="premium-return" id="premium-return" type="button" hidden>Вернуться к материалу</button>
+            </div>
+
+            <div class="premium-demo">
+                <h4 data-i18n="premium.demoTitle">Демо-режим</h4>
+                <p data-i18n="premium.demoDesc">Для проверки интерфейса: включите статус Премиум вручную.</p>
+                <button id="premium-demo-btn" type="button">Включить Премиум</button>
+            </div>
+        </section>
+    </div>
+
+    <!-- МОДАЛКА-ЗАГЛУШКА ОПЛАТЫ -->
+    <div class="modal-overlay premium-pay" id="premium-pay-modal">
+        <div class="modal-content" role="dialog" aria-modal="true">
+            <div class="premium-pay__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg>
+            </div>
+            <h3 data-i18n="premium.payTitle">Оплата подписки</h3>
+            <p data-i18n="premium.payText">Перенаправление на страницу оплаты (СБП/ЮKassa)…</p>
+            <p class="premium-pay__plan" id="premium-pay-plan"></p>
+            <button class="modal-btn" id="premium-pay-ok" type="button" data-i18n="premium.payOk">Понятно</button>
+        </div>
     </div>
 
     <!-- МОДАЛКА КОМПАСА -->
@@ -167,11 +268,12 @@
         <a href="profile.html" class="nav-item active"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span data-i18n="nav.profile">Профиль</span></a>
     </nav>
 
-    <script defer src="js/translations.js"></script>
+    <script defer src="js/translations.js?v=6"></script>
     <script defer src="js/account-modal.js"></script>
     <!-- Firebase SDK загружается в фоне из app.js и не блокирует отрисовку страницы -->
     <script defer src="js/data.js"></script>
-    <script defer src="js/app.js"></script>
+    <script defer src="js/app.js?v=6"></script>
+    <script defer src="js/premium.js?v=6"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const updateSettingsCards = () => {
