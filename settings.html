@@ -25,8 +25,9 @@
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
     <noscript><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet"></noscript>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/premium.css?v=6">
+    <link rel="stylesheet" href="css/style.css?v=9">
+    <link rel="stylesheet" href="css/premium.css?v=7">
+    <link rel="stylesheet" href="css/about.css?v=7">
     <link rel="manifest" href="manifest.webmanifest">
     <meta name="theme-color" content="#f5f3ec">
 </head>
@@ -105,14 +106,16 @@
                     </div>
                 </div>
 
-                <div class="card">
+                <div class="card about-entry" onclick="About.open()">
                     <div class="icon-box">
                         <svg viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                     </div>
                     <div class="card-content">
                         <h3 data-i18n="settings.about">О приложении</h3>
-                        <p data-i18n="settings.version">Версия 1.0.0 • AMANAH</p>
+                        <p data-i18n="settings.aboutDesc">Источники, учёные и обратная связь</p>
+                        <span class="about-entry__tag" data-i18n="settings.version">Версия 1.0.0 • AMANAH</span>
                     </div>
+                    <svg class="about-entry__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
                 </div>
             </main>
         </section>
@@ -192,6 +195,79 @@
                 <button id="premium-demo-btn" type="button">Включить Премиум</button>
             </div>
         </section>
+
+        <!-- ===================== ЭКРАН «О ПРИЛОЖЕНИИ» ===================== -->
+        <section id="about-page" class="page-section about-page">
+            <div class="back-btn about-back" onclick="About.close()">
+                <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> <span data-i18n="about.back">Назад в настройки</span>
+            </div>
+
+            <div class="about-hero">
+                <div class="about-hero__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10.5 5.2 8.2 4.6 5 4.6v13c3.2 0 5.5.6 7 1.9 1.5-1.3 3.8-1.9 7-1.9v-13c-3.2 0-5.5.6-7 1.9z"/><path d="M12 6.5v13"/><path d="M8 9h1.5M15 9h1.5"/></svg>
+                </div>
+                <span class="about-hero__eyebrow" data-i18n="about.eyebrow">Знания · Достоверность · Аманат</span>
+                <h1 class="about-hero__title" data-i18n="about.title">О приложении AMANAH</h1>
+                <span class="about-hero__version" data-i18n="settings.version">Версия 1.0.0 • AMANAH</span>
+            </div>
+
+            <p class="about-lead" data-i18n="about.intro">AMANAH — это ваш надёжный путеводитель в мире Ислама. Наша цель — сделать изучение религии доступным, понятным и удобным для каждого, независимо от уровня знаний.</p>
+
+            <section class="about-section">
+                <h2 class="about-section__title">
+                    <span class="about-section__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+                    <span data-i18n="about.sources.title">Наши источники</span>
+                </h2>
+                <p class="about-p" data-i18n="about.sources.p">Вся информация в приложении базируется исключительно на достоверных источниках. Мы не используем сомнительные данные или выдумки.</p>
+                <ul class="about-list">
+                    <li><span class="about-list__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><span data-i18n="about.sources.i1">Основой для раздела «Сира» (жизнеописание Пророка ﷺ) служат классические труды признанных историков и богословов, такие как «Ар-Рахик аль-Махтум» (Сафи ар-Рахман аль-Мубаракфури) и фундаментальные хадисоведческие сборники (Сахих аль-Бухари, Сахих Муслим).</span></li>
+                    <li><span class="about-list__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><span data-i18n="about.sources.i2">Раздел «Знания» содержит разборы классических книг по Акыде (вероубеждению), Фикху (праву) и Сунне.</span></li>
+                    <li><span class="about-list__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><span data-i18n="about.sources.i3">Тексты аятов и хадисов приводятся в соответствии с общепринятыми переводами (например, перевод смыслов Эльмира Кулиева).</span></li>
+                </ul>
+            </section>
+
+            <section class="about-section">
+                <h2 class="about-section__title">
+                    <span class="about-section__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/></svg></span>
+                    <span data-i18n="about.scholars.title">Наши учёные и авторитеты</span>
+                </h2>
+                <p class="about-p" data-i18n="about.scholars.p">При подготовке материалов и разъяснении сложных вопросов мы опираемся на труды признанных учёных исламского мира, в числе которых:</p>
+                <ul class="about-scholars">
+                    <li><span class="about-scholars__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/></svg></span><span data-i18n="about.scholars.s1">Имам Ибн Касир (толкование Корана)</span></li>
+                    <li><span class="about-scholars__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/></svg></span><span data-i18n="about.scholars.s2">Имам ан-Навави (хадисы и фикх)</span></li>
+                    <li><span class="about-scholars__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/></svg></span><span data-i18n="about.scholars.s3">Ибн Хаджар аль-Аскаляни (хадисоведение)</span></li>
+                    <li><span class="about-scholars__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/></svg></span><span data-i18n="about.scholars.s4">Сафи ар-Рахман аль-Мубаракфури (жизнеописание Пророка ﷺ)</span></li>
+                    <li><span class="about-scholars__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/></svg></span><span data-i18n="about.scholars.s5">Шейх Абдуль-Азиз ибн Баз</span></li>
+                    <li><span class="about-scholars__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/></svg></span><span data-i18n="about.scholars.s6">Шейх Мухаммад ибн Салих аль-Усаймин</span></li>
+                    <li><span class="about-scholars__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/></svg></span><span data-i18n="about.scholars.s7">Шейх Салих аль-Фаузан</span></li>
+                    <li><span class="about-scholars__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/></svg></span><span data-i18n="about.scholars.s8">Шейх Усман аль-Хамис</span></li>
+                    <li><span class="about-scholars__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/></svg></span><span data-i18n="about.scholars.s9">Шейх Али Аш-Шейх</span></li>
+                </ul>
+            </section>
+
+            <section class="about-section about-note">
+                <h2 class="about-section__title">
+                    <span class="about-section__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></span>
+                    <span data-i18n="about.reliability.title">О достоверности</span>
+                </h2>
+                <p class="about-p" data-i18n="about.reliability.p">Мы придерживаемся пути Ахлю-с-Сунна валь-Джамаа (следование Корану и Сунне в понимании праведных предшественников). Все материалы проходят проверку на соответствие каноническим нормам.</p>
+            </section>
+
+            <section class="about-section about-feedback">
+                <h2 class="about-section__title">
+                    <span class="about-section__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 6l10 7 10-7"/></svg></span>
+                    <span data-i18n="about.feedback.title">Обратная связь</span>
+                </h2>
+                <p class="about-p" data-i18n="about.feedback.p">Если вы нашли неточность или опечатку, пожалуйста, свяжитесь с нами, и мы оперативно внесём правки.</p>
+                <a class="about-email" href="mailto:amana1t@outlook.com">
+                    <span class="about-email__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 6l10 7 10-7"/></svg></span>
+                    <span class="about-email__text">
+                        <span class="about-email__hint" data-i18n="about.emailHint">E-mail для связи</span>
+                        <strong>amana1t@outlook.com</strong>
+                    </span>
+                </a>
+            </section>
+        </section>
     </div>
 
     <!-- МОДАЛКА-ЗАГЛУШКА ОПЛАТЫ -->
@@ -268,12 +344,13 @@
         <a href="profile.html" class="nav-item active"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span data-i18n="nav.profile">Профиль</span></a>
     </nav>
 
-    <script defer src="js/translations.js?v=6"></script>
+    <script defer src="js/translations.js?v=7"></script>
     <script defer src="js/account-modal.js"></script>
     <!-- Firebase SDK загружается в фоне из app.js и не блокирует отрисовку страницы -->
     <script defer src="js/data.js"></script>
-    <script defer src="js/app.js?v=6"></script>
-    <script defer src="js/premium.js?v=6"></script>
+    <script defer src="js/app.js?v=7"></script>
+    <script defer src="js/premium.js?v=7"></script>
+    <script defer src="js/about.js?v=7"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const updateSettingsCards = () => {

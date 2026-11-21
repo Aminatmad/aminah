@@ -1590,6 +1590,15 @@ html[dir="rtl"] .modal-arrow {
     letter-spacing: 1px;
 }
 
+/* Абзацы «Истории» и «Пользы» (js/dua-details.js) */
+.dua-info-block p {
+    margin: 0 0 10px;
+}
+
+.dua-info-block p:last-child {
+    margin-bottom: 0;
+}
+
 /* Блок «Польза»: темо-зависимые цвета (в тёмной теме больше не «светлый на светлом») */
 .dua-info-block--benefit {
     background: var(--gold-soft);
@@ -1610,6 +1619,9 @@ html[data-theme="dark"] .dua-info-block--benefit strong {
     color: var(--muted);
     font-style: italic;
     text-align: end;
+    /* чтобы плавающая кнопка языка не перекрывала ссылку на источник */
+    padding-inline-end: 46px;
+    overflow-wrap: anywhere;
 }
 
 .dua-header-text {
