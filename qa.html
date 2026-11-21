@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+    <script>
+        (function () {
+            try {
+                var theme = localStorage.getItem('amanah_theme');
+                if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+                var lang = localStorage.getItem('amanah_lang');
+                if (lang) {
+                    document.documentElement.lang = lang;
+                    document.documentElement.setAttribute('data-lang', lang);
+                    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+                }
+            } catch (e) { /* ignore */ }
+        })();
+    </script>
+
+    <title data-i18n="page.qaTitle">AMANAH — Вопрос-Ответ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet"></noscript>
+    <link rel="stylesheet" href="css/style.css?v=9">
+    <link rel="stylesheet" href="css/qa.css?v=3">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#f5f3ec">
+
+    <link rel="icon" type="image/jpg" href="images/ico-192.jpg">
+    <link rel="apple-touch-icon" href="images/ico-192.jpg">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="AMANAH">
+</head>
+<body>
+    <div class="container">
+        <!-- ШАПКА -->
+        <header class="header" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; margin-bottom: 20px;">
+            <div class="header-qibla" id="profile-account-trigger" role="button" tabindex="0" aria-label="Мой аккаунт" data-i18n-aria-label="settings.account.title" onclick="AccountModal.open()" style="flex: 1; display: flex; flex-direction: column; align-items: center; cursor: pointer;">
+                <div class="compass-icon-mini">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                </div>
+                <span style="font-size: 10px; color: var(--gold); font-weight: bold; margin-top: 4px;" data-i18n="header.profile">ПРОФИЛЬ</span>
+            </div>
+
+            <div class="header-center" onclick="window.location.href='index.html'" style="flex: 2; display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer;">
+                <div class="logo-img" style="margin-bottom: 5px; width: 50px; height: 50px; background-image: url('images/ico-180.png');"></div>
+                <span class="logo-text" style="font-size: 20px; line-height: 1;">AMANAH</span>
+                <span class="logo-subtext" style="font-size: 8px; margin-top: 2px;" data-i18n="app.tagline">ТВОЯ РЕЛИГИЯ — ТВОЙ АМАНАТ</span>
+            </div>
+
+            <div class="header-prayer" onclick="window.location.href='settings.html'" style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer;">
+                <div class="compass-icon-mini">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                    </svg>
+                </div>
+                <span style="font-size: 10px; color: var(--gold); font-weight: bold; margin-top: 4px;" data-i18n="header.settings">НАСТРОЙКИ</span>
+            </div>
+        </header>
+
+        <!-- ===================== ЭКРАН «ВОПРОС-ОТВЕТ» ===================== -->
+        <section id="qa-page" class="page-section active qa-page">
+            <div class="back-btn" onclick="window.location.href='profile.html'">
+                <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> <span data-i18n="qa.back">Назад в профиль</span>
+            </div>
+
+            <!-- HERO -->
+            <div class="qa-hero">
+                <div class="qa-hero__emblem" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9.3 9.3 0 0 1-3.6-.6L3 21l1.7-4.9A8.2 8.2 0 0 1 4 11.5a8.4 8.4 0 0 1 9-8.4 8.4 8.4 0 0 1 8 8.4z"/>
+                        <path d="M8.5 11.5h7M8.5 8.5h4"/>
+                    </svg>
+                </div>
+                <span class="qa-hero__eyebrow" data-i18n="qa.eyebrow">PREMIUM · ЛИЧНАЯ ПОДДЕРЖКА</span>
+                <h1 class="qa-hero__title" data-i18n="qa.title">Задайте вопрос</h1>
+                <p class="qa-hero__subtitle" data-i18n="qa.subtitle">Наши специалисты ответят на ваши вопросы по урокам и религии в течение 24-48 часов</p>
+                <div class="qa-hero__meta">
+                    <span class="qa-hero__pill">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                        <span data-i18n="qa.hero.time">24–48 часов</span>
+                    </span>
+                    <span class="qa-hero__pill">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+                        <span data-i18n="qa.hero.private">Конфиденциально</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- ЗАГЛУШКА: НЕТ ПРЕМИУМА -->
+            <div class="qa-gate" id="qa-gate" hidden>
+                <div class="qa-gate__emblem" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.2"/></svg>
+                </div>
+                <span class="qa-gate__badge" data-i18n="qa.entry.badge">PREMIUM</span>
+                <h2 class="qa-gate__title" data-i18n="qa.gate.title">Раздел для премиум-пользователей</h2>
+                <p class="qa-gate__desc" data-i18n="qa.gate.desc">Задавать вопросы специалистам могут только премиум-пользователи. Оформите подписку, чтобы открыть личную поддержку.</p>
+                <button class="qa-send qa-send--gate" id="qa-gate-cta" type="button" data-i18n="qa.gate.cta">Оформить Премиум</button>
+                <button class="qa-gate__demo" id="qa-gate-demo" type="button" data-i18n="qa.gate.demo">Демо: включить Премиум</button>
+            </div>
+
+            <!-- ОСНОВНОЙ ИНТЕРФЕЙС -->
+            <div id="qa-main">
+                <div class="qa-compose">
+                    <div class="qa-compose__head">
+                        <span class="qa-compose__label" data-i18n="qa.formLabel">Ваш вопрос</span>
+                        <span class="qa-compose__counter" id="qa-counter">0 / 1000</span>
+                    </div>
+                    <textarea id="qa-input" class="qa-compose__input" rows="5" maxlength="1000"
+                        data-i18n-placeholder="qa.placeholder"
+                        data-i18n-aria-label="qa.aria.textarea"
+                        aria-label="Поле для ввода вопроса"
+                        placeholder="Напишите вопрос подробно — так ответ будет точнее…"></textarea>
+                    <p class="qa-compose__hint" data-i18n="qa.charHint">Не менее 10 символов · максимум 1000</p>
+                    <div class="qa-compose__foot">
+                        <span class="qa-compose__privacy">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            <span data-i18n="qa.privacy">Вопрос виден только вам и специалисту</span>
+                        </span>
+                        <button class="qa-send" id="qa-send" type="button">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>
+                            <span data-i18n="qa.send">Отправить вопрос</span>
+                        </button>
+                    </div>
+                </div>
+
+                <section class="qa-history">
+                    <div class="qa-history__head">
+                        <h2 data-i18n="qa.myTitle">Мои вопросы</h2>
+                        <span class="qa-history__count" id="qa-count">0</span>
+                    </div>
+                    <div id="qa-list" class="qa-list"></div>
+                </section>
+            </div>
+        </section>
+    </div>
+
+    <div class="mosque-footer"></div>
+
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span data-i18n="nav.home">Главная</span>
+        </a>
+        <a href="catalog.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span data-i18n="nav.knowledge">Знания</span>
+        </a>
+        <a href="sira.html" class="nav-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg><span data-i18n="nav.sira">Сира</span></a>
+        <a href="dua.html" class="nav-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg><span data-i18n="nav.dua">Дуа</span></a>
+        <a href="profile.html" class="nav-item active"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span data-i18n="nav.profile">Профиль</span></a>
+    </nav>
+
+    <script defer src="js/translations.js?v=8"></script>
+    <script defer src="js/account-modal.js"></script>
+    <!-- Firebase SDK загружается в фоне из app.js и не блокирует отрисовку страницы -->
+    <script defer src="js/data.js"></script>
+    <script defer src="js/app.js?v=7"></script>
+    <script defer src="js/qa.js?v=2"></script>
+</body>
+</html>

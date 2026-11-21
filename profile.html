@@ -27,6 +27,7 @@
     <noscript><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet"></noscript>
     <link rel="stylesheet" href="css/style.css?v=9">
     <link rel="stylesheet" href="css/premium.css?v=7">
+    <link rel="stylesheet" href="css/qa.css?v=3">
     <link rel="manifest" href="manifest.webmanifest">
     <meta name="theme-color" content="#f5f3ec">
 
@@ -78,17 +79,21 @@
                 <h2 class="section-title" id="profile-page-title" data-i18n="profile.title">Мой прогресс</h2>
             </div>
 
-            <!-- БАННЕР ПРЕМИУМА -->
-            <a class="premium-banner" id="premium-banner" href="settings.html?premium=1">
-                <div class="premium-banner__icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l4.5 4L12 4l4.5 7L21 7l-1.6 11H4.6L3 7z"/><path d="M4.6 21h14.8"/></svg>
+            <!-- КНОПКА «ВОПРОС-ОТВЕТ»: приглушённая без Премиума, контрастная с Премиумом -->
+            <a class="qa-entry" id="qa-entry" data-qa-entry href="settings.html?premium=1&amp;qa=locked">
+                <span class="qa-entry__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9.3 9.3 0 0 1-3.6-.6L3 21l1.7-4.9A8.2 8.2 0 0 1 4 11.5a8.4 8.4 0 0 1 9-8.4 8.4 8.4 0 0 1 8 8.4z"/>
+                        <path d="M8.5 11.5h7M8.5 8.5h4"/>
+                    </svg>
+                </span>
+                <div class="qa-entry__body">
+                    <span class="qa-entry__badge" data-qa-badge>PREMIUM</span>
+                    <p class="qa-entry__title" data-i18n="qa.entry.title">Вопрос-Ответ</p>
+                    <p class="qa-entry__desc" data-qa-desc>Ответы специалистов доступны с Премиум</p>
                 </div>
-                <div class="premium-banner__body">
-                    <span class="premium-banner__badge" data-i18n="profile.premium.badge">PREMIUM</span>
-                    <p class="premium-banner__title" id="premium-banner-title" data-i18n="profile.premium.title">Откройте весь AMANAH</p>
-                    <p class="premium-banner__desc" id="premium-banner-desc" data-i18n="profile.premium.desc">25 точек Сиры, все книги, аудио и ответы учёных.</p>
-                </div>
-                <span class="premium-banner__cta" id="premium-banner-cta" data-i18n="profile.premium.cta">Узнать о Премиум</span>
+                <span class="qa-entry__cta" data-qa-cta>Открыть доступ</span>
+                <svg class="qa-entry__lock" data-qa-lock viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
             </a>
 
             <div id="continue-block"></div>
@@ -228,11 +233,12 @@
         <a href="profile.html" class="nav-item active"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span data-i18n="nav.profile">Профиль</span></a>
     </nav>
 
-    <script defer src="js/translations.js?v=7"></script>
+    <script defer src="js/translations.js?v=8"></script>
     <script defer src="js/account-modal.js"></script>
     <!-- Firebase SDK загружается в фоне из app.js и не блокирует отрисовку страницы -->
     <script defer src="js/data.js"></script>
     <script defer src="js/app.js?v=7"></script>
     <script defer src="js/premium.js?v=7"></script>
+    <script defer src="js/qa.js?v=2"></script>
 </body>
 </html>

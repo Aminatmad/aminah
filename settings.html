@@ -18,6 +18,10 @@
             } catch (e) { /* ignore */ }
         })();
     </script>
+    <script>
+        /* Захватываем флаг до того, как premium.js перепишет URL через replaceState */
+        window.__qaLocked = new URLSearchParams(window.location.search).get('qa') === 'locked';
+    </script>
 
     <title data-i18n="page.settingsTitle">AMANAH — Настройки</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,6 +32,7 @@
     <link rel="stylesheet" href="css/style.css?v=9">
     <link rel="stylesheet" href="css/premium.css?v=7">
     <link rel="stylesheet" href="css/about.css?v=7">
+    <link rel="stylesheet" href="css/qa.css?v=3">
     <link rel="manifest" href="manifest.webmanifest">
     <meta name="theme-color" content="#f5f3ec">
 </head>
@@ -133,6 +138,12 @@
                 <span class="premium-eyebrow" data-i18n="premium.eyebrow">Полный доступ · AMANAH</span>
                 <h1 class="premium-brand" data-i18n="premium.brand">AMANAH Premium</h1>
                 <p class="premium-subtitle" data-i18n="premium.subtitle">Откройте полный доступ к знаниям и пути Пророка ﷺ</p>
+            </div>
+
+            <!-- Сообщение при переходе с закрытого раздела «Вопрос-Ответ» -->
+            <div class="qa-gate-note" id="qa-gate-note" hidden>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+                <span data-i18n="qa.lockedMsg">Задавать вопросы могут только премиум-пользователи</span>
             </div>
 
             <div class="premium-block">
@@ -344,13 +355,14 @@
         <a href="profile.html" class="nav-item active"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span data-i18n="nav.profile">Профиль</span></a>
     </nav>
 
-    <script defer src="js/translations.js?v=7"></script>
+    <script defer src="js/translations.js?v=8"></script>
     <script defer src="js/account-modal.js"></script>
     <!-- Firebase SDK загружается в фоне из app.js и не блокирует отрисовку страницы -->
     <script defer src="js/data.js"></script>
     <script defer src="js/app.js?v=7"></script>
     <script defer src="js/premium.js?v=7"></script>
     <script defer src="js/about.js?v=7"></script>
+    <script defer src="js/qa.js?v=2"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const updateSettingsCards = () => {
